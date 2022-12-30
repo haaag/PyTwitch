@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from datetime import timedelta
 from typing import Any
+from typing import Generator
 from typing import Iterable
 from typing import Iterator
 
@@ -22,7 +23,6 @@ from twitch.datatypes import SearchChannelsAPIResponse
 from twitch.datatypes import TwitchApiResponse
 from twitch.datatypes import TwitchChannelSchedule
 from twitch.datatypes import TwitchChannelVideo
-from twitch.datatypes import TwitchChannelVideos
 from twitch.datatypes import TwitchClip
 from twitch.datatypes import TwitchStreamLive
 from twitch.datatypes import TwitchStreams
@@ -129,7 +129,7 @@ class TwitchAPI:
         # if data.get("pagination"):
         #     print("Calling pagination")
         #     query_params["after"] = data["pagination"]["cursor"]  # type: ignore
-        #     data["data"] += self._request_get(endpoint_url, query_params)["data"]
+        #     data["data"] += self.request_get(endpoint_url, query_params)["data"]
 
         return data
 
@@ -223,7 +223,7 @@ class ChannelsAPI(TwitchAPI):
         data = self.request_get(endpoint, params)
         return [SearchChannelsAPIResponse(**streamer) for streamer in data["data"]]
 
-    def videos(self, user_id: str, highlight: bool = False) -> TwitchChannelVideos:
+    def videos(self, user_id: str, highlight: bool = False) -> Generator[TwitchChannelVideo, None, None]:
         """
         Gets information about one or more published videos.
 
@@ -241,6 +241,13 @@ class ChannelsAPI(TwitchAPI):
             params["type"] = "highlight"
         data = self.request_get(endpoint, params)
         return (TwitchChannelVideo(**video) for video in data["data"])
+
+    def is_online(self, user_id: str) -> bool:
+        """Check if a user is currently streaming on Twitch."""
+        # https://dev.twitch.tv/docs/api/reference#get-streams
+        endpoint = URL("streams")
+        params = {"user_id": user_id}
+        return bool(self.request_get(endpoint, params)["data"])
 
 
 class ClipsAPI(TwitchAPI):

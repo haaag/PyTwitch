@@ -3,7 +3,6 @@
 from dataclasses import dataclass
 from typing import Any
 from typing import Callable
-from typing import Generator
 from typing import Iterable
 from typing import Iterator
 from typing import Mapping
@@ -67,20 +66,6 @@ class TwitchStreamLive:
     user_login: str
     user_name: str
     viewer_count: int
-
-
-@dataclass
-class TwitchChannelDB:
-    id: str
-    user_id: str
-    user_login: str
-    user_name: str
-    game_id: str
-    game_name: str
-    type: str
-    title: str
-    started_at: str
-    thumbnail_url: str
 
 
 @dataclass
@@ -170,24 +155,12 @@ QueryParamTypes = Mapping[str, Any]
 
 HeaderTypes = Mapping[str, Any]
 
-TwitchChannelList = list[str]
-
-TwitchChannelVideos = Generator[TwitchChannelVideo, None, None]
-
 TwitchStreams = Iterable[TwitchStreamLive]
-
-TwitchStreamsGenerator = Iterator[TwitchStreamLive]
-
-TwitchChannels = Iterable[TwitchChannel]
-
-TwitchIterableClips = Union[Generator[TwitchClip, None, None], list[TwitchClip]]
 
 TwitchClips = Union[Iterator[TwitchClip], list[TwitchClip]]
 
-TwitchApiProcessedResponse = Union[Iterable[SearchChannelsAPIResponse], Iterable[TwitchStreamLive]]
-
 TwitchApiResponse = Mapping[str, Any]
-NewTwitchApiResponse = Iterable[Any]
+
 RequestData = Iterable[Any]
 
 TwitchChannelSchedule = TwitchApiResponse

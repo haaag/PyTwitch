@@ -69,14 +69,11 @@ class App:
             return strip_str.strip()
         return name.strip()
 
-    def show_online_follows(self) -> Optional[str]:
+    def show_online_follows(self) -> None:
         """
         Show the channels that the user follows that are currently live.
-
-        Returns:
-        str: The name of the selected channel if a channel was selected, None otherwise.
         """
-        streams_online = self.twitch.channels_live
+        streams_online = self.twitch.channels.followed_streams_live
 
         if not streams_online:
             log.warning("No %s followed channels", C.red("online"))
@@ -100,12 +97,10 @@ class App:
         if selected == self.menu.back:
             self.show_menu()
 
-        if self.twitch.live_icon in selected:
-            selected = selected.replace(self.twitch.live_icon, "").split("|")[0]
-            self.load_stream_selected(selected.strip())
-            self.show_online_follows()
-
-        return selected
+        selected = self.clean_channel_name(selected).split("|")[0]
+        self.load_stream_selected(selected.strip())
+        self.show_online_follows()
+        return None
 
     def show_follows_and_online(self) -> None:
         """
@@ -115,7 +110,7 @@ class App:
         follows = {user.to_name: user for user in self.user_follows}
         follows_names = list(follows.keys())
 
-        for channel in self.twitch.channels_live:
+        for channel in self.twitch.channels.followed_streams_live:
             if channel.user_name in follows_names:
                 idx = follows_names.index(channel.user_name)
                 follows_names[idx] = f"{self.twitch.live_icon} {channel.user_name}"
@@ -246,12 +241,17 @@ class App:
         None: The selected option is executed.
         """
         channel = self.twitch.channels.information(user_id)
+        print("UserID:", user_id)
 
         menu_info = []
         category = f"Category: {channel.game_name}"
         menu_info.append(category)
         menu_info.append("-" * len(category))
-        menu_info.append(f"Last Stream: {channel.title}")
+        if self.twitch.channels.is_online(user_id):
+            menu_info.append(f"{self.twitch.live_icon} Live Stream: {channel.title}")
+            menu_info.append("-" * len(category))
+        else:
+            menu_info.append(f"Last Stream: {channel.title}")
         menu_info.append("Videos: Get videos")
         menu_info.append("Clips: Get clips")
 
@@ -266,7 +266,7 @@ class App:
             sys.exit(1)
 
         if selected == self.menu.back:
-            self.show_follows()
+            self.show_follows_and_online()
 
         if selected.startswith("Clips"):
             self.show_clips(channel)
@@ -276,6 +276,9 @@ class App:
 
         if selected.startswith("Last"):
             print("Selected:", selected)
+
+        if selected.startswith(self.twitch.live_icon):
+            self.load_stream_selected(channel.broadcaster_name)
 
         self.show_info(user_id)
 
