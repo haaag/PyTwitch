@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "menu-twitch"
+description = "Simple menu tool for launching Twitch streams."
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["dmenu", "rofi", "twitch"]
+dependencies = [ "httpx>=0.23.1" ]
+
+[project.scripts]
+menu-twitch = "twitch.__main__:main"
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 120
+force_single_line = true
+
+[tool.mypy]
+show_error_codes = true
+show_error_context = true
+show_column_numbers = true
+ignore_missing_imports = true
+
+[tool.pylint]
+max-line-length = 120
+disable = [
+    "C0103", # (invalid-name)
+    "C0114", # (missing-module-docstring)
+    "C0115", # (missing-class-docstring)
+    "C0116", # (missing-function-docstring)
+    "E0401", # (import-error)
+    "R0903", # (too-few-public-methods)
+    "R0913", # (too-many-arguments)
+    "W0105", # (pointless-string-statement)
+    "R0902", # (too-many-instance-attributes)
+    "W0511", # (fixme)
+]
+
+[tool.pycodestyle]
+line-length = 120
+count = false
+ignore = [
+    "E226",
+    "E302",
+    "E71",
+]
+statistics = true
+
+[tool.flake8]
+max-line-length = 120
+max-complexity = 10
+ignore = ["W503"]

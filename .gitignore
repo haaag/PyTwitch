@@ -1,0 +1,13 @@
+# basic
+__pycache__
+.venv
+.mypy_cache
+__init__.py
+test.sh
+twitch/menu_beta.py
+twitch/credentials.py
+twitch/channels-bk.json
+twitch/channels-pavel.json
+data.json
+testing.py
+.env

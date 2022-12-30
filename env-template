@@ -1,0 +1,5 @@
+# Twitch credentials
+# Rename file to .env
+CLIENT_ID=xxxxx
+ACCESS_TOKEN=xxx
+USER_ID=00000
