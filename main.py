@@ -43,7 +43,6 @@ def main() -> None:
     app = App(twitch=twitch, menu=menu, player=args.player)
 
     if args.test:
-        app.show_follows()
         sys.exit(0)
 
     if args.mixed:

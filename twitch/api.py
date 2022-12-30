@@ -5,7 +5,6 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from datetime import timedelta
-from typing import Any
 from typing import Generator
 from typing import Iterable
 from typing import Iterator
@@ -18,7 +17,6 @@ from twitch.datatypes import BroadcasterInfo
 from twitch.datatypes import ChannelUserFollows
 from twitch.datatypes import HeaderTypes
 from twitch.datatypes import QueryParamTypes
-from twitch.datatypes import RequestData
 from twitch.datatypes import SearchChannelsAPIResponse
 from twitch.datatypes import TwitchApiResponse
 from twitch.datatypes import TwitchChannelSchedule
@@ -55,14 +53,14 @@ class TwitchAPI:
     credentials: TwitchApiCredentials
 
     def __init__(self) -> None:
-        self.credentials = self.verify_credentials()
+        self.credentials = self.validate_credentials()
         self.base_url = URL("https://api.twitch.tv/helix/")
 
-    def verify_credentials(self) -> TwitchApiCredentials:
+    def validate_credentials(self) -> TwitchApiCredentials:
         return TwitchApiCredentials(
-            access_token=os.getenv("ACCESS_TOKEN"),  # type: ignore
-            client_id=os.getenv("CLIENT_ID"),  # type: ignore
-            user_id=os.getenv("USER_ID"),  # type: ignore
+            access_token=os.getenv("TWITCH_ACCESS_TOKEN"),  # type: ignore
+            client_id=os.getenv("TWITCH_CLIENT_ID"),  # type: ignore
+            user_id=os.getenv("TWITCH_USER_ID"),  # type: ignore
         )
 
     @property
@@ -73,49 +71,17 @@ class TwitchAPI:
             "Authorization": "Bearer " + self.credentials.access_token,
         }
 
-    def new_request_get(self, endpoint_url: URL, query_params: QueryParamTypes, limit: int = 100) -> RequestData:
-        results: list[Any] = []
-
-        def make_request(endpoint_url: URL, query_params: QueryParamTypes):
-            url = self.base_url.join(endpoint_url)
-            response = httpx.get(url, headers=self._get_request_headers, params=query_params)
-
-            try:
-                response.raise_for_status()
-            except httpx.HTTPStatusError as exc:
-                error_url = C.info(str(exc.request.url))
-                error_response = C.error(f"Error response {exc.response.status_code}")
-                log.info("%s %s", error_response, error_url)
-                sys.exit(1)
-            else:
-                data = response.json()
-
-            for item in data["data"]:
-                results.append(item)
-
-                if len(results) >= limit:
-                    return results
-
-            if data.get("pagination"):
-                query_params["after"] = data["pagination"]["cursor"]  # type: ignore
-                return make_request(endpoint_url, query_params)
-            return data
-
-        make_request(endpoint_url, query_params)
-        return results
+    @property
+    def client(self) -> httpx.Client:
+        return httpx.Client(headers=self._get_request_headers)
 
     def request_get(
         self,
         endpoint_url: URL,
         query_params: QueryParamTypes,
     ) -> TwitchApiResponse:
-        # TODO:
-        # - [ ] The _request_get method should handle the case where the data key is not present in the response JSON.
-        # - [ ] Make a limit of calls. Maybe no more than 100 videos in data["data"]
-        #     - [ ] In recursion, pass old data as a parameter and check length
         url = self.base_url.join(endpoint_url)
-        response = httpx.get(url, headers=self._get_request_headers, params=query_params)
-
+        response = self.client.get(url, params=query_params)
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
@@ -126,11 +92,9 @@ class TwitchAPI:
         else:
             data = response.json()
 
-        # if data.get("pagination"):
-        #     print("Calling pagination")
-        #     query_params["after"] = data["pagination"]["cursor"]  # type: ignore
-        #     data["data"] += self.request_get(endpoint_url, query_params)["data"]
-
+        if data.get("pagination"):
+            query_params["after"] = data["pagination"]["cursor"]  # type: ignore
+            data["data"] += self.request_get(endpoint_url, query_params)["data"]
         return data
 
 
@@ -270,13 +234,3 @@ class ClipsAPI(TwitchAPI):
         params = {"broadcaster_id": user_id, "started_at": started_at, "ended_at": ended_at, "first": 100}
         data = self.request_get(endpint, params)
         return (TwitchClip(**clip) for clip in data["data"])
-
-    def test_get_clips_list_comprehension(self, user_id: str) -> list[TwitchClip]:
-        """Gets one or more video clips that were captured from streams."""
-        # https://dev.twitch.tv/docs/api/reference#get-clips
-        ended_at = datetime.now().isoformat() + "Z"
-        started_at = (datetime.now() - timedelta(days=15)).isoformat() + "Z"
-        endpint = URL("clips")
-        params = {"broadcaster_id": user_id, "first": 100, "started_at": started_at, "ended_at": ended_at}
-        data = self.new_request_get(endpint, params)
-        return [TwitchClip(**clip) for clip in data]
