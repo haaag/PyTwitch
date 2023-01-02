@@ -32,7 +32,6 @@ class Executor:
 
         args_splitted = shlex.split(f"{executable} {commands}")
 
-        # proc = subprocess.Popen(args_splitted, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
         with subprocess.Popen(
             args_splitted, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT
         ) as proc:
@@ -46,8 +45,6 @@ class Executor:
         return None
 
     def launch(self, url: str | URL) -> int:
-        # TODO:
-        # - [X] Replace str type with httpx.URL
         if not self.bin:
             raise ExecutableNotFound(self.player)
 

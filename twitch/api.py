@@ -135,6 +135,7 @@ class ChannelsAPI(TwitchAPI):
         return [ChannelUserFollows(**user) for user in data]
 
     def schedule(self, user_id: str) -> TwitchChannelSchedule:
+        # FIX: I think, no one uses this feature.
         """
         Gets the broadcaster’s streaming schedule.
 
@@ -187,7 +188,7 @@ class ChannelsAPI(TwitchAPI):
         data = self.request_get(endpoint, params)
         return [SearchChannelsAPIResponse(**streamer) for streamer in data["data"]]
 
-    def videos(self, user_id: str, highlight: bool = False) -> Generator[TwitchChannelVideo, None, None]:
+    def get_videos(self, user_id: str, highlight: bool = False) -> Generator[TwitchChannelVideo, None, None]:
         """
         Gets information about one or more published videos.
 

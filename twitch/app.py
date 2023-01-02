@@ -85,21 +85,22 @@ class App:
         selected = self.menu.show_items(self._executor, options, prompt="live:", back=True)
 
         if not selected:
-            return None
+            sys.exit(1)
+            # return None
 
         if selected not in options:
             log.warning("Live stream %s not found.", C.red(selected))
             self.menu.show_items(
                 self._executor, [f"Live stream '{selected}' not found."], prompt="'twitch follows:'", back=True
             )
-            self.show_online_follows()
+            # self.show_online_follows()
 
         if selected == self.menu.back:
             self.show_menu()
 
         selected = self.clean_channel_name(selected).split("|")[0]
         self.load_stream_selected(selected.strip())
-        self.show_online_follows()
+        # self.show_online_follows()
         return None
 
     def show_follows_and_online(self) -> None:
@@ -128,13 +129,15 @@ class App:
             self.menu.show_items(
                 self._executor, [f"Channel '{selected}' not found."], prompt="'twitch follows:'", back=True
             )
-            self.show_follows_and_online()
+            # self.show_follows_and_online()
+            return None
 
         selected = self.clean_channel_name(selected)
 
         follow = follows[selected]
 
         self.show_info(follow.to_id)
+        return None
 
     def show_follows(self) -> None:
         """Shows a list of channels that the user follows."""
@@ -161,13 +164,13 @@ class App:
 
         self.show_info(follow.to_id)
 
-    def show_follows_videos(self, channel: BroadcasterInfo) -> None:
+    def show_videos(self, channel: BroadcasterInfo) -> None:
         """Shows a list of videos for the specified channel."""
-        channel_videos = self.twitch.channels.videos(user_id=channel.broadcaster_id)
+        channel_videos = self.twitch.channels.get_videos(user_id=channel.broadcaster_id)
 
         videos_dict = {
-            f"{self.menu.unicode.BULLET_ICON} {video.title} | {video.duration} (views: {video.view_count})": video
-            for video in channel_videos
+            f"{idx} {self.menu.unicode.BULLET_ICON} {video.title} | {video.duration} (views: {video.view_count})": video
+            for idx, video in enumerate(channel_videos)
         }
 
         if not videos_dict:
@@ -195,7 +198,7 @@ class App:
         else:
             video = videos_dict[selected]
             self.load_stream_selected(video.url)
-            self.show_follows_videos(channel)
+            self.show_videos(channel)
 
     def show_menu(self) -> None:
         """
@@ -241,8 +244,6 @@ class App:
         None: The selected option is executed.
         """
         channel = self.twitch.channels.information(user_id)
-        print("UserID:", user_id)
-
         menu_info = []
         category = f"Category: {channel.game_name}"
         menu_info.append(category)
@@ -272,10 +273,11 @@ class App:
             self.show_clips(channel)
 
         if selected.startswith("Videos"):
-            self.show_follows_videos(channel)
+            self.show_videos(channel)
 
         if selected.startswith("Last"):
             print("Selected:", selected)
+            raise NotImplementedError()
 
         if selected.startswith(self.twitch.live_icon):
             self.load_stream_selected(channel.broadcaster_name)
@@ -300,7 +302,7 @@ class App:
             clips = self.twitch.clips.get_clips(channel.broadcaster_id)
 
         clips_dict = {
-            f"{self.menu.unicode.BULLET_ICON} {idx} {c.title} | creator: {c.creator_name} ({c.view_count} views)": c
+            f"{idx} {self.menu.unicode.BULLET_ICON} {c.title} | creator: {c.creator_name} ({c.view_count} views)": c
             for idx, c in enumerate(clips)
         }
 
