@@ -26,7 +26,6 @@ class App:
     This class is responsible for handling the main application flow,
     including the interaction with the user through a command line interface,
     and performing requests to the Twitch API through the `TwitchClient` object.
-
     """
 
     def __init__(self, twitch: TwitchClient, menu: Menu, player: str) -> None:
@@ -105,8 +104,7 @@ class App:
 
     def show_follows_and_online(self) -> None:
         """
-        Shows a list of channels that the user follows.
-        (Live channels have a '●')
+        Shows a list of channels that the user follows and highlights those who are live.
         """
         follows = {user.to_name: user for user in self.user_follows}
         follows_names = list(follows.keys())
@@ -114,7 +112,7 @@ class App:
         for channel in self.twitch.channels.followed_streams_live:
             if channel.user_name in follows_names:
                 idx = follows_names.index(channel.user_name)
-                follows_names[idx] = f"{self.twitch.live_icon} {channel.user_name}"
+                follows_names[idx] = f"{self.twitch.live_icon} {channel.user_name} (live)"
 
         selected = self.menu.show_items(self._executor, follows_names, prompt="'twitch follows:'", back=True)
 
@@ -129,10 +127,9 @@ class App:
             self.menu.show_items(
                 self._executor, [f"Channel '{selected}' not found."], prompt="'twitch follows:'", back=True
             )
-            # self.show_follows_and_online()
             return None
 
-        selected = self.clean_channel_name(selected)
+        selected = self.clean_channel_name(selected).replace("(live)", "").strip()
 
         follow = follows[selected]
 
@@ -206,7 +203,7 @@ class App:
         and channels that the user follows.
         """
         menu_options: MenuOptions = {
-            f"{self.menu.unicode.BULLET_ICON} All follows": self.show_follows,
+            f"{self.menu.unicode.BULLET_ICON} All follows": self.show_follows_and_online,
             f"{self.menu.unicode.BULLET_ICON} Live followed": self.show_online_follows,
         }
 
