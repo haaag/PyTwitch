@@ -32,9 +32,6 @@ log = get_logger(__name__)
 
 load_dotenv()
 
-# TODO:
-# [X] Remove DB class from api
-
 
 @dataclass
 class TwitchApiCredentials:
@@ -216,16 +213,6 @@ class ChannelsAPI(TwitchAPI):
 
 
 class ClipsAPI(TwitchAPI):
-    def get_clips_list_comprehension(self, user_id: str) -> list[TwitchClip]:
-        """Gets one or more video clips that were captured from streams."""
-        # https://dev.twitch.tv/docs/api/reference#get-clips
-        ended_at = datetime.now().isoformat() + "Z"
-        started_at = (datetime.now() - timedelta(days=5)).isoformat() + "Z"
-        endpint = URL("clips")
-        params = {"broadcaster_id": user_id, "first": 100, "started_at": started_at, "ended_at": ended_at}
-        data = self.request_get(endpint, params)
-        return [TwitchClip(**clip) for clip in data["data"]]
-
     def get_clips(self, user_id: str) -> Iterator[TwitchClip]:
         """Gets one or more video clips that were captured from streams."""
         # https://dev.twitch.tv/docs/api/reference#get-clips
