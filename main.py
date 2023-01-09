@@ -12,17 +12,9 @@ from twitch.utils.menu import get_menu
 
 def main() -> None:
     """
-    main
-
     This function is the entry point of the program. It parses the command line arguments, initializes the TwitchClient
     and App objects, and starts the program by calling show_menu on the App object. If a KeyboardInterrupt exception
     is raised, the program terminates and prints a message to the console.
-
-    Args:
-    --rofi (bool): Set launcher to Rofi (default: dmenu)
-    --lines (int): Show dmenu in lines (default: 12)
-    --player (str): Specify player to use to play streams (default: mpv)
-    --bottom (bool): Show dmenu bottom
     """
     logger.set_logging_level(logging.INFO)
 

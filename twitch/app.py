@@ -65,12 +65,13 @@ class App:
         self._executor.launch(clip.url)
 
     def clean_channel_name(self, name: str) -> str:
+        # FIX: Extract method from class
         if self.twitch.live_icon in name:
             return name.replace(self.twitch.live_icon, "").replace("(live)", "").strip()
         return name.strip()
 
     def show_items(
-        self, options: list[str], fallback: Optional[Callable] = None, prompt: str = "twitch:", back: bool = False
+        self, options: list[str], fallback_fn: Optional[Callable] = None, prompt: str = "twitch:", back: bool = False
     ) -> Optional[str]:
         selected = self.menu.show_items(self._executor, options, prompt=prompt, back=back)
 
@@ -79,18 +80,18 @@ class App:
 
         if selected not in options:
             self.handle_missing_option(selected)
-            if fallback:
-                fallback()
+            if fallback_fn:
+                fallback_fn()
             sys.exit(1)
 
-        if selected == self.menu.back and fallback is not None:
-            fallback()
+        if selected == self.menu.back and fallback_fn is not None:
+            fallback_fn()
 
         return selected
 
     def handle_missing_option(self, selected: str) -> None:
         log.warning("Option %s not found.", C.red(selected))
-        self.show_items([f"Option '{selected}' selected not found."], fallback=None)
+        self.show_items([f"Option '{selected}' selected not found."])
 
     def show_no_results_message(self, log_msg: str) -> None:
         log.warning(log_msg)
@@ -108,7 +109,7 @@ class App:
 
         items = {channel.user_name: channel for channel in self.twitch.channels_live_for_menu}
         options = list(items.keys())
-        selected = self.show_items(options, fallback=self.show_menu, prompt="live:", back=True)
+        selected = self.show_items(options=options, prompt="live:", back=True)
 
         if selected is None:
             sys.exit(0)
@@ -137,7 +138,7 @@ class App:
                     idx = follows_names.index(channel.user_name)
                     follows_names[idx] = f"{self.twitch.live_icon} {channel.user_name} (live)"
 
-        selected = self.show_items(follows_names, fallback=self.show_menu, prompt="'twitch follows:'", back=True)
+        selected = self.show_items(follows_names, fallback_fn=self.show_menu, prompt="'twitch follows:'", back=True)
 
         if selected is None:
             sys.exit(1)
@@ -161,7 +162,7 @@ class App:
         fallback = functools.partial(self.show_info, channel.broadcaster_id)
         selected = self.show_items(
             list(videos_dict.keys()),
-            fallback=fallback,
+            fallback_fn=fallback,
             prompt=f"'{channel.broadcaster_name} videos:'",
             back=True,
         )
@@ -220,7 +221,7 @@ class App:
 
         selected = self.show_items(
             menu_info,
-            fallback=self.show_follows_and_online,
+            fallback_fn=self.show_follows_and_online,
             prompt=f"'{channel.broadcaster_name} info:'",
             back=True,
         )
@@ -271,7 +272,7 @@ class App:
 
         selected = self.show_items(
             options=list(clips_dict.keys()),
-            fallback=functools.partial(self.show_info, channel.broadcaster_id),
+            fallback_fn=functools.partial(self.show_info, channel.broadcaster_id),
             prompt=f"'{channel.broadcaster_name} clips:'",
             back=True,
         )
