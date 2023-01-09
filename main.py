@@ -30,7 +30,7 @@ def main() -> None:
         description="Simple tool menu for watching streams live, video or clips from Twitch."
     )
     parser.add_argument("--rofi", action="store_true", help="Set launcher to Rofi (default: dmenu)")
-    parser.add_argument("--lines", type=int, required=False, help="Show dmenu in lines", nargs="?", const=12)
+    parser.add_argument("--lines", type=int, required=False, help="Show dmenu in lines", nargs="?", default=12)
     parser.add_argument("--player", type=str, required=False, help="Show dmenu in lines", nargs="?", default="mpv")
     parser.add_argument("--bottom", action="store_true", help="Show dmenu bottom")
     parser.add_argument("--mixed", action="store_true", help="All channels, live with live icon.")
