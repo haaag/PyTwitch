@@ -54,7 +54,7 @@ options:
 
 ### Rofi
 
-<img align="center" src="./img/rofi-screenshot.png">
+<img align="center" src="https://github.com/haaag/twitch-menu/blob/main/img/rofi-screenshot.png?raw=true">
 
 ## 🔗 References and links
 
