@@ -2,14 +2,17 @@
 
 <!--toc:start-->
 - [Twitch Menu](#twitch-menu)
+  - [About](#about)
   - [Installation](#📦-installation)
   - [Usage](#🛠️-usage)
-  - [Screenshots](#🖼️-screenshots)
+  - [Gifs](#🖼️-gifs)
   - [References and links](#🔗-references-and-links)
+  - [TODO](#todo)
 <!--toc:end-->
 
-A user-friendly tool for easily accessing and watching live streams, videos, and clips from Twitch, it presents a menu interface for seamless browsing and streaming.
+## ⭐ About
 
+A user-friendly tool for easily accessing and watching live streams, videos, and clips from Twitch, it presents a menu interface for seamless browsing and streaming.
 
 ## 📦 Installation
 
@@ -26,7 +29,6 @@ $ source .venv/bin/activate
 $ (.venv) pip install -r requirements.txt
 ```
 
-<br>
 
 ## 🛠️ Usage
 
@@ -36,25 +38,18 @@ usage: main.py [-h] [--rofi] [--lines [LINES]] [--player [PLAYER]] [--bottom] [-
 Simple tool menu for watching streams live, video or clips from Twitch.
 
 options:
-  -h, --help         show this help message and exit
   --rofi             Set launcher to Rofi (default: dmenu)
   --lines [LINES]    Show dmenu in lines (default: 12 lines)
   --player [PLAYER]  Player (default: mpv)
   --bottom           Show dmenu bottom
   --mixed            All channels, live with icon.
   --live             Show live streams
+  -h, --help         show this help message and exit
 ```
-<br>
 
-## 🖼️ Screenshots
+## 🖼️ Gifs
 
-### Dmenu
-
-<img align="center" src="./img/rofi-screenshot.svg">
-
-### Rofi
-
-<img align="center" src="https://github.com/haaag/twitch-menu/blob/main/img/rofi-screenshot.png?raw=true">
+![demo](https://github.com/haaag/twitch-menu/raw/main/.github/images/rofi-live.gif)
 
 ## 🔗 References and links
 
@@ -63,9 +58,9 @@ options:
   - Scope: `user:read:follows`
 - [Twitch Channel ID and User ID Convertor](https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/)
 
-<br> 
 
 ## TODO
 
 - [ ] Complete Usage
 - [ ] Update screenshots
+- https://raw.githubusercontent.com/haaag/{repo_name}/{branch}/.github/images/{asset_name}.{asset_extension}
