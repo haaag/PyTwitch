@@ -40,7 +40,6 @@ class Executor:
             selected, _ = proc.communicate(input=bytes_items)
 
         if selected:
-            # item = selected.decode(encoding="utf-8")
             return selected.decode(encoding="utf-8")
         return None
 

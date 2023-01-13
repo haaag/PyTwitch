@@ -111,7 +111,7 @@ class Rofi:
             lines = extra.get("lines")
             command_str += f" -l {lines}"
 
-        command_str += " -theme-str 'window {width: 65%; height: 40%; text-align: center;}'"
+        command_str += " -theme-str 'window {width: 45%; height: 35%; text-align: center;}'"
         item = executor.run(self.name, command_str, items)
 
         if item == "" or item is None:

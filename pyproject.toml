@@ -57,3 +57,11 @@ statistics = true
 max-line-length = 120
 max-complexity = 10
 ignore = ["W503"]
+
+[tool.ruff]
+line-length = 120
+typing-modules = ["twitch.datatypes"]
+
+[tool.ruff.isort]
+force-single-line = true
+order-by-type = true

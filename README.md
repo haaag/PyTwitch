@@ -29,7 +29,6 @@ $ source .venv/bin/activate
 $ (.venv) pip install -r requirements.txt
 ```
 
-
 ## 🛠️ Usage
 
 ```bash
@@ -58,8 +57,7 @@ options:
   - Scope: `user:read:follows`
 - [Twitch Channel ID and User ID Convertor](https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/)
 
-
-## TODO
+## 🧰 TODO
 
 - [ ] Complete Usage
 - [ ] Update screenshots
