@@ -1,15 +1,5 @@
 # Twitch Menu
 
-<!--toc:start-->
-- [Twitch Menu](#twitch-menu)
-  - [About](#about)
-  - [Installation](#📦-installation)
-  - [Usage](#🛠️-usage)
-  - [Gifs](#🖼️-gifs)
-  - [References and links](#🔗-references-and-links)
-  - [TODO](#todo)
-<!--toc:end-->
-
 ## ⭐ About
 
 A user-friendly tool for easily accessing and watching live streams, videos, and clips from Twitch, it presents a menu interface for seamless browsing and streaming.
@@ -19,7 +9,7 @@ A user-friendly tool for easily accessing and watching live streams, videos, and
 ```bash
 # Clone repository
 $ git clone "https://github.com/haaag/twitch-menu.git"
-$ cd profiles-browser-python
+$ cd twitch-menu
 
 # Create virtual environment & source
 $ python -m venv .venv
@@ -28,6 +18,10 @@ $ source .venv/bin/activate
 # Install requirements
 $ (.venv) pip install -r requirements.txt
 ```
+
+## ⚡️ Requirements
+* :D
+* :D
 
 ## 🛠️ Usage
 
@@ -59,6 +53,8 @@ options:
 
 ## 🧰 TODO
 
-- [ ] Complete Usage
-- [ ] Update screenshots
+- [ ] Create/Update requirements/dependencies
+- [X] Complete Usage
+- [X] Update screenshots
+- [ ] Finish tests
 - https://raw.githubusercontent.com/haaag/{repo_name}/{branch}/.github/images/{asset_name}.{asset_extension}

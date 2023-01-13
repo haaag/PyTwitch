@@ -32,9 +32,6 @@ log = get_logger(__name__)
 
 load_dotenv()
 
-# TODO:
-# [X] Remove DB class from api
-
 
 @dataclass
 class TwitchApiCredentials:
@@ -134,23 +131,6 @@ class ChannelsAPI(TwitchAPI):
         data = self.request_get(endpoint, params)["data"]
         return [ChannelUserFollows(**user) for user in data]
 
-    def schedule(self, user_id: str) -> TwitchChannelSchedule:
-        # FIX: I think, no one uses this feature.
-        """
-        Gets the broadcaster’s streaming schedule.
-
-        Args:
-            user_id (str): The ID of the broadcaster.
-
-        Returns:
-            TwitchChannelSchedule: The streaming schedule for the specified broadcaster.
-        """
-        # https://dev.twitch.tv/docs/api/reference#get-channel-stream-schedule
-        # endpoint = URL("schedule")
-        # params = {"broadcaster_id": user_id}
-        # schedule = self.request_get(endpoint, params)
-        raise NotImplementedError()
-
     def information(self, user_id: str) -> BroadcasterInfo:
         """
         Gets information about one channel.
@@ -216,16 +196,6 @@ class ChannelsAPI(TwitchAPI):
 
 
 class ClipsAPI(TwitchAPI):
-    def get_clips_list_comprehension(self, user_id: str) -> list[TwitchClip]:
-        """Gets one or more video clips that were captured from streams."""
-        # https://dev.twitch.tv/docs/api/reference#get-clips
-        ended_at = datetime.now().isoformat() + "Z"
-        started_at = (datetime.now() - timedelta(days=5)).isoformat() + "Z"
-        endpint = URL("clips")
-        params = {"broadcaster_id": user_id, "first": 100, "started_at": started_at, "ended_at": ended_at}
-        data = self.request_get(endpint, params)
-        return [TwitchClip(**clip) for clip in data["data"]]
-
     def get_clips(self, user_id: str) -> Iterator[TwitchClip]:
         """Gets one or more video clips that were captured from streams."""
         # https://dev.twitch.tv/docs/api/reference#get-clips

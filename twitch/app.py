@@ -2,6 +2,7 @@
 
 import functools
 import sys
+from typing import Callable
 from typing import Iterable
 from typing import Optional
 
@@ -63,10 +64,37 @@ class App:
         self._executor.launch(clip.url)
 
     def clean_channel_name(self, name: str) -> str:
+        # FIX: Extract method from class
         if self.twitch.live_icon in name:
-            strip_str = name.replace(self.twitch.live_icon, "")
-            return strip_str.strip()
+            return name.replace(self.twitch.live_icon, "").replace("(live)", "").strip()
         return name.strip()
+
+    def show_items(
+        self, options: list[str], fallback_fn: Optional[Callable] = None, prompt: str = "twitch:", back: bool = False
+    ) -> Optional[str]:
+        selected = self.menu.show_items(self._executor, options, prompt=prompt, back=back)
+
+        if not selected:
+            return None
+
+        if selected not in options:
+            self.handle_missing_option(selected)
+            if fallback_fn:
+                fallback_fn()
+            sys.exit(1)
+
+        if selected == self.menu.back and fallback_fn is not None:
+            fallback_fn()
+
+        return selected
+
+    def handle_missing_option(self, selected: str) -> None:
+        log.warning("Option %s not found.", C.red(selected))
+        self.show_items([f"Option '{selected}' selected not found."])
+
+    def show_no_results_message(self, log_msg: str) -> None:
+        log.warning(log_msg)
+        self.menu.show_items(self._executor, [log_msg])
 
     def show_online_follows(self) -> None:
         """
@@ -75,91 +103,47 @@ class App:
         streams_online = self.twitch.channels.followed_streams_live
 
         if not streams_online:
-            log.warning("No %s followed channels", C.red("online"))
-            self.menu.show_items(self._executor, ["No online followed channels"])
+            self.show_no_results_message("No online followed channels")
             return None
 
         items = {channel.user_name: channel for channel in self.twitch.channels_live_for_menu}
         options = list(items.keys())
-        selected = self.menu.show_items(self._executor, options, prompt="live:", back=True)
+        selected = self.show_items(options=options, prompt="live:", back=True)
 
-        if not selected:
-            sys.exit(1)
-            # return None
-
-        if selected not in options:
-            log.warning("Live stream %s not found.", C.red(selected))
-            self.menu.show_items(
-                self._executor, [f"Live stream '{selected}' not found."], prompt="'twitch follows:'", back=True
-            )
-            # self.show_online_follows()
-
-        if selected == self.menu.back:
-            self.show_menu()
+        if selected is None:
+            sys.exit(0)
 
         selected = self.clean_channel_name(selected).split("|")[0]
         self.load_stream_selected(selected.strip())
-        # self.show_online_follows()
         return None
 
     def show_follows_and_online(self) -> None:
         """
         Shows a list of channels that the user follows and highlights those who are live.
         """
-        follows = {user.to_name: user for user in self.user_follows}
-        follows_names = list(follows.keys())
-
-        for channel in self.twitch.channels.followed_streams_live:
-            if channel.user_name in follows_names:
-                idx = follows_names.index(channel.user_name)
-                follows_names[idx] = f"{self.twitch.live_icon} {channel.user_name} (live)"
-
-        selected = self.menu.show_items(self._executor, follows_names, prompt="'twitch follows:'", back=True)
-
-        if not selected:
-            sys.exit(1)
-
-        if selected == self.menu.back:
-            self.show_menu()
-
-        if selected not in follows_names:
-            log.warning("Channel %s not found.", C.red(selected))
-            self.menu.show_items(
-                self._executor, [f"Channel '{selected}' not found."], prompt="'twitch follows:'", back=True
-            )
+        follow = self.show_follows(highlight_live=True)
+        if not follow:
             return None
+        return self.show_info(follow.to_id)
 
-        selected = self.clean_channel_name(selected).replace("(live)", "").strip()
-
-        follow = follows[selected]
-
-        self.show_info(follow.to_id)
-        return None
-
-    def show_follows(self) -> None:
+    def show_follows(self, highlight_live: bool) -> Optional[ChannelUserFollows]:
         """Shows a list of channels that the user follows."""
         follows = {user.to_name: user for user in self.user_follows}
         follows_names = list(follows.keys())
-        selected = self.menu.show_items(self._executor, follows_names, prompt="'twitch follows:'", back=True)
 
-        if not selected:
+        if highlight_live:
+            for channel in self.twitch.channels.followed_streams_live:
+                if channel.user_name in follows_names:
+                    idx = follows_names.index(channel.user_name)
+                    follows_names[idx] = f"{self.twitch.live_icon} {channel.user_name} (live)"
+
+        selected = self.show_items(follows_names, fallback_fn=self.show_menu, prompt="'twitch follows:'", back=True)
+
+        if selected is None:
             sys.exit(1)
 
-        if selected == self.menu.back:
-            self.show_menu()
-
         selected = self.clean_channel_name(selected)
-
-        if selected not in follows_names:
-            log.warning("Option %s not found.", C.red(selected))
-            self.menu.show_items(
-                self._executor, [f"Channel '{selected}' not found."], prompt="'twitch follows:'", back=True
-            )
-            self.show_follows()
-
-        follow = follows[selected]
-
-        self.show_info(follow.to_id)
+        return follows[selected]
 
     def show_videos(self, channel: BroadcasterInfo) -> None:
         """Shows a list of videos for the specified channel."""
@@ -171,31 +155,23 @@ class App:
         }
 
         if not videos_dict:
-            log.warning("No available videos from followed channel: %s", C.info(channel.broadcaster_name))
-            self.menu.show_items(
-                self._executor,
-                ["No available videos from followed channel"],
-                prompt=f"'{channel.broadcaster_name} videos:'",
-                back=True,
-            )
-            self.show_info(channel.broadcaster_id)
+            self.show_no_results_message(f"No available videos from followed channel: {channel.broadcaster_name}")
+            return self.show_info(channel.broadcaster_id)
 
-        selected = self.menu.show_items(
-            self._executor,
+        fallback = functools.partial(self.show_info, channel.broadcaster_id)
+        selected = self.show_items(
             list(videos_dict.keys()),
+            fallback_fn=fallback,
             prompt=f"'{channel.broadcaster_name} videos:'",
             back=True,
         )
 
-        if not selected:
-            sys.exit(1)
+        if selected is None:
+            sys.exit(0)
 
-        if selected == self.menu.back:
-            self.show_info(channel.broadcaster_id)
-        else:
-            video = videos_dict[selected]
-            self.load_stream_selected(video.url)
-            self.show_videos(channel)
+        video = videos_dict[selected]
+        self.load_stream_selected(video.url)
+        return self.show_videos(channel)
 
     def show_menu(self) -> None:
         """
@@ -207,25 +183,13 @@ class App:
             f"{self.menu.unicode.BULLET_ICON} Live followed": self.show_online_follows,
         }
 
-        menu = functools.partial(self.menu.show_items)
         options_keys = list(menu_options.keys())
-        option_selected = menu(self._executor, options_keys)
+        selected = self.show_items(options=options_keys)
 
-        if not option_selected:
+        if not selected:
             sys.exit(1)
 
-        if option_selected not in list(options_keys):
-            log.warning("Option %s not found.", C.red(option_selected))
-            self.menu.show_items(
-                self._executor, [f"Option '{option_selected}' selected not found."], prompt="twitch:", back=True
-            )
-            self.show_menu()
-
-        run_option = menu_options[option_selected]
-        selected = run_option()
-
-        if selected == self.menu.back:
-            self.show_menu()
+        menu_options[selected]()
 
         sys.exit(0)
 
@@ -235,36 +199,34 @@ class App:
         and a menu to view the channel's videos or schedule.
 
         Args:
-        channel_id (int): The ID of the channel to display information for.
+        user_id (str): The ID of the channel to display information for.
 
         Returns:
         None: The selected option is executed.
         """
         channel = self.twitch.channels.information(user_id)
+
         menu_info = []
         category = f"Category: {channel.game_name}"
+        menu_info.append(f"Name: {channel.broadcaster_name}")
         menu_info.append(category)
-        menu_info.append("-" * len(category))
         if self.twitch.channels.is_online(user_id):
             menu_info.append(f"{self.twitch.live_icon} Live Stream: {channel.title}")
-            menu_info.append("-" * len(category))
         else:
             menu_info.append(f"Last Stream: {channel.title}")
-        menu_info.append("Videos: Get videos")
-        menu_info.append("Clips: Get clips")
+        menu_info.append("-" * len(category))
+        menu_info.append("Videos: Get videos (This can take a couple of seconds)")
+        menu_info.append("Clips: Get clips (This can take a couple of seconds)")
 
-        selected = self.menu.show_items(
-            self._executor,
+        selected = self.show_items(
             menu_info,
+            fallback_fn=self.show_follows_and_online,
             prompt=f"'{channel.broadcaster_name} info:'",
             back=True,
         )
 
-        if selected is None:
+        if not selected:
             sys.exit(1)
-
-        if selected == self.menu.back:
-            self.show_follows_and_online()
 
         if selected.startswith("Clips"):
             self.show_clips(channel)
@@ -304,28 +266,18 @@ class App:
         }
 
         if not clips_dict:
-            log.warning("No available %s from followed channel: %s", C.green("clips"), C.info(channel.broadcaster_name))
-            self.menu.show_items(
-                self._executor,
-                ["No available clips from followed channel"],
-                prompt=f"'{channel.broadcaster_name} clips:'",
-                back=True,
-            )
+            self.show_no_results_message(f"No available clips from followed channel: {channel.broadcaster_name}")
             self.show_info(channel.broadcaster_id)
 
-        option_selected = self.menu.show_items(
-            self._executor,
-            list(clips_dict.keys()),
+        selected = self.show_items(
+            options=list(clips_dict.keys()),
+            fallback_fn=functools.partial(self.show_info, channel.broadcaster_id),
             prompt=f"'{channel.broadcaster_name} clips:'",
             back=True,
         )
-
-        if not option_selected:
+        if not selected:
             sys.exit(1)
 
-        if option_selected == self.menu.back:
-            self.show_info(channel.broadcaster_id)
-        else:
-            clip = clips_dict[option_selected]
-            self.load_clip_selected(clip)
-            self.show_clips(channel, list(clips_dict.values()))
+        clip = clips_dict[selected]
+        self.load_clip_selected(clip)
+        self.show_clips(channel, list(clips_dict.values()))
