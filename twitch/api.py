@@ -52,6 +52,7 @@ class TwitchAPI:
     def __init__(self) -> None:
         self.credentials = self.validate_credentials()
         self.base_url = URL("https://api.twitch.tv/helix/")
+        self.client = httpx.Client(headers=self._get_request_headers)
 
     def validate_credentials(self) -> TwitchApiCredentials:
         return TwitchApiCredentials(
@@ -67,10 +68,6 @@ class TwitchAPI:
             "Client-ID": self.credentials.client_id,
             "Authorization": "Bearer " + self.credentials.access_token,
         }
-
-    @property
-    def client(self) -> httpx.Client:
-        return httpx.Client(headers=self._get_request_headers)
 
     def request_get(
         self,
