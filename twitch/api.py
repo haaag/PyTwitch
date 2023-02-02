@@ -19,7 +19,6 @@ from twitch.datatypes import HeaderTypes
 from twitch.datatypes import QueryParamTypes
 from twitch.datatypes import SearchChannelsAPIResponse
 from twitch.datatypes import TwitchApiResponse
-from twitch.datatypes import TwitchChannelSchedule
 from twitch.datatypes import TwitchChannelVideo
 from twitch.datatypes import TwitchClip
 from twitch.datatypes import TwitchStreamLive
@@ -73,6 +72,8 @@ class TwitchAPI:
         self,
         endpoint_url: URL,
         query_params: QueryParamTypes,
+        limit: int = 100,
+        quantity: int = 0,
     ) -> TwitchApiResponse:
         url = self.base_url.join(endpoint_url)
         response = self.client.get(url, params=query_params)
@@ -85,10 +86,13 @@ class TwitchAPI:
             sys.exit(1)
         else:
             data = response.json()
+            quantity += len(data["data"])
 
-        if data.get("pagination"):
+        if data.get("pagination") and limit > quantity:
             query_params["after"] = data["pagination"]["cursor"]  # type: ignore
-            data["data"] += self.request_get(endpoint_url, query_params)["data"]
+            more_data = self.request_get(endpoint_url, query_params, quantity=quantity)["data"]
+            if limit > quantity:
+                data["data"] += more_data
         return data
 
 
@@ -197,7 +201,7 @@ class ClipsAPI(TwitchAPI):
         """Gets one or more video clips that were captured from streams."""
         # https://dev.twitch.tv/docs/api/reference#get-clips
         ended_at = datetime.now().isoformat() + "Z"
-        started_at = (datetime.now() - timedelta(days=5)).isoformat() + "Z"
+        started_at = (datetime.now() - timedelta(days=7)).isoformat() + "Z"
         endpint = URL("clips")
         params = {"broadcaster_id": user_id, "started_at": started_at, "ended_at": ended_at, "first": 100}
         data = self.request_get(endpint, params)
