@@ -30,12 +30,13 @@ class Executor:
         if not shutil.which(executable):
             raise ExecutableNotFound(executable)
 
-        args_splitted = shlex.split(f"{executable} {commands}")
+        args_splitted = self.split(f"{executable} {commands}")
+        log_msg = f"Running [red bold]{executable}[/] with args: [yellow]{commands}[/]"
+        log.debug("%s", log_msg, extra={"markup": True})
 
         with subprocess.Popen(
             args_splitted, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT
         ) as proc:
-
             bytes_items = "\n".join(items).encode()
             selected, _ = proc.communicate(input=bytes_items)
 
@@ -44,14 +45,23 @@ class Executor:
         return None
 
     def launch(self, url: str | URL) -> int:
-        if not self.bin:
-            raise ExecutableNotFound(self.player)
-
-        args = shlex.split(f"{self.player} {url}")
-        subprocess.call(args, stderr=subprocess.DEVNULL)
+        log_msg = f"[red bold]Launching '{self.player}' with args:[/] {url}"
+        log.debug("%s", log_msg, extra={"markup": True})
+        command_with_args = self.split(f"{self.player} {url}")
+        subprocess.call(command_with_args, stderr=subprocess.DEVNULL)
         return 0
 
     def notification(self, message: str) -> subprocess.Popen[bytes]:
-        notification_str = f"notify-send -i twitch-indicator 'Dmenu-Twitch' '{message}'"
-        command: list[str] = shlex.split(notification_str)
+        notification_str = f"notify-send -i twitch-indicator 'Twitch' '{message}'"
+        command = self.split(notification_str)
         return subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    def split(self, command: str) -> list[str]:
+        command_splited: list[str]
+        log.debug("Split command: %s", command)
+        try:
+            command_splited = shlex.split(command)
+        except ValueError:
+            command = command.replace("'", "")
+            command_splited = shlex.split(command)
+        return command_splited

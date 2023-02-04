@@ -41,7 +41,9 @@ class TwitchApiCredentials:
     def __post_init__(self):
         credentials = [self.access_token, self.client_id, self.user_id]
         if not all(env_var is not None and env_var != "" for env_var in credentials):
-            raise ValidationEnvError("There's something wrong with the .env file")
+            msg = "There's something wrong with the .env file"
+            log.error("[bold red blink]%s[/]", msg, extra={"markup": True})
+            raise ValidationEnvError(msg)
 
 
 class TwitchAPI:
@@ -76,13 +78,13 @@ class TwitchAPI:
         quantity: int = 0,
     ) -> TwitchApiResponse:
         url = self.base_url.join(endpoint_url)
+        log.debug("Params: %s", query_params)
         response = self.client.get(url, params=query_params)
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
-            error_url = C.info(str(exc.request.url))
-            error_response = C.error(f"Error response {exc.response.status_code}")
-            log.info("%s %s", error_response, error_url)
+            error_msg = f"[bold red blink]Error response {exc.response.status_code} {exc.request.url}[/]"
+            log.error("%s", error_msg, extra={"markup": True})
             sys.exit(1)
         else:
             data = response.json()
@@ -113,6 +115,7 @@ class ChannelsAPI(TwitchAPI):
             TwitchStreams: A list of live streams.
         """
         # https://dev.twitch.tv/docs/api/reference#get-followed-streams
+        log.debug("[yellow bold]Getting a list of live streams.[/]", extra={"markup": True})
         endpoint = URL("streams/followed")
         params = {"user_id": self.credentials.user_id}
         channels = self.request_get(endpoint, params)
@@ -127,6 +130,7 @@ class ChannelsAPI(TwitchAPI):
             Iterable[ChannelUserFollows]: An iterable containing information about the channels that the user follows.
         """
         # https://dev.twitch.tv/docs/api/reference#get-users-follows
+        log.debug("[yellow bold]Getting list that user follows.[/]", extra={"markup": True})
         endpoint = URL("users/follows")
         params = {"from_id": self.credentials.user_id}
         data = self.request_get(endpoint, params)["data"]
@@ -143,6 +147,7 @@ class ChannelsAPI(TwitchAPI):
             BroadcasterInfo: Information about the specified broadcaster.
         """
         # https://dev.twitch.tv/docs/api/reference#get-channel-information
+        log.debug("[yellow bold]Getting information about one channel.[/]", extra={"markup": True})
         endpoint = URL("channels")
         params = {"broadcaster_id": user_id}
         data = self.request_get(endpoint, params)

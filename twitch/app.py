@@ -48,18 +48,15 @@ class App:
 
     def load_stream_selected(self, stream: str) -> None:
         url = self.tv.join(stream)
-        log.info("%s stream %s with %s", C.info("Opening"), C.red(stream), C.green(self._executor.bin))  # type: ignore
+        log_msg = f"[yellow]Opening[/] [red bold]{stream}[/] with [green]{self._executor.bin}[/]"
+        log.info("%s", log_msg, extra={"markup": True})
         self._executor.notification(f"Opening stream <b>{stream}</b>")
         self._executor.launch(url)
 
     def load_clip_selected(self, clip: TwitchClip) -> None:
         """Load a selected clip by its URL."""
-        log.info(
-            "%s stream %s with %s",
-            C.info("Opening"),
-            C.red(clip.title),
-            C.green(self._executor.bin),  # type: ignore
-        )
+        log_msg = f"[yellow]Opening[/] clip [red bold]{clip.title[:40]}...[/] with [green]{self._executor.bin}[/]"
+        log.info("%s", log_msg, extra={"markup": True})
         self._executor.notification(f"Opening clip <b>{clip.broadcaster_name}@{clip.title}</b>")
         self._executor.launch(clip.url)
 
@@ -89,7 +86,8 @@ class App:
         return selected
 
     def handle_missing_option(self, selected: str) -> None:
-        log.warning("Option %s not found.", C.red(selected))
+        msg_log = "Option [bold yellow]%s[/] not found."
+        log.warning(msg_log, selected, extra={"markup": True})
         self.show_items([f"Option '{selected}' selected not found."])
 
     def show_no_results_message(self, log_msg: str) -> None:
@@ -258,6 +256,8 @@ class App:
         None: The selected clip is played.
         """
         if not clips:
+            log_msg = f"Getting [green bold]clips[/] from channel [red bold]{channel.broadcaster_name}[/]"
+            log.debug("%s", log_msg, extra={"markup": True})
             clips = self.twitch.clips.get_clips(channel.broadcaster_id)
 
         clips_dict = {

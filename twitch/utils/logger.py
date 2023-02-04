@@ -2,17 +2,17 @@
 
 import logging
 
-from twitch.utils.colors import Color as C
+from rich.logging import RichHandler
 
 
-def set_logging_level(level: int) -> None:
-    levels = {
-        20: C.info("[%(levelname)s]"),
-        30: C.warning("[%(levelname)s]"),
-        40: C.error("[%(levelname)s]"),
-    }
-    levelname = levels.get(level)
-    logging.basicConfig(level=level, format=f"{levelname}:%(name)s - %(message)s")
+def set_logging_level(verbose: bool = False) -> None:
+    level = logging.DEBUG if verbose else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s %(levelname)s %(name)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=[RichHandler(rich_tracebacks=True)],
+    )
 
 
 def get_logger(name) -> logging.Logger:
