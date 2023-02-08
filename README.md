@@ -4,6 +4,38 @@
 
 A user-friendly tool for easily accessing and watching live streams, videos, and clips from Twitch, it presents a menu interface for seamless browsing and streaming.
 
+## ⚡️ Requirements
+
+* Player:
+    * ⭐ [mpv](https://mpv.io/) _(recommended)_
+    * [streamlink](https://streamlink.github.io/) _(WIP)_
+* Launcher: 
+    * [dmenu](https://tools.suckless.org/dmenu/)
+    * [Rofi](https://github.com/davatorium/rofi)
+
+## ➕ Dependencies
+
+- [httpx](https://www.python-httpx.org/)
+- [rich](https://github.com/Textualize/rich)
+
+## 🔒Credentials
+
+In this project, the library [python-dotenv](https://pypi.org/project/python-dotenv/) is used to read the credentials in the `.env` file (reference [env-template](https://github.com/haaag/twitch-menu/blob/main/env-template) file)
+
+```bash
+# Twitch credentials
+# Rename file 'env-template' to .env
+TWITCH_CLIENT_ID=xxxxx
+TWITCH_ACCESS_TOKEN=xxx
+TWITCH_USER_ID=00000
+```
+
+### 🔓Credentials directions
+
+* [Twitch token generator](https://twitchtokengenerator.com/)
+  * Scope: `user:read:follows`
+* [Twitch Channel ID and User ID Convertor](https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/)
+
 ## 📦 Installation
 
 ```bash
@@ -16,27 +48,32 @@ $ python -m venv .venv
 $ source .venv/bin/activate
 
 # Install requirements
-$ (.venv) pip install -r requirements.txt
+(.venv) $ pip install -r requirements.txt
 ```
-
-## ⚡️ Requirements
-* :D
-* :D
 
 ## 🛠️ Usage
 
 ```bash
-usage: main.py [-h] [--rofi] [--lines [LINES]] [--player [PLAYER]] [--bottom] [--mixed] [--live] [--test]
+# Run main.py with default launcher 'dmenu'
+(.venv) $ python main.py
+
+# Run main.py with launcher 'rofi'
+(.venv) $ python main.py --rofi
+
+# help
+(.venv) $ python main.py --help
+
+# Output
+usage: main.py [-h] [--rofi] [--lines [LINES]] [--player [PLAYER]] [--live]
 
 Simple tool menu for watching streams live, video or clips from Twitch.
 
 options:
   --rofi             Set launcher to Rofi (default: dmenu)
-  --lines [LINES]    Show dmenu in lines (default: 12 lines)
-  --player [PLAYER]  Player (default: mpv)
-  --bottom           Show dmenu bottom
-  --mixed            All channels, live with icon.
-  --live             Show live streams
+  --lines            Show dmenu in lines (default: 12 lines)
+  --player           Player (default: mpv)
+  --live             Show live streams only
+  -v, --verbose      Verbose mode
   -h, --help         show this help message and exit
 ```
 
@@ -44,17 +81,16 @@ options:
 
 ![demo](https://github.com/haaag/twitch-menu/raw/main/.github/images/rofi-live.gif)
 
-## 🔗 References and links
+## 🔗 References
 
-- [Twitch API Docs](https://dev.twitch.tv/docs/api/reference)
-- [Twitch token generator](https://twitchtokengenerator.com/)
-  - Scope: `user:read:follows`
-- [Twitch Channel ID and User ID Convertor](https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/)
+- [Twitch API](https://dev.twitch.tv/docs/api/)
+- [Twitch API Reference](https://dev.twitch.tv/docs/api/reference)
 
 ## 🧰 TODO
 
 - [ ] Create/Update requirements/dependencies
 - [X] Complete Usage
 - [X] Update screenshots
+- [X] Better logging
 - [ ] Finish tests
-- https://raw.githubusercontent.com/haaag/{repo_name}/{branch}/.github/images/{asset_name}.{asset_extension}
+- [ignore](https://raw.githubusercontent.com/haaag/{repo_name}/{branch}/.github/images/{asset_name}.{asset_extension})
