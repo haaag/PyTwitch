@@ -6,6 +6,7 @@ from typing import Callable
 from typing import Iterable
 from typing import Iterator
 from typing import Mapping
+from typing import MutableMapping
 from typing import NamedTuple
 from typing import Optional
 from typing import Union
@@ -15,8 +16,7 @@ class ValidationEnvError(Exception):
     pass
 
 
-@dataclass
-class TwitchChannelVideo:
+class TwitchChannelVideo(NamedTuple):
     user_id: str
     user_login: str
     user_name: str
@@ -36,8 +36,7 @@ class TwitchChannelVideo:
     created_at: str
 
 
-@dataclass
-class BroadcasterInfo:
+class BroadcasterInfo(NamedTuple):
     broadcaster_id: str
     broadcaster_login: str
     broadcaster_name: str
@@ -68,8 +67,7 @@ class TwitchStreamLive:
     viewer_count: int
 
 
-@dataclass
-class SearchChannelsAPIResponse:
+class SearchChannelsAPIResponse(NamedTuple):
     id: str
     game_id: str
     game_name: str
@@ -78,13 +76,13 @@ class SearchChannelsAPIResponse:
     display_name: str
     is_live: bool
     started_at: str
+    tags: list[str]
     tag_ids: list[str]
     thumbnail_url: str
     title: str
 
 
-@dataclass
-class TwitchSavedStream:
+class TwitchSavedStream(NamedTuple):
     id: str
     game_id: str
     game_name: str
@@ -96,8 +94,7 @@ class TwitchSavedStream:
     user_name: str
 
 
-@dataclass
-class TwitchChannel:
+class TwitchChannel(NamedTuple):
     user_id: int
     user_login: str
     user_name: str
@@ -117,8 +114,7 @@ class ChannelUserFollows(NamedTuple):
     followed_at: str
 
 
-@dataclass
-class TwitchUserInfo:
+class TwitchUserInfo(NamedTuple):
     broadcaster_type: str
     created_at: str
     description: str
@@ -131,8 +127,7 @@ class TwitchUserInfo:
     view_count: int
 
 
-@dataclass
-class TwitchClip:
+class TwitchClip(NamedTuple):
     broadcaster_id: str
     broadcaster_name: str
     created_at: str
@@ -151,7 +146,7 @@ class TwitchClip:
     vod_offset: int
 
 
-QueryParamTypes = Mapping[str, Any]
+QueryParamTypes = MutableMapping[str, Any]
 
 HeaderTypes = Mapping[str, Any]
 
