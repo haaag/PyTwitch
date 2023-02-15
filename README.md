@@ -7,16 +7,16 @@ A user-friendly tool for easily accessing and watching live streams, videos, and
 ## ⚡️ Requirements
 
 * Player:
-    * ⭐ [mpv](https://mpv.io/) _(recommended)_
-    * [streamlink](https://streamlink.github.io/) _(WIP)_
-* Launcher: 
-    * [dmenu](https://tools.suckless.org/dmenu/)
-    * [Rofi](https://github.com/davatorium/rofi)
+  * ⭐ [mpv](https://mpv.io/) _(recommended)_
+  * [streamlink](https://streamlink.github.io/) _(WIP)_
+* Launcher:
+  * [dmenu](https://tools.suckless.org/dmenu/)
+  * [Rofi](https://github.com/davatorium/rofi)
 
 ## ➕ Dependencies
 
-- [httpx](https://www.python-httpx.org/)
-- [rich](https://github.com/Textualize/rich)
+* [httpx](https://www.python-httpx.org/)
+* [rich](https://github.com/Textualize/rich)
 
 ## 🔒Credentials
 
@@ -83,14 +83,14 @@ options:
 
 ## 🔗 References
 
-- [Twitch API](https://dev.twitch.tv/docs/api/)
-- [Twitch API Reference](https://dev.twitch.tv/docs/api/reference)
+* [Twitch API](https://dev.twitch.tv/docs/api/)
+* [Twitch API Reference](https://dev.twitch.tv/docs/api/reference)
 
 ## 🧰 TODO
 
-- [ ] Create/Update requirements/dependencies
-- [X] Complete Usage
-- [X] Update screenshots
-- [X] Better logging
-- [ ] Finish tests
-- [ignore](https://raw.githubusercontent.com/haaag/{repo_name}/{branch}/.github/images/{asset_name}.{asset_extension})
+* [ ] Create/Update requirements/dependencies
+* [X] Complete Usage
+* [X] Update screenshots
+* [X] Better logging
+* [ ] Finish tests
+* [ignore](https://raw.githubusercontent.com/haaag/{repo_name}/{branch}/.github/images/{asset_name}.{asset_extension})
