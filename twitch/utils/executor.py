@@ -13,9 +13,7 @@ log = get_logger(__name__)
 
 
 class ExecutableNotFound(Exception):
-    def __init__(self, message):
-        self.message = f"Executable '{message}' not found."
-        super().__init__(self.message)
+    pass
 
 
 class Executor:
@@ -32,7 +30,7 @@ class Executor:
 
         args_splitted = self.split(f"{executable} {commands}")
         log_msg = f"Running [red bold]{executable}[/] with args: [yellow]{commands}[/]"
-        log.debug("%s", log_msg, extra={"markup": True})
+        log.debug("%s", log_msg)
 
         with subprocess.Popen(
             args_splitted, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT
@@ -41,12 +39,12 @@ class Executor:
             selected, _ = proc.communicate(input=bytes_items)
 
         if selected:
-            return selected.decode(encoding="utf-8")
+            return selected.decode(encoding="utf-8").strip()
         return None
 
     def launch(self, url: str | URL) -> int:
         log_msg = f"[red bold]Launching '{self.player}' with args:[/] {url}"
-        log.debug("%s", log_msg, extra={"markup": True})
+        log.debug("%s", log_msg)
         command_with_args = self.split(f"{self.player} {url}")
         subprocess.call(command_with_args, stderr=subprocess.DEVNULL)
         return 0

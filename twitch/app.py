@@ -14,7 +14,7 @@ from twitch.datatypes import MenuOptions
 from twitch.datatypes import TwitchClip
 from twitch.datatypes import TwitchClips
 from twitch.twitch import TwitchClient
-from twitch.utils.colors import Color as C
+from twitch.utils import helpers
 from twitch.utils.executor import Executor
 from twitch.utils.logger import get_logger
 from twitch.utils.menu import Menu
@@ -49,22 +49,16 @@ class App:
     def load_stream_selected(self, stream: str) -> None:
         url = self.tv.join(stream)
         log_msg = f"[yellow]Opening[/] [red bold]{stream}[/] with [green]{self._executor.bin}[/]"
-        log.info("%s", log_msg, extra={"markup": True})
+        log.info("%s", log_msg)
         self._executor.notification(f"Opening stream <b>{stream}</b>")
         self._executor.launch(url)
 
     def load_clip_selected(self, clip: TwitchClip) -> None:
         """Load a selected clip by its URL."""
         log_msg = f"[yellow]Opening[/] clip [red bold]{clip.title[:40]}...[/] with [green]{self._executor.bin}[/]"
-        log.info("%s", log_msg, extra={"markup": True})
+        log.info("%s", log_msg)
         self._executor.notification(f"Opening clip <b>{clip.broadcaster_name}@{clip.title}</b>")
         self._executor.launch(clip.url)
-
-    def clean_channel_name(self, name: str) -> str:
-        # FIX: Extract method from class
-        if self.twitch.live_icon in name:
-            return name.replace(self.twitch.live_icon, "").replace("(live)", "").strip()
-        return name.strip()
 
     def show_items(
         self, options: list[str], fallback_fn: Optional[Callable] = None, prompt: str = "twitch:", back: bool = False
@@ -87,7 +81,7 @@ class App:
 
     def handle_missing_option(self, selected: str) -> None:
         msg_log = "Option [bold yellow]%s[/] not found."
-        log.warning(msg_log, selected, extra={"markup": True})
+        log.warning(msg_log, selected)
         self.show_items([f"Option '{selected}' selected not found."])
 
     def show_no_results_message(self, log_msg: str) -> None:
@@ -98,20 +92,18 @@ class App:
         """
         Show the channels that the user follows that are currently live.
         """
-        streams_online = self.twitch.channels.followed_streams_live
-
-        if not streams_online:
+        items = {channel.user_name: channel for channel in self.twitch.channels_live_for_menu}
+        if not items:
             self.show_no_results_message("No online followed channels")
             return None
 
-        items = {channel.user_name: channel for channel in self.twitch.channels_live_for_menu}
         options = list(items.keys())
-        selected = self.show_items(options=options, prompt="live:", back=True)
+        selected = self.show_items(options=options, prompt="'twitch live:'", back=False)
 
         if selected is None:
             sys.exit(0)
 
-        selected = self.clean_channel_name(selected).split("|")[0]
+        selected = helpers.clean_string(selected, self.twitch.live_icon).split(self.twitch.delimiter)[0]
         self.load_stream_selected(selected.strip())
         return None
 
@@ -130,26 +122,44 @@ class App:
         follows_names = list(follows.keys())
 
         if highlight_live:
-            for channel in self.twitch.channels.followed_streams_live:
-                if channel.user_name in follows_names:
-                    idx = follows_names.index(channel.user_name)
-                    follows_names[idx] = f"{self.twitch.live_icon} {channel.user_name} (live)"
+            delimiter = self.twitch.delimiter
+            eye = self.menu.unicode.EYE
+            live = self.twitch.live_icon
+            for c in self.twitch.channels.followed_streams_live:
+                if c.user_name in follows_names:
+                    # live_icon user_name title - live: viewer_count
+                    live_since = helpers.calculate_live_time(c.started_at)
+                    title = f"{live} {c.user_name} {delimiter} {c.title[:40]}"
+                    info = f"{delimiter} {eye}{c.viewer_count} viewers {delimiter} {live_since}"
+                    idx = follows_names.index(c.user_name)
+                    follows_names[idx] = f"{title} {info}"
 
         selected = self.show_items(follows_names, fallback_fn=self.show_menu, prompt="'twitch follows:'", back=True)
 
         if selected is None:
             sys.exit(1)
 
-        selected = self.clean_channel_name(selected)
-        return follows[selected]
+        if self.twitch.live_icon in selected:
+            selected = selected.split(" ")[1]
+            return follows.get(selected)
+        return follows.get(selected)
+
+    async def new_show_follows(self) -> Optional[ChannelUserFollows]:
+        pass
 
     def show_videos(self, channel: BroadcasterInfo) -> None:
         """Shows a list of videos for the specified channel."""
         channel_videos = self.twitch.channels.get_videos(user_id=channel.broadcaster_id)
 
+        # FIX: Fix this mess..
+        bullet = self.menu.unicode.BULLET_ICON
+        clock = self.menu.unicode.CLOCK
+        eye = self.menu.unicode.EYE
+        delimiter = self.twitch.delimiter
+
         videos_dict = {
-            f"{idx} {self.menu.unicode.BULLET_ICON} {video.title} | {video.duration} (views: {video.view_count})": video
-            for idx, video in enumerate(channel_videos)
+            f"{i} {bullet} {v.title[:50]} {delimiter} {clock}{v.duration} ({eye}{v.view_count} views)": v
+            for i, v in enumerate(channel_videos)
         }
 
         if not videos_dict:
@@ -213,8 +223,8 @@ class App:
         else:
             menu_info.append(f"Last Stream: {channel.title}")
         menu_info.append("-" * len(category))
-        menu_info.append("Videos: Get videos (This can take a couple of seconds)")
-        menu_info.append("Clips: Get clips (This can take a couple of seconds)")
+        menu_info.append("Videos: Get videos")
+        menu_info.append("Clips: Get clips")
 
         selected = self.show_items(
             menu_info,
@@ -241,6 +251,9 @@ class App:
 
         self.show_info(user_id)
 
+    def debug(self, msg: str) -> None:
+        return log.debug("%s", msg)
+
     def show_clips(
         self,
         channel: BroadcasterInfo,
@@ -256,14 +269,16 @@ class App:
         None: The selected clip is played.
         """
         if not clips:
-            log_msg = f"Getting [green bold]clips[/] from channel [red bold]{channel.broadcaster_name}[/]"
-            log.debug("%s", log_msg, extra={"markup": True})
+            self.debug(f"Getting [green bold]clips[/] from channel [red bold]{channel.broadcaster_name}[/]")
             clips = self.twitch.clips.get_clips(channel.broadcaster_id)
 
-        clips_dict = {
-            f"{idx} {self.menu.unicode.BULLET_ICON} {c.title} | creator: {c.creator_name} ({c.view_count} views)": c
-            for idx, c in enumerate(clips)
-        }
+        # BUG: This is a mess...
+        icons = self.menu.unicode
+        clips_dict: dict[str, TwitchClip] = {}
+        for idx, c in enumerate(clips):
+            clip_title = f"{idx} {icons.BULLET_ICON} {c.title[:40]} createor: {c.creator_name}"
+            clip_info = f"({icons.EYE}{c.view_count} views {self.twitch.delimiter} {icons.CALENDAR} {c.created_at})"
+            clips_dict[f"{clip_title} {clip_info}"] = c
 
         if not clips_dict:
             self.show_no_results_message(f"No available clips from followed channel: {channel.broadcaster_name}")
@@ -278,6 +293,6 @@ class App:
         if not selected:
             sys.exit(1)
 
-        clip = clips_dict[selected]
-        self.load_clip_selected(clip)
+        c = clips_dict[selected]
+        self.load_clip_selected(c)
         self.show_clips(channel, list(clips_dict.values()))

@@ -2,6 +2,7 @@
 
 import os
 import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from datetime import timedelta
@@ -24,12 +25,13 @@ from twitch.datatypes import TwitchClip
 from twitch.datatypes import TwitchStreamLive
 from twitch.datatypes import TwitchStreams
 from twitch.datatypes import ValidationEnvError
-from twitch.utils.colors import Color as C
 from twitch.utils.logger import get_logger
 
 log = get_logger(__name__)
 
 load_dotenv()
+
+MAX_ITEMS_PER_REQUEST = 100
 
 
 @dataclass
@@ -42,7 +44,7 @@ class TwitchApiCredentials:
         credentials = [self.access_token, self.client_id, self.user_id]
         if not all(env_var is not None and env_var != "" for env_var in credentials):
             msg = "There's something wrong with the .env file"
-            log.error("[bold red blink]%s[/]", msg, extra={"markup": True})
+            log.error("[bold red blink]%s[/]", msg)
             raise ValidationEnvError(msg)
 
 
@@ -74,17 +76,18 @@ class TwitchAPI:
         self,
         endpoint_url: URL,
         query_params: QueryParamTypes,
-        limit: int = 100,
+        limit: int = 200,
         quantity: int = 0,
     ) -> TwitchApiResponse:
         url = self.base_url.join(endpoint_url)
+        query_params["first"] = MAX_ITEMS_PER_REQUEST
         log.debug("Params: %s", query_params)
         response = self.client.get(url, params=query_params)
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
             error_msg = f"[bold red blink]Error response {exc.response.status_code} {exc.request.url}[/]"
-            log.error("%s", error_msg, extra={"markup": True})
+            log.error("%s", error_msg)
             sys.exit(1)
         else:
             data = response.json()
@@ -115,7 +118,7 @@ class ChannelsAPI(TwitchAPI):
             TwitchStreams: A list of live streams.
         """
         # https://dev.twitch.tv/docs/api/reference#get-followed-streams
-        log.debug("[yellow bold]Getting a list of live streams.[/]", extra={"markup": True})
+        log.debug("[yellow bold]Getting a list of live streams.[/]")
         endpoint = URL("streams/followed")
         params = {"user_id": self.credentials.user_id}
         channels = self.request_get(endpoint, params)
@@ -130,7 +133,7 @@ class ChannelsAPI(TwitchAPI):
             Iterable[ChannelUserFollows]: An iterable containing information about the channels that the user follows.
         """
         # https://dev.twitch.tv/docs/api/reference#get-users-follows
-        log.debug("[yellow bold]Getting list that user follows.[/]", extra={"markup": True})
+        log.debug("[yellow bold]Getting list that user follows.[/]")
         endpoint = URL("users/follows")
         params = {"from_id": self.credentials.user_id}
         data = self.request_get(endpoint, params)["data"]
@@ -147,15 +150,13 @@ class ChannelsAPI(TwitchAPI):
             BroadcasterInfo: Information about the specified broadcaster.
         """
         # https://dev.twitch.tv/docs/api/reference#get-channel-information
-        log.debug("[yellow bold]Getting information about one channel.[/]", extra={"markup": True})
+        log.debug("[yellow bold]Getting information about one channel.[/]")
         endpoint = URL("channels")
         params = {"broadcaster_id": user_id}
         data = self.request_get(endpoint, params)
         return BroadcasterInfo(**data["data"][0])
 
-    def search(
-        self, query: str, live_only: bool = True, maximum_items: int = 20
-    ) -> Iterable[SearchChannelsAPIResponse]:
+    def search(self, query: str, live_only: bool = True) -> Iterable[SearchChannelsAPIResponse]:
         """
         Gets the channels that match the specified query.
 
@@ -169,8 +170,8 @@ class ChannelsAPI(TwitchAPI):
             channels that match the search query.
         """
         # https://dev.twitch.tv/docs/api/reference#search-channels
-        endpoint = URL("search/channels")
-        params = {"first": maximum_items, "query": query, "live_only": live_only}
+        endpoint = URL("search/channelsss")
+        params = {"query": query, "live_only": live_only}
         data = self.request_get(endpoint, params)
         return [SearchChannelsAPIResponse(**streamer) for streamer in data["data"]]
 
@@ -187,7 +188,7 @@ class ChannelsAPI(TwitchAPI):
         """
         # https://dev.twitch.tv/docs/api/reference#get-videos
         endpoint = URL("videos")
-        params = {"user_id": user_id, "period": "week", "type": "archive", "first": 100}
+        params = {"user_id": user_id, "period": "week", "type": "archive"}
         if highlight:
             params["type"] = "highlight"
         data = self.request_get(endpoint, params)
@@ -205,9 +206,15 @@ class ClipsAPI(TwitchAPI):
     def get_clips(self, user_id: str) -> Iterator[TwitchClip]:
         """Gets one or more video clips that were captured from streams."""
         # https://dev.twitch.tv/docs/api/reference#get-clips
+        start_time = time.time()
         ended_at = datetime.now().isoformat() + "Z"
         started_at = (datetime.now() - timedelta(days=7)).isoformat() + "Z"
-        endpint = URL("clips")
-        params = {"broadcaster_id": user_id, "started_at": started_at, "ended_at": ended_at, "first": 100}
-        data = self.request_get(endpint, params)
+        endpoint = URL("clips")
+        params = {
+            "broadcaster_id": user_id,
+            "started_at": started_at,
+            "ended_at": ended_at,
+        }
+        data = self.request_get(endpoint, params)
+        print(f"--- {time.time() - start_time} seconds ---")
         return (TwitchClip(**clip) for clip in data["data"])

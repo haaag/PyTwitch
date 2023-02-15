@@ -9,16 +9,21 @@ def date_diff_in_seconds(dt2: datetime, dt1: datetime) -> int:
     return timedelta.days * 24 * 3600 + timedelta.seconds
 
 
-def dhms_from_seconds(seconds: int):
+def dhms_from_seconds(seconds: int) -> str:
+    return_str: str = ""
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     days, hours = divmod(hours, 24)
     if days > 0:
-        return f"{days} days, {hours} hrs."
+        return_str = f"{days} days, {hours} hrs."
+        # return f"{days} days, {hours} hrs."
     elif hours > 0:
-        return f"{hours} hrs."
+        return_str = f"{hours} hrs."
+        # return f"{hours} hrs."
     else:
-        return f"{minutes} min."
+        return_str = f"{minutes} min."
+        # return f"{minutes} min."
+    return return_str
 
 
 def calculate_live_time(dt: str) -> str:
@@ -40,3 +45,12 @@ def remove_emojis(string: str) -> str:
         flags=re.UNICODE,
     )
     return emoji_pattern.sub(r"", string)
+
+
+def clean_string(name, *args) -> str:
+    a = name.split(" ")[1]
+    print("Name:", a)
+    for remove in args:
+        if remove in name:
+            name = name.replace(remove, "")
+    return name.strip()

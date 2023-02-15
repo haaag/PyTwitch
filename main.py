@@ -1,7 +1,6 @@
 # main.py
 
 import argparse
-import logging
 import sys
 
 from twitch.app import App
@@ -16,39 +15,41 @@ def main() -> None:
     and App objects, and starts the program by calling show_menu on the App object. If a KeyboardInterrupt exception
     is raised, the program terminates and prints a message to the console.
     """
-    logger.set_logging_level(logging.INFO)
 
     parser = argparse.ArgumentParser(
         description="Simple tool menu for watching streams live, video or clips from Twitch."
     )
-    parser.add_argument("--rofi", action="store_true", help="Set launcher to Rofi (default: dmenu)")
+    parser.add_argument("--rofi", "-r", action="store_true", help="Set launcher to Rofi (default: dmenu)")
     parser.add_argument(
         "--lines", type=int, required=False, help="Show dmenu in lines (default: 12 lines)", nargs="?", default=12
     )
     parser.add_argument("--player", type=str, required=False, help="Player (default: mpv)", nargs="?", default="mpv")
-    parser.add_argument("--bottom", action="store_true", help="Show dmenu bottom")
-    parser.add_argument("--live", action="store_true", help="Show only live streams")
+    parser.add_argument("-l", "--live", action="store_true", help="Show only live streams only")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose mode")
     parser.add_argument("--test", help="", action="store_true")
     args = parser.parse_args()
 
+    logger.set_logging_level(args.verbose)
+
     twitch = TwitchClient()
-    menu = get_menu(rofi=args.rofi, lines=args.lines, bottom=args.bottom)
+    menu = get_menu(rofi=args.rofi, lines=args.lines)
     app = App(twitch=twitch, menu=menu, player=args.player)
 
-    if args.test:
-        sys.exit(0)
+    try:
+        if args.test:
+            sys.exit(0)
 
-    if args.live:
-        app.show_online_follows()
-        sys.exit(0)
+        if args.live:
+            app.show_online_follows()
+            sys.exit(0)
 
-    app.show_follows_and_online()
-    sys.exit(0)
+        app.show_follows_and_online()
+    except KeyboardInterrupt:
+        print("Terminated by user.")
+        sys.exit(0)
+    finally:
+        app.twitch.api.client.close()
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("Terminated by user.")
-        sys.exit(1)
+    main()

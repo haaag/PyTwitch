@@ -143,7 +143,7 @@ class TwitchClip(NamedTuple):
     url: str
     video_id: str
     view_count: int
-    vod_offset: int
+    vod_offset: Optional[int]
 
 
 QueryParamTypes = MutableMapping[str, Any]

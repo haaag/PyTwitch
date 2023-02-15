@@ -17,11 +17,6 @@ menu-twitch = "twitch.__main__:main"
 [tool.black]
 line-length = 120
 
-[tool.isort]
-profile = "black"
-line_length = 120
-force_single_line = true
-
 [tool.mypy]
 show_error_codes = true
 show_error_context = true
@@ -43,24 +38,16 @@ disable = [
     "W0511", # (fixme)
 ]
 
-[tool.pycodestyle]
-line-length = 120
-count = false
-ignore = [
-    "E226",
-    "E302",
-    "E71",
-]
-statistics = true
-
-[tool.flake8]
-max-line-length = 120
-max-complexity = 10
-ignore = ["W503"]
-
 [tool.ruff]
 line-length = 120
-typing-modules = ["twitch.datatypes"]
+task-tags = ["HACK", "FIX", "BUG"]
+show-source = true
+update-check = true
+exclude = [
+    ".venv",
+    ".mypy_cache",
+    ".pytest_cache",
+]
 
 [tool.ruff.isort]
 force-single-line = true
