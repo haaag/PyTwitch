@@ -1,23 +1,28 @@
 # app.py
 
+from __future__ import annotations
+
 import functools
 import sys
+import typing
 from typing import Callable
 from typing import Iterable
 from typing import Optional
 
 from httpx import URL
 
-from twitch.datatypes import BroadcasterInfo
-from twitch.datatypes import ChannelUserFollows
-from twitch.datatypes import MenuOptions
-from twitch.datatypes import TwitchClip
-from twitch.datatypes import TwitchClips
-from twitch.twitch import TwitchClient
 from twitch.utils import helpers
 from twitch.utils.executor import Executor
 from twitch.utils.logger import get_logger
-from twitch.utils.menu import Menu
+
+if typing.TYPE_CHECKING:
+    from twitch.datatypes import BroadcasterInfo
+    from twitch.datatypes import ChannelUserFollows
+    from twitch.datatypes import MenuOptions
+    from twitch.datatypes import TwitchClip
+    from twitch.datatypes import TwitchClips
+    from twitch.twitch import TwitchClient
+    from twitch.utils.menu import Menu
 
 log = get_logger(__name__)
 
@@ -61,14 +66,25 @@ class App:
         self._executor.launch(clip.url)
 
     def show_items(
-        self, options: list[str], fallback_fn: Optional[Callable] = None, prompt: str = "twitch:", back: bool = False
-    ) -> Optional[str]:
-        selected = self.menu.show_items(self._executor, options, prompt=prompt, back=back)
+        self,
+        items: list[str],
+        fallback_fn: Optional[Callable] = None,
+        prompt: str = "twitch:",
+        back: bool = False,
+        **kwargs,
+    ) -> str:
+        selected = self.menu.show_items(
+            self._executor,
+            items,
+            prompt=prompt,
+            back=back,
+            **kwargs,
+        )
 
         if not selected:
-            return None
+            sys.exit(0)
 
-        if selected not in options:
+        if selected not in items:
             self.handle_missing_option(selected)
             if fallback_fn:
                 fallback_fn()
@@ -95,57 +111,58 @@ class App:
         items = {channel.user_name: channel for channel in self.twitch.channels_live_for_menu}
         if not items:
             self.show_no_results_message("No online followed channels")
-            return None
+            return
 
         options = list(items.keys())
-        selected = self.show_items(options=options, prompt="'twitch live:'", back=False)
+        selected = self.show_items(items=options, prompt="'twitch live:'", back=False)
 
         if selected is None:
             sys.exit(0)
 
         selected = helpers.clean_string(selected, self.twitch.live_icon).split(self.twitch.delimiter)[0]
         self.load_stream_selected(selected.strip())
-        return None
+        return
 
     def show_follows_and_online(self) -> None:
         """
         Shows a list of channels that the user follows and highlights those who are live.
         """
-        follow = self.show_follows(highlight_live=True)
-        if not follow:
-            return None
+        follow = self.show_follows()
         return self.show_info(follow.to_id)
 
-    def show_follows(self, highlight_live: bool) -> Optional[ChannelUserFollows]:
+    def show_follows(self) -> ChannelUserFollows:
         """Shows a list of channels that the user follows."""
         follows = {user.to_name: user for user in self.user_follows}
         follows_names = list(follows.keys())
+        follows_names = self.merge_with_online(sorted(follows_names))
 
-        if highlight_live:
-            delimiter = self.twitch.delimiter
-            eye = self.menu.unicode.EYE
-            live = self.twitch.live_icon
-            for c in self.twitch.channels.followed_streams_live:
-                if c.user_name in follows_names:
-                    # live_icon user_name title - live: viewer_count
-                    live_since = helpers.calculate_live_time(c.started_at)
-                    title = f"{live} {c.user_name} {delimiter} {c.title[:40]}"
-                    info = f"{delimiter} {eye}{c.viewer_count} viewers {delimiter} {live_since}"
-                    idx = follows_names.index(c.user_name)
-                    follows_names[idx] = f"{title} {info}"
-
-        selected = self.show_items(follows_names, fallback_fn=self.show_menu, prompt="'twitch follows:'", back=True)
-
-        if selected is None:
-            sys.exit(1)
+        selected = self.show_items(
+            follows_names,
+            fallback_fn=self.show_menu,
+            prompt="'twitch follows:'",
+            back=True,
+            mesg=f"{self.menu.unicode.BULLET_ICON} Offline and Online channels.",
+        )
 
         if self.twitch.live_icon in selected:
             selected = selected.split(" ")[1]
-            return follows.get(selected)
-        return follows.get(selected)
+            return follows[selected]
+        return follows[selected]
 
-    async def new_show_follows(self) -> Optional[ChannelUserFollows]:
-        pass
+    def merge_with_online(self, follows_names: list[str]) -> list[str]:
+        delimiter = self.twitch.delimiter
+        eye = self.menu.unicode.EYE
+        live = self.twitch.live_icon
+
+        for c in self.twitch.channels.followed_streams_live:
+            if c.user_name in follows_names:
+                # live_icon user_name title - live: viewer_count
+                live_since = helpers.calculate_live_time(c.started_at)
+                title = f"{live} {c.user_name} {delimiter} {c.title[:40]}"
+                info = f"({eye}{c.viewer_count} viewers {delimiter} {live_since})"
+                idx = follows_names.index(c.user_name)
+                follows_names[idx] = f"{title} {info}"
+        return follows_names
 
     def show_videos(self, channel: BroadcasterInfo) -> None:
         """Shows a list of videos for the specified channel."""
@@ -192,7 +209,7 @@ class App:
         }
 
         options_keys = list(menu_options.keys())
-        selected = self.show_items(options=options_keys)
+        selected = self.show_items(items=options_keys)
 
         if not selected:
             sys.exit(1)
@@ -216,13 +233,12 @@ class App:
 
         menu_info = []
         category = f"Category: {channel.game_name}"
-        menu_info.append(f"Name: {channel.broadcaster_name}")
         menu_info.append(category)
         if self.twitch.channels.is_online(user_id):
             menu_info.append(f"{self.twitch.live_icon} Live Stream: {channel.title}")
         else:
             menu_info.append(f"Last Stream: {channel.title}")
-        menu_info.append("-" * len(category))
+        menu_info.append("-" * len(menu_info[1]))
         menu_info.append("Videos: Get videos")
         menu_info.append("Clips: Get clips")
 
@@ -231,10 +247,8 @@ class App:
             fallback_fn=self.show_follows_and_online,
             prompt=f"'{channel.broadcaster_name} info:'",
             back=True,
+            mesg=f"Channel {channel.broadcaster_name} information.",
         )
-
-        if not selected:
-            sys.exit(1)
 
         if selected.startswith("Clips"):
             self.show_clips(channel)
@@ -243,8 +257,7 @@ class App:
             self.show_videos(channel)
 
         if selected.startswith("Last"):
-            print("Selected:", selected)
-            raise NotImplementedError()
+            raise NotImplementedError
 
         if selected.startswith(self.twitch.live_icon):
             self.load_stream_selected(channel.broadcaster_name)
@@ -285,7 +298,7 @@ class App:
             self.show_info(channel.broadcaster_id)
 
         selected = self.show_items(
-            options=list(clips_dict.keys()),
+            items=list(clips_dict.keys()),
             fallback_fn=functools.partial(self.show_info, channel.broadcaster_id),
             prompt=f"'{channel.broadcaster_name} clips:'",
             back=True,

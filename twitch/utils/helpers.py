@@ -1,6 +1,7 @@
 # utils.py
 
 import re
+import shlex
 from datetime import datetime
 
 
@@ -10,20 +11,15 @@ def date_diff_in_seconds(dt2: datetime, dt1: datetime) -> int:
 
 
 def dhms_from_seconds(seconds: int) -> str:
-    return_str: str = ""
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     days, hours = divmod(hours, 24)
     if days > 0:
-        return_str = f"{days} days, {hours} hrs."
-        # return f"{days} days, {hours} hrs."
+        return f"{days} days, {hours} hrs."
     elif hours > 0:
-        return_str = f"{hours} hrs."
-        # return f"{hours} hrs."
+        return f"{hours} hrs."
     else:
-        return_str = f"{minutes} min."
-        # return f"{minutes} min."
-    return return_str
+        return f"{minutes} min."
 
 
 def calculate_live_time(dt: str) -> str:
@@ -48,9 +44,17 @@ def remove_emojis(string: str) -> str:
 
 
 def clean_string(name, *args) -> str:
-    a = name.split(" ")[1]
-    print("Name:", a)
-    for remove in args:
-        if remove in name:
-            name = name.replace(remove, "")
+    for to_remove in args:
+        if to_remove in name:
+            name = name.replace(to_remove, "")
     return name.strip()
+
+
+def secure_split(command: str) -> list[str]:
+    command_splited: list[str]
+    try:
+        command_splited = shlex.split(command)
+    except ValueError:
+        command = command.replace("'", "")
+        command_splited = shlex.split(command)
+    return command_splited

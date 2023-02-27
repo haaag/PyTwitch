@@ -1,13 +1,16 @@
 # menu.py
-# -*- coding: utf-8 -*-
+
+from __future__ import annotations
 
 import sys
+import typing
 from typing import Optional
 from typing import Protocol
 from typing import Text
 from typing import Union
 
-from twitch.utils.executor import Executor
+if typing.TYPE_CHECKING:
+    from twitch.utils.executor import Executor
 
 
 class MenuUnicodes:
@@ -21,6 +24,8 @@ class MenuUnicodes:
     EXIT: Text = "\uf842"
     EYE: Text = "\U0001F441"
     HEART: Text = "\u2665"
+    BELL: Text = "\uf0f3"
+    UNBELL: Text = "\uf1f6"
 
 
 class Menu(Protocol):
@@ -30,8 +35,12 @@ class Menu(Protocol):
     exit: Text
     lines: Optional[int]
 
-    def show_items(self, executor: Executor, items: list[str], prompt: str = "twitch:", **extra) -> Optional[str]:
-        raise NotImplementedError()
+    @property
+    def args(self) -> list[str]:
+        raise NotImplementedError
+
+    def show_items(self, executor: Executor, items: list[str], prompt: str = "twitch:", **extra) -> str:
+        raise NotImplementedError
 
 
 class Dmenu:
@@ -42,25 +51,29 @@ class Dmenu:
         self.exit = f"{self.unicode.EXIT} Exit"
         self.lines = lines
 
-    def show_items(self, executor: Executor, items: list[str], prompt: str = "twitch:", **extra) -> Optional[str]:
-        case_insensitively = "-i"
-        command_str = f"{case_insensitively}"
+    @property
+    def args(self) -> list[str]:
+        return [
+            self.command,
+            "-i",  # Set filter to be case insensitive
+        ]
+
+    def show_items(self, executor: Executor, items: list[str], prompt: str = "twitch:", **extra) -> str:
+        commands = self.args
+        commands.append(f"-p {prompt}")
+
+        items.append(self.exit)
 
         if extra.get("back"):
             items.append(self.back)
 
-        if extra.get("exit"):
-            items.append(self.unicode.EXIT)
-
         if self.lines:
-            command_str += f" -l {self.lines}"
+            commands.append(f"-l {self.lines}")
 
-        command_str += f" -p {prompt}"
+        item = executor.run(" ".join(commands), items)
 
-        item = executor.run(self.command, command_str, items)
-
-        if item == "" or item is None:
-            return None
+        if item == self.exit or item == "" or item is None:
+            sys.exit(1)
 
         return item
 
@@ -73,26 +86,35 @@ class Rofi:
         self.exit = f"{self.unicode.EXIT} Exit"
         self.lines = lines
 
-    def show_items(self, executor: Executor, items: list[str], prompt: str = "twitch:", **extra) -> Optional[str]:
-        command_str = f"-dmenu -i -p {prompt}"
+    @property
+    def args(self) -> list[str]:
+        return [
+            self.command,
+            "-dmenu",
+            "-i",  # Set filter to be case insensitive
+            "-theme-str 'window {width: 50%; height: 40%; text-align: center;}'",
+        ]
+
+    def show_items(self, executor: Executor, items: list[str], prompt: str = "twitch:", **extra) -> str:
+        commands = self.args
+        commands.append(f"-p {prompt}")
+
+        items.append(self.exit)
 
         if extra.get("back"):
             items.append(self.back)
 
-        items.append(self.exit)
+        if extra.get("mesg"):
+            msg = extra.get("mesg")
+            commands.append(f" -mesg '{msg}'")
 
-        if extra.get("lines"):
-            lines = extra.get("lines")
-            command_str += f" -l {lines}"
+        if self.lines:
+            commands.append(f"-l {self.lines}")
 
-        command_str += " -theme-str 'window {width: 45%; height: 35%; text-align: center;}'"
-        item = executor.run(self.command, command_str, items)
+        item = executor.run(" ".join(commands), items)
 
-        if item == self.exit:
-            sys.exit(0)
-
-        if item == "" or item is None:
-            return None
+        if item == self.exit or item == "" or item is None:
+            sys.exit(1)
 
         return item
 

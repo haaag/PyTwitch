@@ -12,6 +12,10 @@ from typing import Optional
 from typing import Union
 
 
+class ExecutableNotFoundError(Exception):
+    pass
+
+
 class ValidationEnvError(Exception):
     pass
 

@@ -42,13 +42,40 @@ disable = [
 line-length = 120
 task-tags = ["HACK", "FIX", "BUG"]
 show-source = true
-update-check = true
+show-fixes = true
+target-version = "py37"
 exclude = [
     ".venv",
     ".mypy_cache",
     ".pytest_cache",
 ]
+extend-select = [
+    "B",
+    "BLE",
+    "C4",
+    "ERA",
+    "I",
+    "ICN",
+    "INP",
+    "ISC",
+    "N",
+    "NPY",
+    "PGH",
+    "PIE",
+    # "PTH",
+    "Q",
+    "RET",
+    "RSE",
+    "RUF",
+    "S",
+    "SIM",
+    "T20",
+    "TCH",
+    "TID",
+    "YTT",
+]
 
 [tool.ruff.isort]
 force-single-line = true
 order-by-type = true
+required-imports = ["from __future__ import annotations"]

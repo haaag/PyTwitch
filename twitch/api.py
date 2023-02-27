@@ -1,8 +1,9 @@
 # api.py
 
+from __future__ import annotations
+
 import os
 import sys
-import time
 from dataclasses import dataclass
 from datetime import datetime
 from datetime import timedelta
@@ -150,7 +151,7 @@ class ChannelsAPI(TwitchAPI):
             BroadcasterInfo: Information about the specified broadcaster.
         """
         # https://dev.twitch.tv/docs/api/reference#get-channel-information
-        log.debug("[yellow bold]Getting information about one channel.[/]")
+        log.debug("[yellow bold]Getting information about channel.[/]")
         endpoint = URL("channels")
         params = {"broadcaster_id": user_id}
         data = self.request_get(endpoint, params)
@@ -206,7 +207,6 @@ class ClipsAPI(TwitchAPI):
     def get_clips(self, user_id: str) -> Iterator[TwitchClip]:
         """Gets one or more video clips that were captured from streams."""
         # https://dev.twitch.tv/docs/api/reference#get-clips
-        start_time = time.time()
         ended_at = datetime.now().isoformat() + "Z"
         started_at = (datetime.now() - timedelta(days=7)).isoformat() + "Z"
         endpoint = URL("clips")
@@ -216,5 +216,4 @@ class ClipsAPI(TwitchAPI):
             "ended_at": ended_at,
         }
         data = self.request_get(endpoint, params)
-        print(f"--- {time.time() - start_time} seconds ---")
         return (TwitchClip(**clip) for clip in data["data"])
