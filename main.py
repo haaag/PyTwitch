@@ -1,5 +1,7 @@
 # main.py
 
+from __future__ import annotations
+
 import argparse
 import sys
 
@@ -21,23 +23,23 @@ def main() -> None:
     )
     parser.add_argument("--rofi", "-r", action="store_true", help="Set launcher to Rofi (default: dmenu)")
     parser.add_argument(
-        "--lines", type=int, required=False, help="Show dmenu in lines (default: 12 lines)", nargs="?", default=12
+        "--lines", type=int, required=False, help="Show menu lines (default: 15)", nargs="?", default=15
     )
-    parser.add_argument("--player", type=str, required=False, help="Player (default: mpv)", nargs="?", default="mpv")
     parser.add_argument("-l", "--live", action="store_true", help="Show only live streams only")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose mode")
     parser.add_argument("--test", help="", action="store_true")
     args = parser.parse_args()
 
     logger.set_logging_level(args.verbose)
+    log = logger.get_logger(__name__)
 
     twitch = TwitchClient()
     menu = get_menu(rofi=args.rofi, lines=args.lines)
-    app = App(twitch=twitch, menu=menu, player=args.player)
+    app = App(twitch=twitch, menu=menu)
 
     try:
         if args.test:
-            sys.exit(0)
+            app.show_menu()
 
         if args.live:
             app.show_online_follows()
@@ -45,7 +47,7 @@ def main() -> None:
 
         app.show_follows_and_online()
     except KeyboardInterrupt:
-        print("Terminated by user.")
+        log.info("Terminated by user.")
         sys.exit(0)
     finally:
         app.twitch.api.client.close()

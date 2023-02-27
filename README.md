@@ -3,12 +3,13 @@
 ## ⭐ About
 
 A user-friendly tool for easily accessing and watching live streams, videos, and clips from Twitch, it presents a menu interface for seamless browsing and streaming.
+`Using 'streamlink' as default player, since using only 'mpv' the ads are very aggressive.`
 
 ## ⚡️ Requirements
 
 * Player:
-  * ⭐ [mpv](https://mpv.io/) _(recommended)_
-  * [streamlink](https://streamlink.github.io/) _(WIP)_
+  * [streamlink](https://streamlink.github.io/) _(recommended)_
+  * ⭐ [mpv](https://mpv.io/)
 * Launcher:
   * [dmenu](https://tools.suckless.org/dmenu/)
   * [Rofi](https://github.com/davatorium/rofi)

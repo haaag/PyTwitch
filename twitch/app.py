@@ -11,6 +11,7 @@ from typing import Optional
 
 from httpx import URL
 
+from twitch.player import StreamLink
 from twitch.utils import helpers
 from twitch.utils.executor import Executor
 from twitch.utils.logger import get_logger
@@ -34,15 +35,16 @@ class App:
     and performing requests to the Twitch API through the `TwitchClient` object.
     """
 
-    def __init__(self, twitch: TwitchClient, menu: Menu, player: str) -> None:
+    def __init__(self, twitch: TwitchClient, menu: Menu) -> None:
         """
         Initializes the app with the specified client, menu, and execution options.
         """
         self.twitch = twitch
         self.menu = menu
-        self._executor = Executor(player)
+        self._executor = Executor()
         self._user_follows: Optional[Iterable[ChannelUserFollows]] = None
         self.tv = URL("https://www.twitch.tv/")
+        self.player = StreamLink()
 
     @property
     def user_follows(self) -> Iterable[ChannelUserFollows]:
@@ -51,16 +53,16 @@ class App:
             return self._user_follows
         return self._user_follows
 
-    def load_stream_selected(self, stream: str) -> None:
+    def play_stream_selected(self, stream: str) -> None:
         url = self.tv.join(stream)
-        log_msg = f"[yellow]Opening[/] [red bold]{stream}[/] with [green]{self._executor.bin}[/]"
+        log_msg = f"[yellow]Opening[/] [red bold]{stream}[/] with [green]{self.player.name}[/]"
         log.info("%s", log_msg)
         self._executor.notification(f"Opening stream <b>{stream}</b>")
-        self._executor.launch(url)
+        self.player.play(url)
 
-    def load_clip_selected(self, clip: TwitchClip) -> None:
+    def play_clip_selected(self, clip: TwitchClip) -> None:
         """Load a selected clip by its URL."""
-        log_msg = f"[yellow]Opening[/] clip [red bold]{clip.title[:40]}...[/] with [green]{self._executor.bin}[/]"
+        log_msg = f"[yellow]Opening[/] clip [red bold]{clip.title[:40]}...[/] with [green]{self.player.name}[/]"
         log.info("%s", log_msg)
         self._executor.notification(f"Opening clip <b>{clip.broadcaster_name}@{clip.title}</b>")
         self._executor.launch(clip.url)
@@ -80,9 +82,6 @@ class App:
             back=back,
             **kwargs,
         )
-
-        if not selected:
-            sys.exit(0)
 
         if selected not in items:
             self.handle_missing_option(selected)
@@ -114,13 +113,10 @@ class App:
             return
 
         options = list(items.keys())
-        selected = self.show_items(items=options, prompt="'twitch live:'", back=False)
-
-        if selected is None:
-            sys.exit(0)
+        selected = self.show_items(items=options, fallback_fn=self.show_menu, prompt="'twitch live:'", back=True)
 
         selected = helpers.clean_string(selected, self.twitch.live_icon).split(self.twitch.delimiter)[0]
-        self.load_stream_selected(selected.strip())
+        self.play_stream_selected(selected.strip())
         return
 
     def show_follows_and_online(self) -> None:
@@ -141,7 +137,7 @@ class App:
             fallback_fn=self.show_menu,
             prompt="'twitch follows:'",
             back=True,
-            mesg=f"{self.menu.unicode.BULLET_ICON} Offline and Online channels.",
+            mesg=f"{self.menu.unicode.BULLET_ICON} Offline and Online channels",
         )
 
         if self.twitch.live_icon in selected:
@@ -165,10 +161,10 @@ class App:
         return follows_names
 
     def show_videos(self, channel: BroadcasterInfo) -> None:
+        # FIX: Fix this mess..
         """Shows a list of videos for the specified channel."""
         channel_videos = self.twitch.channels.get_videos(user_id=channel.broadcaster_id)
 
-        # FIX: Fix this mess..
         bullet = self.menu.unicode.BULLET_ICON
         clock = self.menu.unicode.CLOCK
         eye = self.menu.unicode.EYE
@@ -183,19 +179,16 @@ class App:
             self.show_no_results_message(f"No available videos from followed channel: {channel.broadcaster_name}")
             return self.show_info(channel.broadcaster_id)
 
-        fallback = functools.partial(self.show_info, channel.broadcaster_id)
         selected = self.show_items(
             list(videos_dict.keys()),
-            fallback_fn=fallback,
+            fallback_fn=functools.partial(self.show_info, channel.broadcaster_id),
             prompt=f"'{channel.broadcaster_name} videos:'",
             back=True,
+            mesg=f"Showing {len(videos_dict)} videos",
         )
 
-        if selected is None:
-            sys.exit(0)
-
         video = videos_dict[selected]
-        self.load_stream_selected(video.url)
+        self.play_stream_selected(video.url)
         return self.show_videos(channel)
 
     def show_menu(self) -> None:
@@ -207,16 +200,9 @@ class App:
             f"{self.menu.unicode.BULLET_ICON} All follows": self.show_follows_and_online,
             f"{self.menu.unicode.BULLET_ICON} Live followed": self.show_online_follows,
         }
-
         options_keys = list(menu_options.keys())
         selected = self.show_items(items=options_keys)
-
-        if not selected:
-            sys.exit(1)
-
         menu_options[selected]()
-
-        sys.exit(0)
 
     def show_info(self, user_id: str) -> None:
         """
@@ -247,7 +233,7 @@ class App:
             fallback_fn=self.show_follows_and_online,
             prompt=f"'{channel.broadcaster_name} info:'",
             back=True,
-            mesg=f"Channel {channel.broadcaster_name} information.",
+            mesg=f"Channel {channel.broadcaster_name} information",
         )
 
         if selected.startswith("Clips"):
@@ -260,7 +246,7 @@ class App:
             raise NotImplementedError
 
         if selected.startswith(self.twitch.live_icon):
-            self.load_stream_selected(channel.broadcaster_name)
+            self.play_stream_selected(channel.broadcaster_name)
 
         self.show_info(user_id)
 
@@ -272,6 +258,7 @@ class App:
         channel: BroadcasterInfo,
         clips: Optional[TwitchClips] = None,
     ) -> None:
+        # BUG: This is a mess...
         """
         Shows the list of clips for the specified user and allows the user to select a clip to play.
 
@@ -282,10 +269,9 @@ class App:
         None: The selected clip is played.
         """
         if not clips:
-            self.debug(f"Getting [green bold]clips[/] from channel [red bold]{channel.broadcaster_name}[/]")
+            log.debug("%s", f"Getting [green bold]clips[/] from channel [red bold]{channel.broadcaster_name}[/]")
             clips = self.twitch.clips.get_clips(channel.broadcaster_id)
 
-        # BUG: This is a mess...
         icons = self.menu.unicode
         clips_dict: dict[str, TwitchClip] = {}
         for idx, c in enumerate(clips):
@@ -302,10 +288,9 @@ class App:
             fallback_fn=functools.partial(self.show_info, channel.broadcaster_id),
             prompt=f"'{channel.broadcaster_name} clips:'",
             back=True,
+            mesg=f"Showing {len(clips_dict)} clips",
         )
-        if not selected:
-            sys.exit(1)
 
-        c = clips_dict[selected]
-        self.load_clip_selected(c)
+        clip = clips_dict[selected]
+        self.play_clip_selected(clip)
         self.show_clips(channel, list(clips_dict.values()))
