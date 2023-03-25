@@ -11,9 +11,9 @@ from typing import Optional
 
 from httpx import URL
 
-from twitch.player import StreamLink
+from twitch.twitch import TwitchClient
+from twitch.utils import executor
 from twitch.utils import helpers
-from twitch.utils.executor import Executor
 from twitch.utils.logger import get_logger
 
 if typing.TYPE_CHECKING:
@@ -22,7 +22,7 @@ if typing.TYPE_CHECKING:
     from twitch.datatypes import MenuOptions
     from twitch.datatypes import TwitchClip
     from twitch.datatypes import TwitchClips
-    from twitch.twitch import TwitchClient
+    from twitch.player import Player
     from twitch.utils.menu import Menu
 
 log = get_logger(__name__)
@@ -35,16 +35,15 @@ class App:
     and performing requests to the Twitch API through the `TwitchClient` object.
     """
 
-    def __init__(self, twitch: TwitchClient, menu: Menu) -> None:
+    def __init__(self, menu: Menu, player: Player) -> None:
         """
         Initializes the app with the specified client, menu, and execution options.
         """
-        self.twitch = twitch
         self.menu = menu
-        self._executor = Executor()
+        self.twitch = TwitchClient()
         self._user_follows: Optional[Iterable[ChannelUserFollows]] = None
         self.tv = URL("https://www.twitch.tv/")
-        self.player = StreamLink()
+        self.player = player
 
     @property
     def user_follows(self) -> Iterable[ChannelUserFollows]:
@@ -57,15 +56,15 @@ class App:
         url = self.tv.join(stream)
         log_msg = f"[yellow]Opening[/] [red bold]{stream}[/] with [green]{self.player.name}[/]"
         log.info("%s", log_msg)
-        self._executor.notification(f"Opening stream <b>{stream}</b>")
+        executor.notification(f"Opening stream <b>{stream}</b>")
         self.player.play(url)
 
     def play_clip_selected(self, clip: TwitchClip) -> None:
         """Load a selected clip by its URL."""
         log_msg = f"[yellow]Opening[/] clip [red bold]{clip.title[:40]}...[/] with [green]{self.player.name}[/]"
         log.info("%s", log_msg)
-        self._executor.notification(f"Opening clip <b>{clip.broadcaster_name}@{clip.title}</b>")
-        self._executor.launch(clip.url)
+        executor.notification(f"Opening clip <b>{clip.broadcaster_name}@{clip.title}</b>")
+        executor.launch(clip.url)
 
     def show_items(
         self,
@@ -76,7 +75,6 @@ class App:
         **kwargs,
     ) -> str:
         selected = self.menu.show_items(
-            self._executor,
             items,
             prompt=prompt,
             back=back,
@@ -101,13 +99,25 @@ class App:
 
     def show_no_results_message(self, log_msg: str) -> None:
         log.warning(log_msg)
-        self.menu.show_items(self._executor, [log_msg])
+        self.menu.show_items(items=[log_msg])
 
     def show_online_follows(self) -> None:
         """
         Show the channels that the user follows that are currently live.
         """
-        items = {channel.user_name: channel for channel in self.twitch.channels_live_for_menu}
+        items = {}
+
+        delimiter = self.twitch.delimiter
+        eye = self.menu.unicode.EYE
+        live = self.twitch.live_icon
+
+        for stream in self.twitch.channels.followed_streams_live:
+            live_since = helpers.calculate_live_time(stream.started_at)
+            title = f"{live} {stream.user_name} {delimiter} {stream.title[:40]}"
+            info = f"({eye}{stream.viewer_count} viewers {delimiter} {live_since})"
+            item_key = f"{title} {info}"
+            items[item_key] = stream
+
         if not items:
             self.show_no_results_message("No online followed channels")
             return
@@ -130,14 +140,14 @@ class App:
         """Shows a list of channels that the user follows."""
         follows = {user.to_name: user for user in self.user_follows}
         follows_names = list(follows.keys())
-        follows_names = self.merge_with_online(sorted(follows_names))
+        follows_names, total_live = self.merge_with_online(sorted(follows_names))
 
         selected = self.show_items(
             follows_names,
             fallback_fn=self.show_menu,
             prompt="'twitch follows:'",
             back=True,
-            mesg=f"{self.menu.unicode.BULLET_ICON} Offline and Online channels",
+            mesg=f"{self.menu.unicode.BULLET_ICON} {total_live} Online channels",
         )
 
         if self.twitch.live_icon in selected:
@@ -145,12 +155,13 @@ class App:
             return follows[selected]
         return follows[selected]
 
-    def merge_with_online(self, follows_names: list[str]) -> list[str]:
+    def merge_with_online(self, follows_names: list[str]) -> tuple[list[str], int]:
         delimiter = self.twitch.delimiter
         eye = self.menu.unicode.EYE
         live = self.twitch.live_icon
+        streams_live = self.twitch.channels.followed_streams_live
 
-        for c in self.twitch.channels.followed_streams_live:
+        for c in streams_live:
             if c.user_name in follows_names:
                 # live_icon user_name title - live: viewer_count
                 live_since = helpers.calculate_live_time(c.started_at)
@@ -158,7 +169,7 @@ class App:
                 info = f"({eye}{c.viewer_count} viewers {delimiter} {live_since})"
                 idx = follows_names.index(c.user_name)
                 follows_names[idx] = f"{title} {info}"
-        return follows_names
+        return follows_names, len(streams_live)
 
     def show_videos(self, channel: BroadcasterInfo) -> None:
         # FIX: Fix this mess..
@@ -211,9 +222,6 @@ class App:
 
         Args:
         user_id (str): The ID of the channel to display information for.
-
-        Returns:
-        None: The selected option is executed.
         """
         channel = self.twitch.channels.information(user_id)
 
@@ -249,9 +257,6 @@ class App:
             self.play_stream_selected(channel.broadcaster_name)
 
         self.show_info(user_id)
-
-    def debug(self, msg: str) -> None:
-        return log.debug("%s", msg)
 
     def show_clips(
         self,

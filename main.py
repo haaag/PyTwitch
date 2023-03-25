@@ -6,12 +6,12 @@ import argparse
 import sys
 
 from twitch.app import App
-from twitch.twitch import TwitchClient
+from twitch.player import get_player
 from twitch.utils import logger
 from twitch.utils.menu import get_menu
 
 
-def main() -> None:
+def main() -> int:
     """
     This function is the entry point of the program. It parses the command line arguments, initializes the TwitchClient
     and App objects, and starts the program by calling show_menu on the App object. If a KeyboardInterrupt exception
@@ -27,15 +27,16 @@ def main() -> None:
     )
     parser.add_argument("-l", "--live", action="store_true", help="Show only live streams only")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose mode")
+    parser.add_argument("-p", "--player", default="mpv", choices=["streamlink", "mpv"], required=False)
     parser.add_argument("--test", help="", action="store_true")
     args = parser.parse_args()
 
     logger.set_logging_level(args.verbose)
     log = logger.get_logger(__name__)
 
-    twitch = TwitchClient()
     menu = get_menu(rofi=args.rofi, lines=args.lines)
-    app = App(twitch=twitch, menu=menu)
+    player = get_player(args.player)
+    app = App(menu=menu, player=player)
 
     try:
         if args.test:
@@ -46,12 +47,15 @@ def main() -> None:
             sys.exit(0)
 
         app.show_follows_and_online()
+
     except KeyboardInterrupt:
         log.info("Terminated by user.")
         sys.exit(0)
     finally:
         app.twitch.api.client.close()
 
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

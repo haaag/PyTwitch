@@ -1,5 +1,4 @@
 # player.py
-
 from __future__ import annotations
 
 import shutil
@@ -16,7 +15,6 @@ if typing.TYPE_CHECKING:
 
 class Player(Protocol):
     name: str
-    player: str
 
     @property
     def bin(self) -> str:
@@ -46,5 +44,26 @@ class StreamLink:
         return 0
 
 
-def get_player() -> Player:
-    return StreamLink()
+class Mpv:
+    def __init__(self) -> None:
+        self.name = "mpv"
+
+    @property
+    def bin(self) -> str:
+        bin = shutil.which(self.name)
+        if not bin:
+            raise ExecutableNotFoundError(self.name)
+        return bin
+
+    def play(self, url: str | URL) -> int:
+        args = secure_split(f"{self.bin} {url}")
+        subprocess.call(args, stderr=subprocess.DEVNULL)
+        return 0
+
+
+def get_player(name: str) -> Player:
+    players: dict[str, Player] = {
+        "streamlink": StreamLink(),
+        "mpv": Mpv(),
+    }
+    return players[name]
