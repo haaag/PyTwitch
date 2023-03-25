@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "menu-twitch"
@@ -8,11 +8,25 @@ description = "Simple menu tool for launching Twitch streams."
 version = "0.1.0"
 readme = "README.md"
 requires-python = ">=3.8"
-keywords = ["dmenu", "rofi", "twitch"]
+keywords = ["dmenu", "rofi", "twitch", "cli", "utility",]
 dependencies = [ "httpx>=0.23.1" ]
 
 [project.scripts]
-menu-twitch = "twitch.__main__:main"
+twitch-menu = "twitch.__main__:main"
+
+[tool.hatch.version]
+path = "src/twitch/__init__.py"
+
+[project.optional-dependencies]
+test = [
+  "pytest >=7.1.3,<8.0.0",
+  "coverage[toml] >= 6.5.0,< 8.0",
+]
+dev = [
+  "ruff ==0.0.257",
+  "mypy ==1.0.1",
+  "black == 23.1.0",
+]
 
 [tool.black]
 line-length = 120
@@ -49,33 +63,56 @@ exclude = [
     ".mypy_cache",
     ".pytest_cache",
 ]
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 extend-select = [
-    "B",
-    "BLE",
-    "C4",
-    "ERA",
-    "I",
-    "ICN",
-    "INP",
-    "ISC",
-    "N",
-    "NPY",
-    "PGH",
-    "PIE",
-    # "PTH",
-    "Q",
-    "RET",
-    "RSE",
-    "RUF",
-    "S",
-    "SIM",
-    "T20",
-    "TCH",
-    "TID",
-    "YTT",
+    "B",    # (flake8-bugbear)
+    "BLE",  # (flake8-blind-except)
+    "C4",   # (flake8-comprehensions)
+    "ERA",  # (eradicate)
+    "I",    # (isort)
+    "ICN",  # (flake8-import-conventions)
+    "INP",  # (flake8-no-pep420)
+    "ISC",  # (flake8-implicit-str-concat)
+    "N",    # (pep8-naming)
+    "NPY",  # (numpy-specific-rules)
+    "PGH",  # (pygrep-hooks)
+    "PIE",  # (flake8-pie)
+    "PTH",  # (flake8-use-pathlib)
+    "Q",    # (flake8-quotes)
+    "RET",  # (flake8-return)
+    "RSE",  # (flake8-raise)
+    "RUF",  # (ruff-specific-rules)
+    "S",    # (flake8-bandit)
+    "SIM",  # (flake8-simplify)
+    "T20",  # (flake8-print)
+    "TCH",  # (flake8-type-checking)
+    "TID",  # (flake8-tidy-imports)
+    "YTT",  # (flake8-2020)
 ]
 
 [tool.ruff.isort]
 force-single-line = true
 order-by-type = true
 required-imports = ["from __future__ import annotations"]
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+testpaths = ["tests"]
+
+[tool.hatch.envs.default]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+]
+[tool.hatch.envs.default.scripts]
+cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=pymarks --cov=tests {args} && coverage html"
+cov-html = "coverage html"
+no-cov = "cov --no-cov {args}"
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]

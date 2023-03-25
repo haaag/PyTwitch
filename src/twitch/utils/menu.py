@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import sys
-import typing
 from typing import Optional
 from typing import Protocol
 from typing import Text
 from typing import Union
 
-if typing.TYPE_CHECKING:
-    from twitch.utils.executor import Executor
+from twitch.utils import executor
 
 
 class MenuUnicodes:
@@ -39,7 +37,7 @@ class Menu(Protocol):
     def args(self) -> list[str]:
         raise NotImplementedError
 
-    def show_items(self, executor: Executor, items: list[str], prompt: str = "twitch:", **extra) -> str:
+    def show_items(self, items: list[str], prompt: str = "twitch:", **extra) -> str:
         raise NotImplementedError
 
 
@@ -58,7 +56,7 @@ class Dmenu:
             "-i",  # Set filter to be case insensitive
         ]
 
-    def show_items(self, executor: Executor, items: list[str], prompt: str = "twitch:", **extra) -> str:
+    def show_items(self, items: list[str], prompt: str = "twitch:", **extra) -> str:
         commands = self.args
         commands.append(f"-p {prompt}")
 
@@ -95,7 +93,7 @@ class Rofi:
             "-theme-str 'window {width: 50%; height: 40%; text-align: center;}'",
         ]
 
-    def show_items(self, executor: Executor, items: list[str], prompt: str = "twitch:", **extra) -> str:
+    def show_items(self, items: list[str], prompt: str = "twitch:", **extra) -> str:
         commands = self.args
         commands.append(f"-p {prompt}")
 

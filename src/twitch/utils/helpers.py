@@ -1,5 +1,7 @@
 # utils.py
 
+from __future__ import annotations
+
 import re
 import shlex
 from datetime import datetime
