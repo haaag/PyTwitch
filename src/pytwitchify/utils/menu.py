@@ -8,7 +8,7 @@ from typing import Protocol
 from typing import Text
 from typing import Union
 
-from twitch.utils import executor
+from . import executor
 
 
 class MenuUnicodes:

@@ -9,7 +9,25 @@ from typing import Mapping
 from typing import MutableMapping
 from typing import NamedTuple
 from typing import Optional
+from typing import Text
 from typing import Union
+
+from .utils import helpers
+
+
+class Unicodes:
+    BACK: Text = "\u21B6"
+    BULLET_ICON: Text = "\u2022"
+    CALENDAR: Text = "\U0001F4C5"
+    CIRCLE: Text = "\u25CF"
+    CLOCK: Text = "\U0001F559"
+    CROSS: Text = "\u2716"
+    DELIMITER: Text = "\u2014"
+    EXIT: Text = "\uf842"
+    EYE: Text = "\U0001F441"
+    HEART: Text = "\u2665"
+    BELL: Text = "\uf0f3"
+    UNBELL: Text = "\uf1f6"
 
 
 class ExecutableNotFoundError(Exception):
@@ -38,6 +56,19 @@ class TwitchChannelVideo(NamedTuple):
     duration: str
     description: str
     created_at: str
+
+    @property
+    def title_str(self) -> str:
+        max_length = 80
+        return self.title[: max_length - 3] + "..." if len(self.title) > max_length else self.title
+
+    @property
+    def viewers(self) -> str:
+        return f"viewers: {Unicodes.EYE} {self.view_count:,d}"
+
+    def __str__(self) -> str:
+        delimiter = f" {Unicodes.DELIMITER} "
+        return f"{self.title_str}{delimiter}(duration: {self.duration} | {self.viewers})"
 
 
 class BroadcasterInfo(NamedTuple):
@@ -69,6 +100,24 @@ class TwitchStreamLive:
     user_login: str
     user_name: str
     viewer_count: int
+
+    def __str__(self):
+        delimiter = f" {Unicodes.DELIMITER} "
+        name = f"{Unicodes.CIRCLE} {self.user_name:<20}"
+        return f"{name}{self.title_str:<50}({self.live_since}{delimiter}{self.viewers})"
+
+    @property
+    def title_str(self) -> str:
+        max_length = 50
+        return self.title[: max_length - 3] + "..." if len(self.title) > max_length else self.title
+
+    @property
+    def live_since(self) -> str:
+        return helpers.calculate_live_time(self.started_at)
+
+    @property
+    def viewers(self) -> str:
+        return f"viewers: {Unicodes.EYE} {self.viewer_count:,d}"
 
 
 class SearchChannelsAPIResponse(NamedTuple):
@@ -117,6 +166,9 @@ class ChannelUserFollows(NamedTuple):
     to_name: str
     followed_at: str
 
+    def __str__(self) -> str:
+        return self.to_name
+
 
 class TwitchUserInfo(NamedTuple):
     broadcaster_type: str
@@ -148,6 +200,23 @@ class TwitchClip(NamedTuple):
     video_id: str
     view_count: int
     vod_offset: Optional[int]
+
+    @property
+    def title_str(self) -> str:
+        max_length = 40
+        return self.title[: max_length - 3] + "..." if len(self.title) > max_length else self.title
+
+    @property
+    def creator_str(self) -> str:
+        return f"creator: {self.creator_name}"
+
+    @property
+    def viewers(self) -> str:
+        return f"viewers: {Unicodes.EYE} {self.view_count:,d}"
+
+    def __str__(self) -> str:
+        delimiter = f" {Unicodes.DELIMITER} "
+        return f"{self.title_str}{delimiter}({self.creator_str}{delimiter}duration: {self.duration}'{delimiter}{self.viewers})"
 
 
 QueryParamTypes = MutableMapping[str, Any]

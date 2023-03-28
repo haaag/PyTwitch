@@ -6,8 +6,8 @@ import subprocess
 import typing
 from typing import Protocol
 
-from twitch.datatypes import ExecutableNotFoundError
-from twitch.utils.helpers import secure_split
+from .datatypes import ExecutableNotFoundError
+from .utils.helpers import secure_split
 
 if typing.TYPE_CHECKING:
     from httpx import URL
@@ -61,7 +61,7 @@ class Mpv:
         return 0
 
 
-def get_player(name: str) -> Player:
+def create_player(name: str) -> Player:
     players: dict[str, Player] = {
         "streamlink": StreamLink(),
         "mpv": Mpv(),

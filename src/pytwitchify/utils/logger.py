@@ -1,5 +1,7 @@
 # logger.py
 
+from __future__ import annotations
+
 import logging
 
 from rich.logging import RichHandler

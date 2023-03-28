@@ -1,58 +1,65 @@
 [build-system]
-requires = ["hatchling"]
 build-backend = "hatchling.build"
+requires = [
+  "hatchling",
+]
 
 [project]
-name = "menu-twitch"
+name = "pytwitchify"
 description = "Simple menu tool for launching Twitch streams."
-version = "0.1.0"
 readme = "README.md"
+keywords = [
+  "cli",
+  "dmenu",
+  "rofi",
+  "twitch",
+  "utility",
+]
+license = "MIT"
+authors = [
+  { name = "haaag", email = "git.haaag@gmail.com" },
+]
 requires-python = ">=3.8"
-keywords = ["dmenu", "rofi", "twitch", "cli", "utility",]
-dependencies = [ "httpx>=0.23.1" ]
-
+dynamic = [
+  "version",
+]
+dependencies = [
+  "pyselector>=0.0.6",
+  "httpx==0.23.3",
+  "rich==13.3.3",
+  "python-dotenv==1.0.0",
+]
 [project.scripts]
-twitch-menu = "twitch.__main__:main"
+pytwitchify = "pytwitchify.__main__:main"
 
 [tool.hatch.version]
-path = "src/twitch/__init__.py"
-
-[project.optional-dependencies]
-test = [
-  "pytest >=7.1.3,<8.0.0",
-  "coverage[toml] >= 6.5.0,< 8.0",
-]
-dev = [
-  "ruff ==0.0.257",
-  "mypy ==1.0.1",
-  "black == 23.1.0",
-]
+path = "src/pytwitchify/__about__.py"
 
 [tool.black]
 line-length = 120
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
 
 [tool.mypy]
 show_error_codes = true
 show_error_context = true
 show_column_numbers = true
 ignore_missing_imports = true
-
-[tool.pylint]
-max-line-length = 120
-disable = [
-    "C0103", # (invalid-name)
-    "C0114", # (missing-module-docstring)
-    "C0115", # (missing-class-docstring)
-    "C0116", # (missing-function-docstring)
-    "E0401", # (import-error)
-    "R0903", # (too-few-public-methods)
-    "R0913", # (too-many-arguments)
-    "W0105", # (pointless-string-statement)
-    "R0902", # (too-many-instance-attributes)
-    "W0511", # (fixme)
-]
+pretty = true
+warn_no_return = false
+warn_unused_ignores = true
 
 [tool.ruff]
+fix = false
 line-length = 120
 task-tags = ["HACK", "FIX", "BUG"]
 show-source = true
@@ -63,7 +70,6 @@ exclude = [
     ".mypy_cache",
     ".pytest_cache",
 ]
-# Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 extend-select = [
     "B",    # (flake8-bugbear)
@@ -95,24 +101,3 @@ extend-select = [
 force-single-line = true
 order-by-type = true
 required-imports = ["from __future__ import annotations"]
-
-[tool.pytest.ini_options]
-pythonpath = "src"
-testpaths = ["tests"]
-
-[tool.hatch.envs.default]
-dependencies = [
-  "pytest",
-  "pytest-cov",
-]
-[tool.hatch.envs.default.scripts]
-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=pymarks --cov=tests {args} && coverage html"
-cov-html = "coverage html"
-no-cov = "cov --no-cov {args}"
-
-[tool.coverage.report]
-exclude_lines = [
-  "no cov",
-  "if __name__ == .__main__.:",
-  "if TYPE_CHECKING:",
-]

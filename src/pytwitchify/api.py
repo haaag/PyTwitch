@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import os
 import sys
 from dataclasses import dataclass
@@ -10,23 +11,24 @@ from datetime import timedelta
 from typing import Generator
 from typing import Iterable
 from typing import Iterator
+from typing import Optional
 
 import httpx
 from dotenv import load_dotenv
 from httpx import URL
 
-from twitch.datatypes import BroadcasterInfo
-from twitch.datatypes import ChannelUserFollows
-from twitch.datatypes import HeaderTypes
-from twitch.datatypes import QueryParamTypes
-from twitch.datatypes import SearchChannelsAPIResponse
-from twitch.datatypes import TwitchApiResponse
-from twitch.datatypes import TwitchChannelVideo
-from twitch.datatypes import TwitchClip
-from twitch.datatypes import TwitchStreamLive
-from twitch.datatypes import TwitchStreams
-from twitch.datatypes import ValidationEnvError
-from twitch.utils.logger import get_logger
+from .datatypes import BroadcasterInfo
+from .datatypes import ChannelUserFollows
+from .datatypes import HeaderTypes
+from .datatypes import QueryParamTypes
+from .datatypes import SearchChannelsAPIResponse
+from .datatypes import TwitchApiResponse
+from .datatypes import TwitchChannelVideo
+from .datatypes import TwitchClip
+from .datatypes import TwitchStreamLive
+from .datatypes import TwitchStreams
+from .datatypes import ValidationEnvError
+from .utils.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -176,6 +178,7 @@ class ChannelsAPI(TwitchAPI):
         data = self.request_get(endpoint, params)
         return [SearchChannelsAPIResponse(**streamer) for streamer in data["data"]]
 
+    @functools.lru_cache
     def get_videos(self, user_id: str, highlight: bool = False) -> Generator[TwitchChannelVideo, None, None]:
         """
         Gets information about one or more published videos.
@@ -202,8 +205,15 @@ class ChannelsAPI(TwitchAPI):
         params = {"user_id": user_id}
         return bool(self.request_get(endpoint, params)["data"])
 
+    def get_info_from_username(self, username: str) -> Optional[BroadcasterInfo]:
+        for channel in self.follows:
+            if channel.to_name == username:
+                return self.information(channel.to_id)
+        return None
+
 
 class ClipsAPI(TwitchAPI):
+    @functools.lru_cache
     def get_clips(self, user_id: str) -> Iterator[TwitchClip]:
         """Gets one or more video clips that were captured from streams."""
         # https://dev.twitch.tv/docs/api/reference#get-clips

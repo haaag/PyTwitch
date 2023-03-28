@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-from twitch.api import ChannelsAPI
-from twitch.api import ClipsAPI
-from twitch.api import TwitchAPI
-from twitch.utils.menu import MenuUnicodes
-
-# TODO:
-# [ ] Add database for simples and fast request for data.
+from .api import ChannelsAPI
+from .api import ClipsAPI
+from .api import TwitchAPI
+from .utils.menu import MenuUnicodes
 
 
 class TwitchClient:

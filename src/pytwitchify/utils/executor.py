@@ -5,8 +5,8 @@ from __future__ import annotations
 import subprocess
 import typing
 
-from twitch.utils.helpers import secure_split
-from twitch.utils.logger import get_logger
+from .helpers import secure_split
+from .logger import get_logger
 
 if typing.TYPE_CHECKING:
     from httpx import URL
