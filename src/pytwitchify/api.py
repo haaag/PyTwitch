@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import functools
+import logging
 import os
 import sys
 from dataclasses import dataclass
@@ -11,26 +12,26 @@ from datetime import timedelta
 from typing import Generator
 from typing import Iterable
 from typing import Iterator
-from typing import Optional
+from typing import Union
 
 import httpx
 from dotenv import load_dotenv
 from httpx import URL
 
-from .datatypes import BroadcasterInfo
-from .datatypes import ChannelUserFollows
-from .datatypes import HeaderTypes
-from .datatypes import QueryParamTypes
-from .datatypes import SearchChannelsAPIResponse
-from .datatypes import TwitchApiResponse
-from .datatypes import TwitchChannelVideo
-from .datatypes import TwitchClip
-from .datatypes import TwitchStreamLive
-from .datatypes import TwitchStreams
-from .datatypes import ValidationEnvError
-from .utils.logger import get_logger
+from pytwitchify.constants import API_TWITCH_BASE_URL
+from pytwitchify.datatypes import BroadcasterInfo
+from pytwitchify.datatypes import ChannelUserFollows
+from pytwitchify.datatypes import FollowedChannel
+from pytwitchify.datatypes import HeaderTypes
+from pytwitchify.datatypes import QueryParamTypes
+from pytwitchify.datatypes import SearchChannelsAPIResponse
+from pytwitchify.datatypes import TwitchApiResponse
+from pytwitchify.datatypes import TwitchChannelVideo
+from pytwitchify.datatypes import TwitchClip
+from pytwitchify.datatypes import TwitchStreamLive
+from pytwitchify.datatypes import ValidationEnvError
 
-log = get_logger(__name__)
+log = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -47,7 +48,7 @@ class TwitchApiCredentials:
         credentials = [self.access_token, self.client_id, self.user_id]
         if not all(env_var is not None and env_var != "" for env_var in credentials):
             msg = "There's something wrong with the .env file"
-            log.error("[bold red blink]%s[/]", msg)
+            log.error("%s", msg)
             raise ValidationEnvError(msg)
 
 
@@ -121,7 +122,7 @@ class ChannelsAPI(TwitchAPI):
             TwitchStreams: A list of live streams.
         """
         # https://dev.twitch.tv/docs/api/reference#get-followed-streams
-        log.debug("[yellow bold]Getting a list of live streams.[/]")
+        log.debug("Getting a list of live streams")
         endpoint = URL("streams/followed")
         params = {"user_id": self.credentials.user_id}
         channels = self.request_get(endpoint, params)
@@ -153,7 +154,7 @@ class ChannelsAPI(TwitchAPI):
             BroadcasterInfo: Information about the specified broadcaster.
         """
         # https://dev.twitch.tv/docs/api/reference#get-channel-information
-        log.debug("[yellow bold]Getting information about channel.[/]")
+        log.debug("Getting information about channel")
         endpoint = URL("channels")
         params = {"broadcaster_id": user_id}
         data = self.request_get(endpoint, params)

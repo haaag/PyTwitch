@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
+import logging
 import subprocess
 import typing
 
 from .helpers import secure_split
-from .logger import get_logger
 
 if typing.TYPE_CHECKING:
     from httpx import URL
 
-log = get_logger(__name__)
+log = logging.getLogger(__name__)
 
 
 def run(commands: str, items: list[str]) -> str:
     commands_split = secure_split(commands)
-    log_msg = f"Running [red bold]{commands_split[0]}[/] with args: [yellow]{commands_split}[/]"
+    log_msg = f"Running {commands_split[0]} with args: {commands_split}"
     log.debug("%s", log_msg)
 
     with subprocess.Popen(
@@ -31,7 +31,7 @@ def run(commands: str, items: list[str]) -> str:
 
 
 def launch(url: str | URL) -> int:
-    log_msg = f"[red bold]Launching 'mpv' with args:[/] {url}"
+    log_msg = f"Launching 'mpv' with args: {url}"
     log.debug("%s", log_msg)
     command_with_args = secure_split(f"mpv {url}")
     subprocess.call(command_with_args, stderr=subprocess.DEVNULL)
