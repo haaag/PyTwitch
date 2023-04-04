@@ -24,7 +24,7 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "pyselector>=0.0.6",
+  "pyselector>=0.0.10",
   "httpx==0.23.3",
   "rich==13.3.3",
   "python-dotenv==1.0.0",
@@ -75,7 +75,7 @@ extend-select = [
     "B",    # (flake8-bugbear)
     "BLE",  # (flake8-blind-except)
     "C4",   # (flake8-comprehensions)
-    "ERA",  # (eradicate)
+    # "ERA",  # (eradicate)
     "I",    # (isort)
     "ICN",  # (flake8-import-conventions)
     "INP",  # (flake8-no-pep420)
