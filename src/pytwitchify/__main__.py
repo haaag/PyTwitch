@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import functools
 import logging
-import sys
 
 from pytwitchify import helpers
 from pytwitchify.app import App
