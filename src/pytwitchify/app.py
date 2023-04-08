@@ -2,199 +2,213 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import json
+import logging
+import re
+import typing
 from typing import Any
 from typing import Callable
+from typing import Mapping
+from typing import Union
 
-from httpx import URL
-from pyselector import Menu
+from pytwitchify import helpers
 
-from .player import create_player
-from .utils import logger
-
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
 
-    from .datatypes import BroadcasterInfo
-    from .twitch import TwitchClient
+    from pytwitchify.client import TwitchClient
+    from pytwitchify.datatypes import TwitchChannel
+    from pytwitchify.datatypes import TwitchPlayableContent
+    from pytwitchify.follows import Category
+    from pytwitchify.follows import FollowedChannelInfo
+    from pytwitchify.player import Player
+
+log = logging.getLogger(__name__)
 
 
-log = logger.get_logger(__name__)
+class App:
+    follow: TwitchPlayableContent
+    keycode: int
+    follows: Mapping[str, TwitchChannel]
 
+    def __init__(self, client: TwitchClient, prompt: Callable, menu: MenuInterface, player: Player):
+        self.client = client
+        self.prompt = prompt
+        self.menu = menu
+        self.player = player
 
-def load_stream(player_name: str, endpoint: str) -> int:
-    if endpoint.startswith("http"):
-        player = create_player("mpv")
-        return player.play(endpoint)
+    def handle_input(self) -> Union[TwitchPlayableContent, int]:
+        log.info(f"{self.keycode=}")
 
-    player = create_player(player_name)
-    url = URL("https://www.twitch.tv/").join(endpoint)
-    return player.play(url)
+        for keybind in self.menu.keybind.registered_keys:
+            if keybind.code == self.keycode:
+                return keybind.callback()
 
+        if hasattr(self.follow, "live") and self.follow.live:
+            return self.play(self.follow)
 
-def handle_selection_old(
-    client: TwitchClient,
-    prompt: Callable[..., Any],
-    menu: MenuInterface,
-    **kwargs: Any,
-) -> str:
-    code = kwargs.pop("keycode")
-    if code == 0:
-        return extract_username_from_str(kwargs.pop("item"))
-    keybinds: dict[int, Callable[..., Any]] = {
-        keybind.code: keybind.callback for keybind in menu.keybind.list_registered
-    }
-    if code in keybinds:
-        keybinds[code](client, prompt, menu, keybind=keybinds[code], **kwargs)
-    return "<<<ERRORRRRRRR>>>"
+        return self.display_follow_videos()
 
+    def display_follows(self, **kwargs) -> TwitchPlayableContent:
+        self.follows = self.client.follows_merged()
+        follows_to_show = [follow.stringify(self.client.markup) for follow in self.follows.values()]
+        selected, self.keycode = self.prompt(
+            items=follows_to_show,
+            mesg=f"> Showing ({len(self.follows)}) channels",
+        )
 
-def handle_selection(
-    client: TwitchClient,
-    prompt: Callable,
-    menu: MenuInterface,
-    **kwargs,
-) -> str:
-    code = kwargs.pop("keycode")
-    if code == 0:
-        return extract_username_from_str(kwargs.pop("item"))
-    for keybind in menu.keybind.list_registered:
-        if keybind.code == code:
-            keybind.toggle_hidden()
-            return keybind.callback(client, prompt, menu, keybind=keybind, **kwargs)
-    return ""
+        username = helpers.extract_str_from_span(selected)
+        self.follow = self.follows[username]
+        return self.handle_input()
 
+    def display(self, items: Mapping[str, TwitchPlayableContent]) -> TwitchPlayableContent:
+        # FIX: Make a generic method that takes items and mesg for self.prompt
+        to_show = [item.stringify(self.client.markup) for item in items.values()]
+        selected, self.keycode = self.prompt(
+            items=to_show,
+            mesg=f"> Showing ({len(to_show)}) channels",
+        )
 
-def get_launcher(name: str):
-    launchers = {
-        "rofi": Menu.rofi(),
-        "dmenu": Menu.dmenu(),
-        "fzf": Menu.fzf(),
-    }
-    return launchers[name]
+        if self.keycode != 0:
+            self.handle_input()
 
+        username = helpers.extract_str_from_span(selected)
+        self.follow = items[username]
+        return self.follow
 
-def extract_username_from_str(stream_str: str) -> str:
-    log.info("processing: %s", stream_str)
-    live_icon = "●"
-    if live_icon not in stream_str:
-        return stream_str
-    username_start = stream_str.find("● ") + 2
-    username_end = stream_str.find(" ", username_start)
-    log.info("extracted: %s", stream_str[username_start:username_end])
-    return stream_str[username_start:username_end]
+    def display_follow_videos(self) -> int:
+        self.menu.keybind.unregister_all()
+        videos = list(self.client.channels.content.get_videos(self.follow.user_id))
 
+        if len(videos) == 0:
+            mesg = f"No videos found for {self.follow.name}"
+            self.prompt([mesg])
+            log.error(mesg)
+            raise SystemExit(1)
 
-def display_live_follows(
-    client: TwitchClient,
-    prompt: Callable,
-    menu: MenuInterface,
-    **kwargs,
-) -> str:
-    live = [str(channel) for channel in client.channels.followed_streams_live]
-    item, keycode = prompt(
-        items=live,
-        mesg=f"> {len(live)} live channels.",
-        prompt="twitch live>",
-    )
-    return handle_selection(client, prompt, menu, item=item, keycode=keycode)
+        item, keycode = self.prompt(
+            items=[f"{i}:::{item.stringify(self.client.markup)}" for i, item in enumerate(videos)],
+            mesg=f"> Showing ({len(videos)}) videos from channel <{self.follow.name}>",
+        )
 
+        try:
+            idx = helpers.extract_id_from_str(item, sep=":")
+        except ValueError as err:
+            raise SystemExit(f"{item=} not found") from err
+        return self.play(videos[idx])
 
-def display_all_follows(
-    client: TwitchClient,
-    prompt: Callable,
-    menu: MenuInterface,
-    **kwargs,
-) -> str:
-    follows = [str(follow) for follow in client.channels.follows]
-    item, keycode = prompt(items=follows)
-    return handle_selection(client, prompt, menu, item=item, keycode=keycode)
+    def display_follow_clips(self) -> int:
+        self.menu.keybind.unregister_all()
+        clips = self.client.get_follow_clips(self.follow.user_id)
 
+        if len(clips) == 0:
+            mesg = f"No clips found for {self.follow.name}"
+            self.prompt([mesg])
+            log.error(mesg)
+            raise SystemExit(1)
 
-def display_follow_clips(
-    client: TwitchClient,
-    prompt: Callable,
-    menu: MenuInterface,
-    **kwargs,
-) -> str:
-    follow = kwargs.pop("follow")
-    clips = client.clips.get_clips(follow.broadcaster_id)
+        item, keycode = self.prompt(
+            items=list(clips),
+            mesg=f"> Showing ({len(clips)}) clips from channel <{self.follow.name}>",
+        )
 
-    if not clips:
-        raise ValueError("No clips...display_follow_videos")
+        try:
+            idx = helpers.extract_id_from_str(item, sep=":")
+        except ValueError as err:
+            raise SystemExit(f"{item=} not found") from err
 
-    items = {f"({i}) {str(clip)}": clip.url for i, clip in enumerate(clips)}
-    mesg = f"> Showing {len(items)} clips from channel <{follow.broadcaster_name}>"
-    item, code = prompt(items=list(items.keys()), mesg=mesg)
+        return self.play(list(clips.values())[idx])
 
-    if item not in list(items.keys()):
-        raise ValueError(f"{item=} not found")
-    return items[item]
+    def display_categories(self) -> Union[TwitchPlayableContent, int]:
+        self.menu.keybind.toggle_hidden()
+        categories = self.client.follows_categorized()
+        categories_and_len = [f"{c} ({len(categories[c])})" for c in categories]
 
+        category_selected, _ = self.prompt(
+            items=categories_and_len,
+            mesg=f"> Showing ({len(categories_and_len)}) categories",
+            markup=False,
+        )
 
-def display_follow_videos(
-    client: TwitchClient,
-    prompt: Callable,
-    menu: MenuInterface,
-    **kwargs,
-) -> str:
-    follow = kwargs.pop("follow")
-    videos = client.channels.get_videos(follow.broadcaster_id)
+        if category_selected not in categories_and_len:
+            raise ValueError(f"{category_selected=} not found")
 
-    if not videos:
-        raise ValueError("No videos...display_follow_videos")
+        category = re.sub(r"\s*\(\d+\)", "", category_selected)
 
-    items = {f"({i}) {str(video)}": video.url for i, video in enumerate(videos)}
-    item, code = prompt(items=list(items.keys()))
+        log.error(type(categories[category]))
+        log.error(categories[category])
 
-    if item not in list(items.keys()):
-        raise ValueError(f"{item=} not found")
+        follows: list[FollowedChannelInfo] = []
+        for follow_dict in categories[category]:
+            for follow in follow_dict.values():
+                follows.append(follow)
 
-    return items[item]
+        return self.display_follows_by_category(follows)
 
+    def display_follows_by_category(
+        self, follows_by_category: list[FollowedChannelInfo]
+    ) -> Union[TwitchPlayableContent, int]:
+        # FIX: Split it...
+        self.menu.keybind.toggle_hidden(restore=True)
+        online = {}
+        follows_offline = {follow.name: follow for follow in follows_by_category}
+        follows_online = self.client.channels.get_channels_live
 
-def display_follow_info(
-    client: TwitchClient,
-    prompt: Callable,
-    menu: MenuInterface,
-    **kwargs,
-) -> str:
-    username = extract_username_from_str(kwargs.pop("item"))
-    follow = client.channels.get_info_from_username(username)
-    menu.keybind.toggle_all()
+        for live in follows_online:
+            if live.name in follows_offline:
+                follows_offline.pop(live.name)
+                online[live.name] = live
+        final_follows: Mapping[str, TwitchPlayableContent] = dict(online, **follows_offline)
+        follows_to_show = [follow.stringify(self.client.markup) for follow in final_follows.values()]
 
-    if follow is None:
-        log.error("Not found: %s", username)
-        return handle_selection(client, prompt, menu, **kwargs)
+        self.selected, self.keycode = self.prompt(
+            items=follows_to_show,
+            mesg=f"> Showing ({len(final_follows)}) channels",
+        )
 
-    clips_keybind = menu.keybind.add(
-        key="alt-p",
-        description="show clips",
-        callback=display_follow_clips,
-    )
+        username = helpers.extract_str_from_span(self.selected)
+        self.follow = final_follows[username]
+        return self.handle_input()
 
-    videos_keybind = menu.keybind.add(
-        key="alt-v",
-        description="show videos",
-        callback=display_follow_videos,
-    )
+    def play(self, follow: TwitchPlayableContent) -> int:
+        log.warning(f"playing content {follow=}")
+        return self.player.play(follow)
 
-    data = build_data_info(client, follow)
-    item, keycode = prompt(items=data)
-    menu.keybind.toggle_all()
-    clips_keybind.toggle_hidden()
-    videos_keybind.toggle_hidden()
-    return handle_selection(client, prompt, menu, item=item, keycode=keycode, follow=follow)
+    def run(self) -> None:
+        self.display_follows()
+        # follows = self.client.follows_merged()
+        # follow = self.display(follows)
+        # log.info(follow)
+        # __import__("pprint").pprint(follow)
 
+    def json(self, data: Mapping[str, Any]) -> None:
+        json_output = json.dumps([obj.__dict__ for obj in data])
+        print(json_output)
 
-def build_data_info(client: TwitchClient, follow: BroadcasterInfo) -> list[str]:
-    data = []
-    data.append(f"Category: {follow.game_name}")
-    if client.channels.is_online(follow.broadcaster_id):
-        data.append(f"{client.live_icon} Live Stream: {follow.title}")
-    else:
-        data.append(f"Last Stream: {follow.title}")
-    data.append("-" * len(data[1]))
-    # data.append("Videos: Get videos")
-    # data.append("Clips: Get clips")
-    return data
+    def display_by_categories(self) -> Category:
+        self.menu.keybind.toggle_hidden()
+        data = {str(c): c for c in self.client.follows_categorized_beta()}
+        show = list(data)
+
+        item, keycode = self.prompt(
+            items=show,
+            markup=True,
+        )
+
+        log.warning(item)
+        category = item.split("<")[0].strip()
+        log.error(f"{category=}")
+
+        return self.display_items(data[item])
+
+    def display_items(self, category: Category) -> None:
+        self.menu.keybind.toggle_hidden(restore=True)
+        item, self.keycode = self.prompt(
+            items=[item.stringify(self.client.markup) for item in category.channels],
+            markup=True,
+        )
+        username = helpers.extract_str_from_span(item)
+        for channel in category.channels:
+            if channel.name == username:
+                self.follow = channel
+        self.handle_input()

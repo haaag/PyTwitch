@@ -7,9 +7,11 @@ import functools
 import logging
 import sys
 
-from . import app
-from .twitch import TwitchClient
-from .utils import logger
+from pytwitchify import helpers
+from pytwitchify.app import App
+from pytwitchify.client import TwitchClient
+from pytwitchify.player import create_player
+from pytwitchify.utils import logger
 
 
 def main() -> int:
@@ -18,55 +20,79 @@ def main() -> int:
     and App objects, and starts the program by calling show_menu on the App object. If a KeyboardInterrupt exception
     is raised, the program terminates and prints a message to the console.
     """
+
     parser = argparse.ArgumentParser(
-        description="Simple tool menu for watching streams live, video or clips from Twitch."
+        description="Simple tool menu for watching streams live, video or clips from Twitch.",
     )
+
+    markup_group = parser.add_argument_group(title="menu options")
+    markup_group.add_argument("--no-markup", action="store_false", help="Disable pango markup")
+
+    parser.add_argument("-c", "--categories", action="store_true", help="Show by categories/games")
     parser.add_argument("-m", "--menu", choices=["rofi", "dmenu", "fzf"], help="Select a launcher/menu", default="rofi")
-    parser.add_argument("--lines", required=False, help="Show menu lines (default: 15)", nargs="?", default=15)
-    parser.add_argument("-p", "--player", default="streamlink", choices=["streamlink", "mpv"])
-    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose mode")
-    parser.add_argument("--test", help="", action="store_true")
+    parser.add_argument("-l", "--lines", help="Show menu lines (default: 15)", nargs="?", default=15)
+    parser.add_argument("-p", "--player", default="mpv", choices=["streamlink", "mpv"])
+    parser.add_argument("-t", "--test", action="store_true", help="Test mode")
+    parser.add_argument("-d", "--debug", action="store_true", help="Debug mode")
+
     args = parser.parse_args()
 
-    logger.set_logging_level(args.verbose)
+    logger.verbose(args.debug)
+    log = logging.getLogger(__name__)
 
-    menu = app.get_launcher(args.menu)
-    client = TwitchClient()
+    if args.debug:
+        log.info("arguments: %s", vars(args))
+
+    if args.menu in ["fzf", "dmenu"]:
+        args.no_markup = False
+
+    menu = helpers.get_launcher(args.menu)
+    client = TwitchClient(markup=args.no_markup)
+    player = create_player(args.player)
 
     prompt = functools.partial(
         menu.prompt,
-        prompt="twitch>",
+        prompt="Twitch>",
         lines=args.lines,
-        width="55%",
-        height="50%",
-        mesg="Welcome to RofiTwitch",
+        width="65%",
+        height="60%",
+        markup=args.no_markup,
         preview=False,
+        theme="tokyonight",
     )
 
-    menu.keybind.add(
-        key="alt-l",
-        description="for only live",
-        callback=app.display_live_follows,
+    twitch = App(client, prompt, menu, player)
+    twitch.menu.keybind.add(
+        key="alt-c",
+        description="show clips",
+        callback=twitch.display_follow_clips,
     )
-    menu.keybind.add(
+    twitch.menu.keybind.add(
+        key="alt-v",
+        description="show videos",
+        callback=twitch.display_follow_videos,
+    )
+    twitch.menu.keybind.add(
+        key="alt-t",
+        description="show by games/categories",
+        callback=twitch.display_by_categories,
+    )
+    twitch.menu.keybind.add(
         key="alt-a",
-        description="for all follows",
-        callback=app.display_all_follows,
-    )
-    menu.keybind.add(
-        key="alt-i",
-        description="for follow information",
-        callback=app.display_follow_info,
+        description="show channels",
+        callback=twitch.display_follows,
     )
 
     try:
-        channel = app.display_live_follows(client, prompt, menu)
-        app.load_stream(args.player, channel)
+        if args.categories:
+            category = twitch.display_by_categories()
+            twitch.display_items(category)
+            return 0
+        twitch.run()
     except KeyboardInterrupt:
-        logging.info("Terminated by user.")
-        sys.exit(0)
+        log.info("Terminated by user")
     finally:
-        client.api.client.close()
+        client.channels.client.close()
 
     return 0
 

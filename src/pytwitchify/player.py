@@ -6,11 +6,14 @@ import subprocess
 import typing
 from typing import Protocol
 
-from .datatypes import ExecutableNotFoundError
-from .utils.helpers import secure_split
+from pytwitchify import helpers
 
 if typing.TYPE_CHECKING:
-    from httpx import URL
+    from pytwitchify.datatypes import TwitchPlayableContent
+
+
+class ExecutableNotFoundError(Exception):
+    pass
 
 
 class Player(Protocol):
@@ -20,7 +23,7 @@ class Player(Protocol):
     def bin(self) -> str:
         ...
 
-    def play(self, url: str | URL) -> int:
+    def play(self, item: TwitchPlayableContent) -> int:
         ...
 
 
@@ -38,8 +41,8 @@ class StreamLink:
             raise ExecutableNotFoundError(self.name)
         return bin
 
-    def play(self, url: str | URL) -> int:
-        args = secure_split(f"{self.bin} {self.player} {url} {self.quality} {self.disable_ads}")
+    def play(self, item: TwitchPlayableContent) -> int:
+        args = helpers.secure_split(f"{self.bin} {self.player} {item.url} {self.quality}")
         subprocess.call(args, stderr=subprocess.DEVNULL)
         return 0
 
@@ -55,8 +58,8 @@ class Mpv:
             raise ExecutableNotFoundError(self.name)
         return bin
 
-    def play(self, url: str | URL) -> int:
-        args = secure_split(f"{self.bin} {url}")
+    def play(self, item: TwitchPlayableContent) -> int:
+        args = helpers.secure_split(f"{self.bin} {item.url}")
         subprocess.call(args, stderr=subprocess.DEVNULL)
         return 0
 

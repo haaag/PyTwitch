@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import functools
 import logging
 import os
 import sys
+import typing
+import warnings
 from dataclasses import dataclass
 from datetime import datetime
 from datetime import timedelta
-from typing import Generator
 from typing import Iterable
 from typing import Iterator
 from typing import Union
@@ -19,23 +19,27 @@ from dotenv import load_dotenv
 from httpx import URL
 
 from pytwitchify.constants import API_TWITCH_BASE_URL
-from pytwitchify.datatypes import BroadcasterInfo
-from pytwitchify.datatypes import ChannelUserFollows
-from pytwitchify.datatypes import FollowedChannel
-from pytwitchify.datatypes import HeaderTypes
-from pytwitchify.datatypes import QueryParamTypes
-from pytwitchify.datatypes import SearchChannelsAPIResponse
-from pytwitchify.datatypes import TwitchApiResponse
-from pytwitchify.datatypes import TwitchChannelVideo
-from pytwitchify.datatypes import TwitchClip
-from pytwitchify.datatypes import TwitchStreamLive
-from pytwitchify.datatypes import ValidationEnvError
+from pytwitchify.content import FollowedContentClip
+from pytwitchify.content import FollowedContentVideo
+from pytwitchify.follows import FollowedChannel
+from pytwitchify.follows import FollowedChannelInfo
+from pytwitchify.follows import FollowedChannelLive
+from pytwitchify.follows import SearchChannelsAPIResponse
+
+if typing.TYPE_CHECKING:
+    from pytwitchify.datatypes import HeaderTypes
+    from pytwitchify.datatypes import QueryParamTypes
+    from pytwitchify.datatypes import TwitchApiResponse
 
 log = logging.getLogger(__name__)
 
 load_dotenv()
 
 MAX_ITEMS_PER_REQUEST = 100
+
+
+class ValidationEnvError(Exception):
+    pass
 
 
 @dataclass
@@ -47,9 +51,7 @@ class TwitchApiCredentials:
     def __post_init__(self):
         credentials = [self.access_token, self.client_id, self.user_id]
         if not all(env_var is not None and env_var != "" for env_var in credentials):
-            msg = "There's something wrong with the .env file"
-            log.error("%s", msg)
-            raise ValidationEnvError(msg)
+            raise ValidationEnvError("There's something wrong with the .env file")
 
 
 class TwitchAPI:
@@ -58,7 +60,7 @@ class TwitchAPI:
 
     def __init__(self) -> None:
         self.credentials = self.validate_credentials()
-        self.base_url = URL("https://api.twitch.tv/helix/")
+        self.base_url = API_TWITCH_BASE_URL
         self.client = httpx.Client(headers=self._get_request_headers)
 
     def validate_credentials(self) -> TwitchApiCredentials:
@@ -84,103 +86,44 @@ class TwitchAPI:
         quantity: int = 0,
     ) -> TwitchApiResponse:
         url = self.base_url.join(endpoint_url)
+
         query_params["first"] = MAX_ITEMS_PER_REQUEST
         log.debug("Params: %s", query_params)
         response = self.client.get(url, params=query_params)
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
-            error_msg = f"[bold red blink]Error response {exc.response.status_code} {exc.request.url}[/]"
-            log.error("%s", error_msg)
+            error_msg = f"Error response {exc.response.status_code} {exc.request.url}"
+            log.error(error_msg)
             sys.exit(1)
         else:
             data = response.json()
             quantity += len(data["data"])
 
         if data.get("pagination") and limit > quantity:
-            query_params["after"] = data["pagination"]["cursor"]  # type: ignore
+            query_params["after"] = data["pagination"]["cursor"]
             more_data = self.request_get(endpoint_url, query_params, quantity=quantity)["data"]
             if limit > quantity:
                 data["data"] += more_data
         return data
 
 
-class ChannelsAPI(TwitchAPI):
-    """
-    A class for interacting with the Twitch Channels API.
-
-    The Channels API allows users to retrieve information about channels,
-    search for channels, and get a list of channels that the user follows.
-    """
-
-    @property
-    def followed_streams_live(self) -> TwitchStreams:
-        """
-        Gets a list of live streams of broadcasters that the specified user follows.
-
-        Returns:
-            TwitchStreams: A list of live streams.
-        """
-        # https://dev.twitch.tv/docs/api/reference#get-followed-streams
-        log.debug("Getting a list of live streams")
-        endpoint = URL("streams/followed")
-        params = {"user_id": self.credentials.user_id}
-        channels = self.request_get(endpoint, params)
-        return [TwitchStreamLive(**streamer) for streamer in channels["data"]]
-
-    @property
-    def follows(self) -> Iterable[ChannelUserFollows]:
-        """
-        Gets information about channels that user follows.
-
-        Returns:
-            Iterable[ChannelUserFollows]: An iterable containing information about the channels that the user follows.
-        """
-        # https://dev.twitch.tv/docs/api/reference#get-users-follows
-        log.debug("[yellow bold]Getting list that user follows.[/]")
-        endpoint = URL("users/follows")
-        params = {"from_id": self.credentials.user_id}
-        data = self.request_get(endpoint, params)["data"]
-        return [ChannelUserFollows(**user) for user in data]
-
-    def information(self, user_id: str) -> BroadcasterInfo:
-        """
-        Gets information about one channel.
-
-        Args:
-            user_id (str): The ID of the broadcaster.
-
-        Returns:
-            BroadcasterInfo: Information about the specified broadcaster.
-        """
-        # https://dev.twitch.tv/docs/api/reference#get-channel-information
-        log.debug("Getting information about channel")
-        endpoint = URL("channels")
-        params = {"broadcaster_id": user_id}
+class ContentAPI(TwitchAPI):
+    def get_clips(self, user_id: str) -> Iterator[FollowedContentClip]:
+        """Gets one or more video clips that were captured from streams."""
+        # https://dev.twitch.tv/docs/api/reference#get-clips
+        ended_at = datetime.now().isoformat() + "Z"
+        started_at = (datetime.now() - timedelta(days=7)).isoformat() + "Z"
+        endpoint = URL("clips")
+        params = {
+            "broadcaster_id": user_id,
+            "started_at": started_at,
+            "ended_at": ended_at,
+        }
         data = self.request_get(endpoint, params)
-        return BroadcasterInfo(**data["data"][0])
+        return (FollowedContentClip(**clip) for clip in data["data"])
 
-    def search(self, query: str, live_only: bool = True) -> Iterable[SearchChannelsAPIResponse]:
-        """
-        Gets the channels that match the specified query.
-
-        Args:
-            query (str): The search query.
-            live_only (bool, optional): A flag indicating whether to search only for live channels (default is True).
-            maximum_items (int, optional): The maximum number of items to return (default is 20).
-
-        Returns:
-            Iterable[SearchChannelsAPIResponse]: An iterable containing information about the
-            channels that match the search query.
-        """
-        # https://dev.twitch.tv/docs/api/reference#search-channels
-        endpoint = URL("search/channelsss")
-        params = {"query": query, "live_only": live_only}
-        data = self.request_get(endpoint, params)
-        return [SearchChannelsAPIResponse(**streamer) for streamer in data["data"]]
-
-    @functools.lru_cache
-    def get_videos(self, user_id: str, highlight: bool = False) -> Generator[TwitchChannelVideo, None, None]:
+    def get_videos(self, user_id: str, highlight: bool = False) -> Iterator[FollowedContentVideo]:
         """
         Gets information about one or more published videos.
 
@@ -197,34 +140,117 @@ class ChannelsAPI(TwitchAPI):
         if highlight:
             params["type"] = "highlight"
         data = self.request_get(endpoint, params)
-        return (TwitchChannelVideo(**video) for video in data["data"])
+        return (FollowedContentVideo(**video) for video in data["data"])
 
-    def is_online(self, user_id: str) -> bool:
+
+class ChannelsAPI(TwitchAPI):
+    content = ContentAPI()
+    """
+    A class for interacting with the Twitch Channels API.
+
+    The Channels API allows users to retrieve information about channels,
+    search for channels, and get a list of channels that the user follows.
+    """
+
+    def get_channels_live_beta(self) -> Iterable[FollowedChannelLive]:
+        """
+        Gets a list of live streams of broadcasters that the specified user follows.
+
+        Returns:
+            TwitchStreams: A list of live streams.
+        """
+        # https://dev.twitch.tv/docs/api/reference#get-followed-streams
+        log.debug("Getting a list of live streams")
+        endpoint = URL("streams/followed")
+        params = {"user_id": self.credentials.user_id}
+        channels = self.request_get(endpoint, params)
+        return [FollowedChannelLive(**streamer) for streamer in channels["data"]]
+
+    @property
+    def get_channels_live(self) -> Iterable[FollowedChannelLive]:
+        """
+        Gets a list of live streams of broadcasters that the specified user follows.
+
+        Returns:
+            TwitchStreams: A list of live streams.
+        """
+        # https://dev.twitch.tv/docs/api/reference#get-followed-streams
+        log.debug("Getting a list of live streams")
+        endpoint = URL("streams/followed")
+        params = {"user_id": self.credentials.user_id}
+        channels = self.request_get(endpoint, params)
+        return [FollowedChannelLive(**streamer) for streamer in channels["data"]]
+
+    @property
+    def channels(self) -> Iterable[FollowedChannel]:
+        # https://dev.twitch.tv/docs/api/reference/#get-followed-channels
+        log.debug("getting list that user follows")
+        endpoint = URL("channels/followed")
+        params = {"user_id": self.credentials.user_id}
+        data = self.request_get(endpoint, params)["data"]
+        return [FollowedChannel(**follow) for follow in data]
+
+    def get_channel_info(self, user_id: str) -> FollowedChannelInfo:
+        """Fetches information about one channel."""
+        # https://dev.twitch.tv/docs/api/reference#get-channel-information
+        log.debug("Getting information about channel")
+        endpoint = URL("channels")
+        params = {"broadcaster_id": user_id}
+        data = self.request_get(endpoint, params)
+        return FollowedChannelInfo(**data["data"][0])
+
+    def get_channels_info(self, broadcaster_ids: list[str]) -> list[FollowedChannelInfo]:
+        """
+        Fetches information about list channels.
+
+        Args:
+            broadcaster_ids (str): The ID of the broadcaster.
+        """
+        # https://dev.twitch.tv/docs/api/reference#get-channel-information
+        endpoint = URL("channels")
+        params = {"broadcaster_id": broadcaster_ids}
+        data = self.request_get(endpoint, params)["data"]
+        return [FollowedChannelInfo(**broadcaster) for broadcaster in data]
+
+    def search(self, query: str, live_only: bool = True) -> Iterable[SearchChannelsAPIResponse]:
+        """
+        Gets the channels that match the specified query.
+
+        Args:
+            query (str): The search query.
+            live_only (bool, optional): A flag indicating whether to search only for live channels (default is True).
+            maximum_items (int, optional): The maximum number of items to return (default is 20).
+
+        Returns:
+            Iterable[SearchChannelsAPIResponse]: An iterable containing information about the
+            channels that match the search query.
+        """
+        # https://dev.twitch.tv/docs/api/reference#search-channels
+        endpoint = URL("search/channels")
+        params = {"query": query, "live_only": live_only}
+        data = self.request_get(endpoint, params)
+        return [SearchChannelsAPIResponse(**streamer) for streamer in data["data"]]
+
+    def is_channel_online_by_userid(self, user_id: Union[str, list[str]]) -> bool:
         """Check if a user is currently streaming on Twitch."""
         # https://dev.twitch.tv/docs/api/reference#get-streams
         endpoint = URL("streams")
         params = {"user_id": user_id}
+        # FIX:
+        data = self.request_get(endpoint, params)["data"]
+        __import__("pprint").pprint(data)
         return bool(self.request_get(endpoint, params)["data"])
 
-    def get_info_from_username(self, username: str) -> Optional[BroadcasterInfo]:
-        for channel in self.follows:
-            if channel.to_name == username:
-                return self.information(channel.to_id)
-        return None
+    def is_channel_online(self, user_name: str) -> bool:
+        """Check if a user is currently streaming on Twitch."""
+        # https://dev.twitch.tv/docs/api/reference#get-streams
+        user = self.get_channel_info_by_username(user_name)
+        return self.is_channel_online_by_userid(user.user_id)
 
-
-class ClipsAPI(TwitchAPI):
-    @functools.lru_cache
-    def get_clips(self, user_id: str) -> Iterator[TwitchClip]:
-        """Gets one or more video clips that were captured from streams."""
-        # https://dev.twitch.tv/docs/api/reference#get-clips
-        ended_at = datetime.now().isoformat() + "Z"
-        started_at = (datetime.now() - timedelta(days=7)).isoformat() + "Z"
-        endpoint = URL("clips")
-        params = {
-            "broadcaster_id": user_id,
-            "started_at": started_at,
-            "ended_at": ended_at,
-        }
-        data = self.request_get(endpoint, params)
-        return (TwitchClip(**clip) for clip in data["data"])
+    def get_channel_info_by_username(self, user_name: str) -> FollowedChannelInfo:
+        log.debug("getting '%s' user info", user_name)
+        follows = {channel.name: channel for channel in self.channels}
+        if user_name not in follows:
+            log.error("user='%s' not found", user_name)
+            raise ValueError(f"'{user_name=} not found")
+        return self.get_channel_info(follows[user_name].user_id)
