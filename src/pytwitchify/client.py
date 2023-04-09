@@ -10,7 +10,8 @@ from typing import Iterator
 from typing import Mapping
 from typing import Optional
 
-from pytwitchify import api, helpers
+from pytwitchify import api
+from pytwitchify import helpers
 from pytwitchify.follows import Category
 
 if typing.TYPE_CHECKING:

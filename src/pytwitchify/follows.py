@@ -223,17 +223,3 @@ class SearchChannelsAPIResponse(NamedTuple):
     tag_ids: list[str]
     thumbnail_url: str
     title: str
-
-
-class ChannelUserFollows(NamedTuple):
-    # FIX: Deprecated (delete_me)
-    from_id: str
-    from_login: str
-    from_name: str
-    to_id: str
-    to_login: str
-    to_name: str
-    followed_at: str
-
-    def __str__(self) -> str:
-        return self.to_name

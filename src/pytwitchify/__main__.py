@@ -61,6 +61,7 @@ def main() -> int:
     )
 
     twitch = App(client, prompt, menu, player)
+
     twitch.menu.keybind.add(
         key="alt-c",
         description="show clips",

@@ -176,10 +176,6 @@ class App:
 
     def run(self) -> None:
         self.display_follows()
-        # follows = self.client.follows_merged()
-        # follow = self.display(follows)
-        # log.info(follow)
-        # __import__("pprint").pprint(follow)
 
     def json(self, data: Mapping[str, Any]) -> None:
         json_output = json.dumps([obj.__dict__ for obj in data])
