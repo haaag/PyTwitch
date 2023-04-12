@@ -8,15 +8,16 @@ import typing
 
 from pytwitchify import helpers
 
-if typing.TYPE_CHECKING:
-    from pytwitchify.datatypes import TwitchPlayableContent
-
-
 log = logging.getLogger(__name__)
 
 
 class ExecutableNotFoundError(Exception):
     pass
+
+
+class TwitchPlayableContent(typing.Protocol):
+    name: str
+    url: str
 
 
 class Player:

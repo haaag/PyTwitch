@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
 from typing import Any
 from typing import Optional
@@ -9,6 +10,8 @@ from typing import Optional
 from pyselector.markup import PangoSpan
 
 from pytwitchify import helpers
+from pytwitchify.constants import SEPARATOR
+from pytwitchify.constants import TITLE_MAX_LENGTH
 
 
 @dataclass
@@ -32,19 +35,30 @@ class FollowedContentClip:
     markup: bool = True
 
     @property
+    def key(self) -> str:
+        return self.id[:10]
+
+    @property
+    def user_id(self) -> str:
+        return self.broadcaster_id
+
+    @property
     def name(self) -> str:
-        return self.broadcaster_name
+        return self.creator_name
+
+    @property
+    def sep(self) -> str:
+        return PangoSpan(SEPARATOR, alpha="100%") if self.markup else SEPARATOR
 
     @property
     def title_str(self) -> str:
-        max_len = 65
-        title = self.title[: max_len - 3] + "..." if len(self.title) > max_len else self.title
+        title = self.title[: TITLE_MAX_LENGTH - 3] + "..." if len(self.title) > TITLE_MAX_LENGTH else f"{self.title} "
         if self.markup:
             title = helpers.remove_punctuation_escape_ampersand(title)
         return PangoSpan(title, size="large", foreground="silver") if self.markup else title
 
     @property
-    def viewers(self) -> str:
+    def viewers_fmt(self) -> str:
         viewers = f"views: {helpers.format_number(self.view_count)}"
         return PangoSpan(viewers, size="medium", weight="light") if self.markup else viewers
 
@@ -54,29 +68,16 @@ class FollowedContentClip:
         return PangoSpan(duration, size="medium", weight="light") if self.markup else duration
 
     @property
-    def user_id(self) -> str:
-        return self.broadcaster_id
-
-    @property
-    def created_by(self) -> str:
-        creator = f" [{self.creator_name}] "
-        return (
-            PangoSpan(creator, size="medium", weight="light", foreground="grey", style="italic")
-            if self.markup
-            else creator
-        )
-
-    def __str__(self) -> str:
-        return f"{self.title_str}{self.created_by}{self.created_date} ({self.duration_fmt} | {self.viewers})"
+    def item_id(self) -> str:
+        return PangoSpan(self.key, foreground="grey") if self.markup else self.key
 
     @property
     def created_date(self) -> str:
         created = helpers.format_datetime(self.created_at)
-        return PangoSpan(created, size="x-large", foreground="orange", sub=True) if self.markup else created
+        return PangoSpan(created, size="large", foreground="orange", sub=True) if self.markup else created
 
-    def stringify(self, markup: bool = True) -> str:
-        self.markup = markup
-        return self.__str__()
+    def __str__(self) -> str:
+        return f"{self.item_id}{self.sep}{self.created_date} {self.title_str} ({self.duration_fmt}{self.sep}{self.viewers_fmt})"
 
 
 @dataclass
@@ -101,19 +102,26 @@ class FollowedContentVideo:
     markup: bool = True
 
     @property
+    def key(self) -> str:
+        return self.stream_id
+
+    @property
     def name(self) -> str:
         return self.user_name
 
     @property
+    def sep(self) -> str:
+        return PangoSpan(SEPARATOR, alpha="100%") if self.markup else SEPARATOR
+
+    @property
     def title_str(self) -> str:
-        max_len = 65
-        title = self.title[: max_len - 3] + "..." if len(self.title) > max_len else self.title
+        title = self.title[: TITLE_MAX_LENGTH - 3] + "..." if len(self.title) > TITLE_MAX_LENGTH else f"{self.title} "
         if self.markup:
             title = helpers.remove_punctuation_escape_ampersand(title)
         return PangoSpan(title, size="large", foreground="silver") if self.markup else title
 
     @property
-    def viewers(self) -> str:
+    def viewers_fmt(self) -> str:
         viewers = helpers.format_number(self.view_count)
         return PangoSpan(viewers, size="medium", weight="light") if self.markup else viewers
 
@@ -121,23 +129,14 @@ class FollowedContentVideo:
     def duration_fmt(self) -> str:
         return PangoSpan(self.duration, size="medium", weight="light") if self.markup else self.duration
 
-    def data(self) -> str:
-        info = f" (duration: {self.duration_fmt} | views: {self.viewers}) "
-        return PangoSpan(info, size="medium", weight="light", foreground="grey") if self.markup else info
-
-    def __str__(self) -> str:
-        return f"{self.title_str} {self.created_time}{self.data()}"
+    @property
+    def video_str(self) -> str:
+        return PangoSpan(self.key, size="small", foreground="grey") if self.markup else self.key
 
     @property
-    def created_time(self) -> str:
+    def created_date(self) -> str:
         created = helpers.format_datetime(self.created_at)
         return PangoSpan(created, size="x-large", foreground="orange", sub=True) if self.markup else created
 
-    def stringify(self, markup: bool = True) -> str:
-        self.markup = markup
-        return self.__str__()
-
-
-@dataclass
-class Game:
-    pass
+    def __str__(self) -> str:
+        return f"{self.video_str}{self.sep}{self.title_str} ({self.duration_fmt} | {self.viewers_fmt})"

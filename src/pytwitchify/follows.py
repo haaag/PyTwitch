@@ -12,7 +12,9 @@ from pytwitchify import helpers
 from pytwitchify.constants import API_TWITCH_BASE_URL
 from pytwitchify.constants import LIVE_ICON
 from pytwitchify.constants import LIVE_ICON_COLOR
+from pytwitchify.constants import SEPARATOR
 from pytwitchify.constants import STREAM_TWITCH_BASE_URL
+from pytwitchify.constants import TITLE_MAX_LENGTH
 
 
 @dataclass
@@ -39,6 +41,17 @@ class FollowedChannelInfo:
         return self.broadcaster_id
 
     @property
+    def sep(self) -> str:
+        return PangoSpan(SEPARATOR, alpha="100%") if self.markup else SEPARATOR
+
+    def __str__(self) -> str:
+        user = PangoSpan(self.name, weight="bold", size="large") if self.markup else self.name
+        offline = (
+            PangoSpan("Offline", foreground="grey", size="x-large", sub=True, alpha="45%") if self.markup else "Offline"
+        )
+        return f"{user}{self.sep}{self.offline_icon} {offline}"
+
+    @property
     def url(self) -> str:
         return str(API_TWITCH_BASE_URL.join(self.broadcaster_name))
 
@@ -49,13 +62,6 @@ class FollowedChannelInfo:
     @property
     def offline_icon(self) -> str:
         return PangoSpan(LIVE_ICON, foreground="grey", size="large", alpha="50%") if self.markup else LIVE_ICON
-
-    def stringify(self, markup: bool = True) -> str:
-        self.markup = markup
-        username = f"{self.name} {self.offline_icon}"
-        user = PangoSpan(username, weight="bold", size="large") if self.markup else username
-        offline = PangoSpan("Offline", foreground="grey", size="x-large", sub=True, alpha="45%") if self.markup else ""
-        return f"{user} {offline}"
 
 
 @dataclass
@@ -90,16 +96,9 @@ class FollowedChannel:
     def url(self) -> str:
         return str(STREAM_TWITCH_BASE_URL.join(self.broadcaster_name))
 
-    def stringify(self, markup: bool = True) -> str:
-        self.markup = markup
-        username = f"{self.name} {self.offline_icon}"
-        user = PangoSpan(username, weight="bold", size="large", alpha="50%") if self.markup else username
-        offline = PangoSpan("Offline", foreground="grey", size="x-large", sub=True, alpha="45%") if self.markup else ""
-        return f"{user} {offline}"
-
 
 @dataclass
-class FollowedChannelLive:
+class FollowedStream:
     id: str
     game_id: str
     game_name: str
@@ -125,16 +124,20 @@ class FollowedChannelLive:
     def name(self) -> str:
         return self.user_name
 
+    @property
+    def sep(self) -> str:
+        return PangoSpan(SEPARATOR, alpha="100%") if self.markup else SEPARATOR
+
     def __str__(self) -> str:
-        return self.user_name
+        user = PangoSpan(self.name, weight="bold", size="large") if self.markup else self.name
+        return f"{user}{self.sep}{self.live_icon} {self.viewers_fmt} {self.title_str} {self.live_since} {self.category}"
 
     @property
     def title_str(self) -> str:
-        max_len = 80
-        title = self.title[: max_len - 3] + "..." if len(self.title) > max_len else self.title
+        title = self.title[: TITLE_MAX_LENGTH - 3] + "..." if len(self.title) > TITLE_MAX_LENGTH else self.title
         if self.markup:
             title = helpers.clean_string(title)
-        return PangoSpan(title, size="medium", foreground="grey") if self.markup else title
+        return PangoSpan(title, size="large", foreground="grey") if self.markup else title
 
     @property
     def live_since(self) -> str:
@@ -146,7 +149,7 @@ class FollowedChannelLive:
         return PangoSpan(LIVE_ICON, foreground=LIVE_ICON_COLOR, size="large") if self.markup else LIVE_ICON
 
     @property
-    def viewers(self) -> str:
+    def viewers_fmt(self) -> str:
         viewers = helpers.format_number(self.viewer_count)
         return PangoSpan(viewers, size="small", weight="bold", foreground=LIVE_ICON_COLOR) if self.markup else viewers
 
@@ -159,67 +162,49 @@ class FollowedChannelLive:
         game = helpers.clean_string(self.game_name)
         return PangoSpan(game, foreground="orange", size="x-large", sub=True) if self.markup else self.game_name
 
-    def stringify(self, markup: bool = True) -> str:
-        self.markup = markup
-        user = PangoSpan(self.name, weight="bold", size="large") if self.markup else self.name
-        return f"{user} {self.live_icon} {self.viewers} {self.title_str} {self.live_since} {self.category}"
-
 
 @dataclass
 class Category:
     name: str
-    channels: list[Union[FollowedChannel, FollowedChannelLive, FollowedChannelInfo]]
+    channels: dict[str, Union[FollowedStream, FollowedChannelInfo]]
     markup: bool = True
+
+    def __hash__(self) -> int:
+        return hash(self.name)
 
     @property
     def online(self) -> int:
-        return sum(1 for c in self.channels if c.live)
+        return sum(1 for c in self.channels.values() if c.live)
 
     @property
-    def length(self) -> int:
-        return len(self.channels)
-
-    @property
-    def viewers(self) -> str:
+    def viewers_fmt(self) -> str:
         if self.online == 0:
             return ""
-        viewers_fmt = helpers.format_number(sum(c.viewer_count for c in self.channels))
-        viewers = f"({viewers_fmt} viewers)"
+        viewers_str = helpers.format_number(sum(c.viewer_count for c in self.channels.values()))
+        viewers = f"{viewers_str} viewers"
         return PangoSpan(viewers, size="small", weight="bold", foreground="grey") if self.markup else viewers
 
     @property
     def online_str(self) -> str:
         if self.online == 0:
             return ""
-        live = f"channels {LIVE_ICON} {self.online}"
-        return PangoSpan(live, foreground=LIVE_ICON_COLOR, size="small", weight="bold") if self.markup else live
+        live = f"{LIVE_ICON} {self.online}"
+        return PangoSpan(live, foreground=LIVE_ICON_COLOR, size="medium", weight="bold") if self.markup else live
 
     @property
     def name_str(self) -> str:
         return PangoSpan(self.name, weight="bold", size="large") if self.markup else self.name
 
+    @property
+    def sep(self) -> str:
+        return PangoSpan(SEPARATOR, alpha="100%") if self.markup else SEPARATOR
+
     def __str__(self) -> str:
-        return f"{self.name_str} {self.online_str} {self.viewers}" if self.viewers and self.markup else self.name
-
-    def stringify(self, markup: bool = True) -> str:
-        self.markup = markup
-        return (
-            PangoSpan(helpers.clean_string(self.name), foreground="grey", size="x-large", sub=True)
-            if self.markup
-            else self.name
+        offline = (
+            PangoSpan("Offline", foreground="grey", size="x-large", sub=True, alpha="45%") if self.markup else "Offline"
         )
-
-
-class SearchChannelsAPIResponse(NamedTuple):
-    id: str
-    game_id: str
-    game_name: str
-    broadcaster_language: str
-    broadcaster_login: str
-    display_name: str
-    is_live: bool
-    started_at: str
-    tags: list[str]
-    tag_ids: list[str]
-    thumbnail_url: str
-    title: str
+        return (
+            f"{self.name_str}{self.sep}{self.online_str} {self.viewers_fmt}"
+            if self.online
+            else f"{self.name_str}{self.sep}{LIVE_ICON} {offline}"
+        )

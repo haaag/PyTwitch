@@ -7,10 +7,18 @@ import functools
 import logging
 
 from pytwitchify import helpers
+from pytwitchify import logger
 from pytwitchify.app import App
+from pytwitchify.app import Keys
 from pytwitchify.client import TwitchClient
 from pytwitchify.player import create_player
-from pytwitchify.utils import logger
+
+keybinds = Keys(
+    channels="alt-a",
+    categories="alt-t",
+    clips="alt-c",
+    videos="alt-v",
+)
 
 
 def main() -> int:
@@ -57,43 +65,37 @@ def main() -> int:
         height="60%",
         markup=args.no_markup,
         preview=False,
-        theme="tokyonight",
     )
 
-    twitch = App(client, prompt, menu, player)
-
+    twitch = App(client, prompt, menu, player, keybinds)
+    twitch.menu.keybind.add(
+        key="alt-a",
+        description="show channels",
+        callback=twitch.get_channels_and_streams,
+    )
+    twitch.menu.keybind.add(
+        key="alt-t",
+        description="show by games",
+        callback=twitch.show_categories,
+    )
     twitch.menu.keybind.add(
         key="alt-c",
         description="show clips",
-        callback=twitch.display_follow_clips,
+        callback=twitch.get_channel_clips,
     )
     twitch.menu.keybind.add(
         key="alt-v",
         description="show videos",
-        callback=twitch.display_follow_videos,
-    )
-    twitch.menu.keybind.add(
-        key="alt-t",
-        description="show by games/categories",
-        callback=twitch.display_by_categories,
-    )
-    twitch.menu.keybind.add(
-        key="alt-a",
-        description="show channels",
-        callback=twitch.display_follows,
+        callback=twitch.get_channel_videos,
     )
 
     try:
-        if args.categories:
-            category = twitch.display_by_categories()
-            twitch.display_items(category)
-            return 0
-        twitch.run()
+        item = twitch.run()
+        twitch.play(item)
     except KeyboardInterrupt:
         log.info("Terminated by user")
     finally:
-        client.channels.client.close()
-
+        client.api.client.close()
     return 0
 
 

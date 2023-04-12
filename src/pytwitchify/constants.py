@@ -6,6 +6,9 @@ from typing import Text
 
 from httpx import URL
 
+# others
+TITLE_MAX_LENGTH = 50
+
 # api
 STREAM_TWITCH_BASE_URL = URL("https://www.twitch.tv/")
 API_TWITCH_BASE_URL = URL("https://api.twitch.tv/helix/")
@@ -23,9 +26,14 @@ EYE: Text = "\U0001F441"
 HEART: Text = "\u2665"
 BELL: Text = "\uf0f3"
 UNBELL: Text = "\uf1f6"
+HYPHEN_BULLET: Text = "\u2043"
+NOBREAK_SPACE: Text = "\u00A0"
+MIDDLE_DOT: Text = "\u00B7"
+BROKEN_BAR: Text = "\u00A6"
 
 # icons
 LIVE_ICON = CIRCLE
+SEPARATOR = f" {MIDDLE_DOT} "
 
 # colors
 RED: str = "#CC241D"

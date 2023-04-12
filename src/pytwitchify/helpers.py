@@ -6,14 +6,27 @@ import logging
 import re
 import shlex
 import string
-import sys
+import time
 from datetime import datetime
 from datetime import timezone
+from functools import wraps
 from typing import Callable
 
 from pyselector import Menu
 
 log = logging.getLogger(__name__)
+
+
+def timeit(func: Callable) -> Callable:
+    @wraps(func)
+    def inner(*args, **kwargs):
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        elapsed = time.perf_counter() - start
+        log.info("execution time: '%s': %s seconds", func.__name__, elapsed)
+        return result
+
+    return inner
 
 
 def date_diff_in_seconds(dt2: datetime, dt1: datetime) -> int:
@@ -41,51 +54,13 @@ def calculate_live_time(dt: str) -> str:
     return f"{live_since} ago"
 
 
-def display_no_results_msg(mesg: str, prompt: Callable) -> int:
-    log.warning(mesg)
-    prompt(items=[mesg])
-    sys.exit(1)
-
-
-def extract_id_from_str(item: str, sep: str) -> int:
-    """Extracts the ID number from a string that represents a video title."""
-    if not item[0].isdigit():
-        log.info("extract_id_from_str: not a valid item='%s'", item)
-        raise ValueError("Not a valid item")
-    return int(item.split(sep)[0])
-
-
-def extract_username_from_str(stream_str: str, search_for: str) -> str:
-    if not stream_str.startswith(search_for):
-        return stream_str
-    log.debug("extract_username_from_str '%s'", stream_str)
-    return stream_str.split()[1]
-
-
-def extract_str_from_span(s: str) -> str:
-    log.debug("processing string '%s'", s)
-    pattern = re.compile(r"<.*?>")
-    string = re.sub(pattern, "", s)
-    log.debug("username extracted '%s'", string.split()[0])
-    return string.split()[0]
-
-
-def extract_username(string: str) -> str:
-    log.info("extract_username_from_span '%s'", string)
-    match = re.search(r"<span\s.*?>(.*?)</span>", string)
+def extract_key_from_str(s: str, sep: str) -> str:
+    log.debug("extracting from=%s", s)
+    s = s.split(sep)[0]
+    match = re.search(r"<span\s.*?>(.*?)</span>", s)
     if match:
-        log.info("username extracted: '%s'", match.group(1))
-        return match.group(1)
-    return string
-
-
-def remove_span_and_extract_username(stream_str: str, search_for: str) -> str:
-    if not stream_str.startswith(search_for):
-        return stream_str
-    log.debug("extract_username_from_str '%s'", stream_str)
-    pattern = re.compile(r"<.*?>")
-    string = re.sub(pattern, "", stream_str)
-    return string.split()[1]
+        s = match.group(1)
+    return s
 
 
 def remove_emojis(string: str) -> str:
@@ -104,7 +79,7 @@ def remove_emojis(string: str) -> str:
 
 
 def clean_string(s):
-    for char in "<>#$%^*()_+":
+    for char in "<>#%^*()_+":
         s = s.replace(char, "")
     return s.replace("&", "&amp;")
 
@@ -146,7 +121,3 @@ def get_launcher(name: str):
         "fzf": Menu.fzf(),
     }
     return launchers[name]
-
-
-def sort_by_key(key: str, items: list[dict[str, str]]) -> list[dict[str, str]]:
-    return sorted(items, key=lambda x: x[key])

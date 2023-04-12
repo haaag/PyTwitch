@@ -38,6 +38,6 @@ handler.setFormatter(CustomFormatter())
 
 def verbose(verbose: bool = False) -> None:
     logging.basicConfig(
-        level=logging.DEBUG if verbose else logging.INFO,
+        level=logging.DEBUG if verbose else logging.ERROR,
         handlers=[handler],
     )

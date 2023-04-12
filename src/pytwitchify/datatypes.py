@@ -11,7 +11,7 @@ from pytwitchify.content import FollowedContentClip
 from pytwitchify.content import FollowedContentVideo
 from pytwitchify.follows import FollowedChannel
 from pytwitchify.follows import FollowedChannelInfo
-from pytwitchify.follows import FollowedChannelLive
+from pytwitchify.follows import FollowedStream
 
 QueryParamTypes = MutableMapping[str, Any]
 
@@ -19,10 +19,6 @@ HeaderTypes = Mapping[str, Any]
 
 TwitchApiResponse = Mapping[str, Any]
 
-TwitchChannel = Union[FollowedChannel, FollowedChannelLive, FollowedChannelInfo]
+TwitchChannel = Union[FollowedChannel, FollowedStream, FollowedChannelInfo]
 
 TwitchContent = Union[FollowedContentClip, FollowedContentVideo]
-
-TwitchPlayableContent = Union[FollowedChannelLive, TwitchContent]
-
-FollowsByCategory = dict[str, list[dict[str, Union[FollowedChannelInfo, int]]]]

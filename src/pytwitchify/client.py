@@ -3,131 +3,134 @@
 from __future__ import annotations
 
 import logging
-import typing
-from collections import defaultdict
 from typing import Iterable
-from typing import Iterator
-from typing import Mapping
 from typing import Optional
+from typing import Union
 
-from pytwitchify import api
 from pytwitchify import helpers
+from pytwitchify.api import TwitchApi
+from pytwitchify.content import FollowedContentClip
+from pytwitchify.content import FollowedContentVideo
 from pytwitchify.follows import Category
-
-if typing.TYPE_CHECKING:
-    from pytwitchify.content import FollowedContentClip
-    from pytwitchify.content import FollowedContentVideo
-    from pytwitchify.datatypes import TwitchChannel
-    from pytwitchify.datatypes import TwitchContent
-    from pytwitchify.follows import FollowedChannel
-    from pytwitchify.follows import FollowedChannelInfo
+from pytwitchify.follows import FollowedChannel
+from pytwitchify.follows import FollowedChannelInfo
+from pytwitchify.follows import FollowedStream
+from pytwitchify.helpers import timeit
 
 log = logging.getLogger(__name__)
 
 
+def group_channels_by_game(
+    channels: dict[str, Union[FollowedChannelInfo, FollowedStream]]
+) -> dict[str, dict[str, Union[FollowedChannelInfo, FollowedStream]]]:
+    output: dict[str, dict[str, Union[FollowedChannelInfo, FollowedStream]]] = {}
+    for channel_name, channel in channels.items():
+        if not channel.game_name:
+            continue
+        game_name = helpers.clean_string(channel.game_name)
+        if game_name not in output:
+            output[game_name] = {}
+        output[game_name][channel_name] = channel
+    return output
+
+
+@timeit
+def merge_data(
+    channels: dict[str, FollowedChannelInfo],
+    streams: dict[str, FollowedStream],
+) -> dict[str, Union[FollowedChannelInfo, FollowedStream]]:
+    """Merge followed channels with the list of currently live channels."""
+    log.info("merging channels and streams from 'get_channels_and_streams'")
+    online = {}
+    channels = channels
+    for live in streams.values():
+        channels.pop(live.name, None)
+        online[live.name] = live
+    return {**online, **channels}
+
+
 class TwitchClient:
     def __init__(self, markup: bool = True) -> None:
-        self.channels = api.ChannelsAPI()
-        self._follows: Optional[Iterable[FollowedChannel]] = None
-        self._follows_dict: Optional[dict[str, FollowedChannel]] = None
         self.markup = markup
+        self.api = TwitchApi()
+        self._channels: Optional[dict[str, FollowedChannelInfo]] = None
+        self._streams: Optional[dict[str, FollowedStream]] = None
+        self._games: Optional[dict[str, Category]] = None
+        self._channels_and_streams: dict[str, Union[FollowedChannelInfo, FollowedStream]] = {}
+        self.online: int = 0
 
     @property
+    def channels(self) -> dict[str, FollowedChannelInfo]:
+        if not self._channels:
+            self._channels = {c.name: c for c in self.get_channels_with_info()}
+        return self._channels
+
+    @property
+    def streams(self) -> dict[str, FollowedStream]:
+        if not self._streams:
+            self._streams = {s.name: s for s in self.get_streams()}
+            self.online = len(self._streams)
+        return self._streams
+
+    @property
+    def games(self) -> dict[str, Category]:
+        if not self._games:
+            self._games = {g.name: g for g in self.channels_categorized()}
+        return self._games
+
+    @property
+    @timeit
+    def channels_and_streams(self) -> dict[str, Union[FollowedChannelInfo, FollowedStream]]:
+        if not self._channels_and_streams:
+            log.info("calling api for channels")
+            channels = self.channels
+            streams = self.streams
+            self._channels_and_streams = merge_data(channels, streams)
+        return self._channels_and_streams
+
+    def get_streams(self) -> Iterable[FollowedStream]:
+        log.info("getting streams from 'get_streams'")
+        streams = self.api.channels.get_streams()
+        return (FollowedStream(**stream, markup=self.markup) for stream in streams)
+
     def get_channels(self) -> Iterable[FollowedChannel]:
-        if not self._follows:
-            self._follows = self.channels.channels
-            return self._follows
-        return self._follows
+        log.info("getting all channels from 'get_channels'")
+        channels = self.api.channels.get_channels()
+        return (FollowedChannel(**channel, markup=self.markup) for channel in channels)
 
-    @property
-    def follows_dict(self) -> dict[str, FollowedChannel]:
-        if not self._follows_dict:
-            self._follows_dict = {f.name: f for f in self.get_channels}
-        return self._follows_dict
+    def get_channel_info(self, channel_id: str) -> FollowedChannelInfo:
+        data = self.api.channels.get_channel_info(user_id=channel_id)
+        if not data:
+            raise ValueError(f"{channel_id=} not found")
+        return FollowedChannelInfo(**data[0], markup=self.markup)
 
-    def follows_merged(self) -> Mapping[str, TwitchChannel]:
-        """
-        Merge followed channels with the list of currently live channels.
+    def get_channels_info(self, channels_id: list[str]) -> Iterable[FollowedChannelInfo]:
+        data = self.api.channels.get_channels_info(broadcaster_ids=channels_id)
+        if not data:
+            raise ValueError(f"{channels_id=} not found")
+        return (FollowedChannelInfo(**broadcaster, markup=self.markup) for broadcaster in data)
 
-        Returns:
-            A mapping of channel names to TwitchChannel objects.
-        """
-        online = {}
-        follows = self.follows_dict
+    def get_channels_with_info(self) -> Iterable[FollowedChannelInfo]:
+        channels_id = [channel.user_id for channel in self.get_channels()]
+        return self.get_channels_info(channels_id)
 
-        for live in self.channels.get_channels_live:
-            follows.pop(live.name, None)
-            online[live.name] = live
+    def channels_categorized(self) -> Iterable[Category]:
+        log.info("getting channels by category from 'channels_categorized'")
+        channels_by_game = group_channels_by_game(self.channels_and_streams)
+        return (Category(name=k, channels=channels_by_game[k], markup=self.markup) for k in channels_by_game)
 
-        return {**online, **follows}
+    def get_channel_videos(self, user_id: str) -> Iterable[FollowedContentVideo]:
+        data = self.api.content.get_videos(user_id=user_id)
+        if not data:
+            # FIX:
+            log.critical("need to find a way to handle request returns 0 data")
+            raise NotImplementedError
+        return (FollowedContentVideo(**video, markup=self.markup) for video in data)
 
-    def pavel_ameo(self) -> Mapping[str, TwitchChannel]:
-        online: dict[str, TwitchChannel] = {}
-        all_follows = {f.name: f for f in self.follows_info()}
-
-        for live in self.channels.get_channels_live:
-            all_follows.pop(live.name, None)
-            online[live.name] = live
-
-        return {**online, **all_follows}
-
-    def follows_categorized(self) -> defaultdict[str, list[dict[str, FollowedChannelInfo]]]:
-        categories = defaultdict(list)
-        for b in self.follows_info():
-            if b.name and b.game_name:
-                categories[b.game_name].append({b.name: b})
-        return categories
-
-    def group_channels_by_game(self):
-        # create a dictionary to group channels by game name
-        channels_by_game = {}
-        for _, channel in self.pavel_ameo().items():
-            channel.markup = False
-            if channel.category not in channels_by_game and channel.category != "":
-                channels_by_game[channel.category] = []
-            channels_by_game[channel.category].append(channel)
-
-        # return the grouped channels as a dictionary
-        return channels_by_game
-
-    def group_channels_by_game_beta(self):
-        channels_by_game = defaultdict(list)
-        for _, channel in self.pavel_ameo().items():
-            if channel.category != "" and channel.game_id != "":
-                channel.markup = self.markup
-                channels_by_game[helpers.clean_string(channel.game_name)].append(channel)
-        return channels_by_game
-
-    def follows_categorized_beta(self) -> Iterable[Category]:
-        categories = self.group_channels_by_game_beta().items()
-        return (Category(name=k, channels=v) for k, v in categories)
-
-    def get_follows_ids(self) -> list[str]:
-        return [follow.user_id for follow in self.get_channels]
-
-    def follows_info(self) -> list[FollowedChannelInfo]:
-        follows_id = [follow.user_id for follow in self.get_channels]
-        return self.channels.get_channels_info(follows_id)
-
-    def get_follow_by_name(self, follow: str) -> FollowedChannel:
-        if not self.follows_dict.get(follow):
-            raise KeyError(f"{follow=} not found")
-        return self.follows_dict[follow]
-
-    def get_follow_clips(self, follow_id: str) -> dict[str, FollowedContentClip]:
-        clips = self.channels.content.get_clips(follow_id)
-        return {f"{i}:::{clip.stringify(self.markup)}": clip for i, clip in enumerate(clips)}
-
-    def get_follow_videos(self, follow_id: str) -> dict[str, FollowedContentVideo]:
-        videos = self.channels.content.get_videos(follow_id)
-        return {f"{i}:::{video.stringify(self.markup)}": video for i, video in enumerate(videos)}
-
-    def get_follow_content(self, follow_id: str, content_type: str) -> Mapping[str, TwitchContent]:
-        if content_type == "clips":
-            content: Iterator[TwitchContent] = self.channels.content.get_clips(follow_id)
-        elif content_type == "videos":
-            content = self.channels.content.get_videos(follow_id)
-        else:
-            raise ValueError("Invalid content type specified.")
-
-        return {f"{i}:::{item.stringify(self.markup)}": item for i, item in enumerate(content)}
+    def get_channel_clips(self, user_id: str) -> Iterable[FollowedContentClip]:
+        data = self.api.content.get_clips(user_id=user_id)
+        if not data:
+            # FIX:
+            log.critical("need to find a way to handle request returns 0 data")
+            raise NotImplementedError
+        return (FollowedContentClip(**clip, markup=self.markup) for clip in data)
