@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import typing
+import webbrowser
 from typing import Callable
 from typing import NamedTuple
 from typing import Union
@@ -31,6 +32,7 @@ class Keys(NamedTuple):
     categories: str
     clips: str
     videos: str
+    chat: str
 
 
 class App:
@@ -135,5 +137,7 @@ class App:
     def hide_key(self, bind: str) -> None:
         self.menu.keybind.get_keybind_by_bind(bind).hide()
 
-    def launch_with_chat(self) -> None:
-        raise NotImplementedError
+    def chat(self, **kwargs) -> None:
+        item = kwargs.pop("item")
+        webbrowser.open(item.chat)
+        raise SystemExit

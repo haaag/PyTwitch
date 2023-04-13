@@ -11,7 +11,9 @@ TITLE_MAX_LENGTH = 50
 
 # api
 STREAM_TWITCH_BASE_URL = URL("https://www.twitch.tv/")
+CHAT_TWITCH_BASE_URL = URL("https://www.twitch.tv/popout/")
 API_TWITCH_BASE_URL = URL("https://api.twitch.tv/helix/")
+
 
 # ui
 BACK: Text = "\u21B6"

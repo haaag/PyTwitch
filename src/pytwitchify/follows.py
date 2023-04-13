@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import NamedTuple
 from typing import Union
 
 from pyselector.markup import PangoSpan
 
 from pytwitchify import helpers
 from pytwitchify.constants import API_TWITCH_BASE_URL
+from pytwitchify.constants import CHAT_TWITCH_BASE_URL
 from pytwitchify.constants import LIVE_ICON
 from pytwitchify.constants import LIVE_ICON_COLOR
 from pytwitchify.constants import SEPARATOR
@@ -63,6 +63,10 @@ class FollowedChannelInfo:
     def offline_icon(self) -> str:
         return PangoSpan(LIVE_ICON, foreground="grey", size="large", alpha="50%") if self.markup else LIVE_ICON
 
+    @property
+    def chat(self) -> str:
+        return str(CHAT_TWITCH_BASE_URL.join(f"{self.broadcaster_login}/chat"))
+
 
 @dataclass
 class FollowedChannel:
@@ -95,6 +99,10 @@ class FollowedChannel:
     @property
     def url(self) -> str:
         return str(STREAM_TWITCH_BASE_URL.join(self.broadcaster_name))
+
+    @property
+    def chat(self) -> str:
+        return str(CHAT_TWITCH_BASE_URL.join(f"{self.broadcaster_login}/chat"))
 
 
 @dataclass
@@ -161,6 +169,10 @@ class FollowedStream:
     def category(self) -> str:
         game = helpers.clean_string(self.game_name)
         return PangoSpan(game, foreground="orange", size="x-large", sub=True) if self.markup else self.game_name
+
+    @property
+    def chat(self) -> str:
+        return str(CHAT_TWITCH_BASE_URL.join(f"{self.user_login}/chat"))
 
 
 @dataclass

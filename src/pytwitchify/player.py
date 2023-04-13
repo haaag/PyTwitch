@@ -18,6 +18,7 @@ class ExecutableNotFoundError(Exception):
 class TwitchPlayableContent(typing.Protocol):
     name: str
     url: str
+    chat: str
 
 
 class Player:

@@ -13,21 +13,16 @@ from pytwitchify.app import Keys
 from pytwitchify.client import TwitchClient
 from pytwitchify.player import create_player
 
-keybinds = Keys(
+keys = Keys(
     channels="alt-a",
     categories="alt-t",
     clips="alt-c",
     videos="alt-v",
+    chat="alt-o",
 )
 
 
 def main() -> int:
-    """
-    This function is the entry point of the program. It parses the command line arguments, initializes the TwitchClient
-    and App objects, and starts the program by calling show_menu on the App object. If a KeyboardInterrupt exception
-    is raised, the program terminates and prints a message to the console.
-    """
-
     parser = argparse.ArgumentParser(
         description="Simple tool menu for watching streams live, video or clips from Twitch.",
     )
@@ -35,7 +30,6 @@ def main() -> int:
     markup_group = parser.add_argument_group(title="menu options")
     markup_group.add_argument("--no-markup", action="store_false", help="Disable pango markup")
 
-    parser.add_argument("-c", "--categories", action="store_true", help="Show by categories/games")
     parser.add_argument("-m", "--menu", choices=["rofi", "dmenu", "fzf"], help="Select a launcher/menu", default="rofi")
     parser.add_argument("-l", "--lines", help="Show menu lines (default: 15)", nargs="?", default=15)
     parser.add_argument("-p", "--player", default="mpv", choices=["streamlink", "mpv"])
@@ -67,7 +61,7 @@ def main() -> int:
         preview=False,
     )
 
-    twitch = App(client, prompt, menu, player, keybinds)
+    twitch = App(client, prompt, menu, player, keys)
     twitch.menu.keybind.add(
         key="alt-a",
         description="show channels",
@@ -87,6 +81,11 @@ def main() -> int:
         key="alt-v",
         description="show videos",
         callback=twitch.get_channel_videos,
+    )
+    twitch.menu.keybind.add(
+        key=keys.chat,
+        description="launch chat",
+        callback=twitch.chat,
     )
 
     try:
