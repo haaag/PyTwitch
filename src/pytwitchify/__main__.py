@@ -30,6 +30,13 @@ def main() -> int:
     markup_group = parser.add_argument_group(title="menu options")
     markup_group.add_argument("--no-markup", action="store_false", help="Disable pango markup")
 
+    # keybinds
+    parser.add_argument("--channels", help="Show all channels", default=keys.channels)
+    parser.add_argument("--categories", help="Show all categories or games", default=keys.categories)
+    parser.add_argument("--clips", help="Show all clips of the selected channel", default=keys.clips)
+    parser.add_argument("--videos", help="Show all videos of the selected channel", default=keys.videos)
+    parser.add_argument("--chat", help="Open the chat of the selected stream", default=keys.chat)
+
     parser.add_argument("-m", "--menu", choices=["rofi", "dmenu", "fzf"], help="Select a launcher/menu", default="rofi")
     parser.add_argument("-l", "--lines", help="Show menu lines (default: 15)", nargs="?", default=15)
     parser.add_argument("-p", "--player", default="mpv", choices=["streamlink", "mpv"])
@@ -63,27 +70,27 @@ def main() -> int:
 
     twitch = App(client, prompt, menu, player, keys)
     twitch.menu.keybind.add(
-        key="alt-a",
+        key=args.channels,
         description="show channels",
         callback=twitch.get_channels_and_streams,
     )
     twitch.menu.keybind.add(
-        key="alt-t",
+        key=args.categories,
         description="show by games",
         callback=twitch.show_categories,
     )
     twitch.menu.keybind.add(
-        key="alt-c",
+        key=args.clips,
         description="show clips",
         callback=twitch.get_channel_clips,
     )
     twitch.menu.keybind.add(
-        key="alt-v",
+        key=args.videos,
         description="show videos",
         callback=twitch.get_channel_videos,
     )
     twitch.menu.keybind.add(
-        key=keys.chat,
+        key=args.chat,
         description="launch chat",
         callback=twitch.chat,
     )
