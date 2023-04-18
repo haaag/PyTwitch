@@ -7,11 +7,11 @@ from typing import Mapping
 from typing import MutableMapping
 from typing import Union
 
-from pytwitchify.content import FollowedContentClip
-from pytwitchify.content import FollowedContentVideo
-from pytwitchify.follows import FollowedChannel
-from pytwitchify.follows import FollowedChannelInfo
-from pytwitchify.follows import FollowedStream
+from src.twitch.content import FollowedContentClip
+from src.twitch.content import FollowedContentVideo
+from src.twitch.follows import FollowedChannel
+from src.twitch.follows import FollowedChannelInfo
+from src.twitch.follows import FollowedStream
 
 QueryParamTypes = MutableMapping[str, Any]
 

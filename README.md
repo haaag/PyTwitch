@@ -28,7 +28,6 @@ A user-friendly tool for easily accessing and watching live streams, videos, and
 ## ➕ Dependencies
 
 * [httpx](https://www.python-httpx.org/)
-* [rich](https://github.com/Textualize/rich)
 
 ## 🔒Credentials
 

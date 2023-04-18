@@ -7,15 +7,15 @@ from typing import Iterable
 from typing import Optional
 from typing import Union
 
-from pytwitchify import helpers
-from pytwitchify.api import TwitchApi
-from pytwitchify.content import FollowedContentClip
-from pytwitchify.content import FollowedContentVideo
-from pytwitchify.follows import Category
-from pytwitchify.follows import FollowedChannel
-from pytwitchify.follows import FollowedChannelInfo
-from pytwitchify.follows import FollowedStream
-from pytwitchify.helpers import timeit
+from src.twitch import helpers
+from src.twitch.api import TwitchApi
+from src.twitch.content import FollowedContentClip
+from src.twitch.content import FollowedContentVideo
+from src.twitch.follows import Category
+from src.twitch.follows import FollowedChannel
+from src.twitch.follows import FollowedChannelInfo
+from src.twitch.follows import FollowedStream
+from src.twitch.helpers import timeit
 
 log = logging.getLogger(__name__)
 

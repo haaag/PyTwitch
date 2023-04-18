@@ -1,17 +1,16 @@
-# pytwitchify.content.py
+# twitch.content.py
 
 from __future__ import annotations
 
-import random
 from dataclasses import dataclass
 from typing import Any
 from typing import Optional
 
 from pyselector.markup import PangoSpan
 
-from pytwitchify import helpers
-from pytwitchify.constants import SEPARATOR
-from pytwitchify.constants import TITLE_MAX_LENGTH
+from src.twitch import helpers
+from src.twitch.constants import SEPARATOR
+from src.twitch.constants import TITLE_MAX_LENGTH
 
 
 @dataclass
@@ -54,7 +53,7 @@ class FollowedContentClip:
     def title_str(self) -> str:
         title = self.title[: TITLE_MAX_LENGTH - 3] + "..." if len(self.title) > TITLE_MAX_LENGTH else f"{self.title} "
         if self.markup:
-            title = helpers.remove_punctuation_escape_ampersand(title)
+            title = helpers.clean_string(title)
         return PangoSpan(title, size="large", foreground="silver") if self.markup else title
 
     @property
@@ -117,7 +116,7 @@ class FollowedContentVideo:
     def title_str(self) -> str:
         title = self.title[: TITLE_MAX_LENGTH - 3] + "..." if len(self.title) > TITLE_MAX_LENGTH else f"{self.title} "
         if self.markup:
-            title = helpers.remove_punctuation_escape_ampersand(title)
+            title = helpers.clean_string(title)
         return PangoSpan(title, size="large", foreground="silver") if self.markup else title
 
     @property
@@ -138,5 +137,12 @@ class FollowedContentVideo:
         created = helpers.format_datetime(self.created_at)
         return PangoSpan(created, size="x-large", foreground="orange", sub=True) if self.markup else created
 
+    @property
+    def published_fmt(self) -> str:
+        published_fmt = helpers.format_datetime(self.published_at)
+        pass
+
     def __str__(self) -> str:
-        return f"{self.video_str}{self.sep}{self.title_str} ({self.duration_fmt} | {self.viewers_fmt})"
+        return (
+            f"{self.video_str}{self.sep}{self.title_str} {self.created_date} ({self.duration_fmt} | {self.viewers_fmt})"
+        )

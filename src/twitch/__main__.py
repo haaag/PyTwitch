@@ -1,17 +1,16 @@
-# main.py
-
 from __future__ import annotations
 
 import argparse
 import functools
 import logging
+import sys
 
-from pytwitchify import helpers
-from pytwitchify import logger
-from pytwitchify.app import App
-from pytwitchify.app import Keys
-from pytwitchify.client import TwitchClient
-from pytwitchify.player import create_player
+from src.twitch import helpers
+from src.twitch import logger
+from src.twitch.app import App
+from src.twitch.app import Keys
+from src.twitch.client import TwitchClient
+from src.twitch.player import create_player
 
 keys = Keys(
     channels="alt-a",
@@ -24,7 +23,7 @@ keys = Keys(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Simple tool menu for watching streams live, video or clips from Twitch.",
+        description="Simple tool menu for watching streams live, video or clips from src.twitch.",
     )
 
     markup_group = parser.add_argument_group(title="menu options")
@@ -57,6 +56,7 @@ def main() -> int:
     menu = helpers.get_launcher(args.menu)
     client = TwitchClient(markup=args.no_markup)
     player = create_player(args.player)
+    # player.add_options("--no-border --no-keepaspect-window")
 
     prompt = functools.partial(
         menu.prompt,
@@ -66,6 +66,7 @@ def main() -> int:
         height="60%",
         markup=args.no_markup,
         preview=False,
+        theme="dracula",
     )
 
     twitch = App(client, prompt, menu, player, keys)
@@ -98,6 +99,7 @@ def main() -> int:
     try:
         item = twitch.run()
         twitch.play(item)
+        # twitch.record(item, path="~/dev/python/twitch")
     except KeyboardInterrupt:
         log.info("Terminated by user")
     finally:
@@ -106,4 +108,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    sys.exit(main())

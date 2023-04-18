@@ -9,17 +9,18 @@ from dataclasses import dataclass
 from datetime import datetime
 from datetime import timedelta
 from typing import Any
+from typing import Union
 
 import httpx
 from dotenv import load_dotenv
 from httpx import URL
 
-from pytwitchify.constants import API_TWITCH_BASE_URL
+from src.twitch.constants import API_TWITCH_BASE_URL
 
 if typing.TYPE_CHECKING:
-    from pytwitchify.datatypes import HeaderTypes
-    from pytwitchify.datatypes import QueryParamTypes
-    from pytwitchify.datatypes import TwitchApiResponse
+    from src.twitch.datatypes import HeaderTypes
+    from src.twitch.datatypes import QueryParamTypes
+    from src.twitch.datatypes import TwitchApiResponse
 
 log = logging.getLogger(__name__)
 
@@ -37,10 +38,11 @@ class ValidationEnvError(Exception):
 class TwitchApiCredentials:
     access_token: str
     client_id: str
-    user_id: int
+    user_id: Union[int, str]
 
     def __post_init__(self):
         credentials = [self.access_token, self.client_id, self.user_id]
+        # if not all(env_var is not None and env_var != "" for env_var in credentials):
         if not all(env_var is not None and env_var != "" for env_var in credentials):
             raise ValidationEnvError("There's something wrong with the .env file")
 
@@ -56,9 +58,9 @@ class API:
 
     def validate_credentials(self) -> TwitchApiCredentials:
         return TwitchApiCredentials(
-            access_token=os.getenv("TWITCH_ACCESS_TOKEN"),  # type: ignore
-            client_id=os.getenv("TWITCH_CLIENT_ID"),  # type: ignore
-            user_id=os.getenv("TWITCH_USER_ID"),  # type: ignore
+            access_token=os.environ.get("TWITCH_ACCESS_TOKEN", ""),
+            client_id=os.environ.get("TWITCH_CLIENT_ID", ""),
+            user_id=os.environ.get("TWITCH_USER_ID", ""),
         )
 
     @property

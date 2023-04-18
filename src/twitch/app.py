@@ -9,20 +9,20 @@ from typing import Callable
 from typing import NamedTuple
 from typing import Union
 
-from pytwitchify import helpers
-from pytwitchify.constants import SEPARATOR
+from src.twitch import helpers
+from src.twitch.constants import SEPARATOR
 
 if typing.TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
     from pyselector.key_manager import Keybind
 
-    from pytwitchify.client import TwitchClient
-    from pytwitchify.content import FollowedContentClip
-    from pytwitchify.content import FollowedContentVideo
-    from pytwitchify.follows import FollowedChannelInfo
-    from pytwitchify.follows import FollowedStream
-    from pytwitchify.player import Player
-    from pytwitchify.player import TwitchPlayableContent
+    from src.twitch.client import TwitchClient
+    from src.twitch.content import FollowedContentClip
+    from src.twitch.content import FollowedContentVideo
+    from src.twitch.follows import FollowedChannelInfo
+    from src.twitch.follows import FollowedStream
+    from src.twitch.player import Player
+    from src.twitch.player import TwitchPlayableContent
 
 log = logging.getLogger(__name__)
 
@@ -125,6 +125,10 @@ class App:
         log.warning(f"playing content {follow.url=}")
         return self.player.play(follow)
 
+    def record(self, follow: TwitchPlayableContent, path: str) -> int:
+        log.warning(f"recording content {follow.url=}")
+        return self.player.record(follow, path)
+
     def toggle_key(self, binds: Union[str, list[str]]) -> None:
         if isinstance(binds, str):
             binds = [binds]
@@ -139,5 +143,5 @@ class App:
 
     def chat(self, **kwargs) -> None:
         item = kwargs.pop("item")
-        webbrowser.open(item.chat)
+        webbrowser.open_new_tab(item.chat)
         raise SystemExit

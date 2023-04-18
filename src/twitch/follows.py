@@ -1,4 +1,4 @@
-# pytwitchify.follows
+# twitch.follows
 
 from __future__ import annotations
 
@@ -7,14 +7,14 @@ from typing import Union
 
 from pyselector.markup import PangoSpan
 
-from pytwitchify import helpers
-from pytwitchify.constants import API_TWITCH_BASE_URL
-from pytwitchify.constants import CHAT_TWITCH_BASE_URL
-from pytwitchify.constants import LIVE_ICON
-from pytwitchify.constants import LIVE_ICON_COLOR
-from pytwitchify.constants import SEPARATOR
-from pytwitchify.constants import STREAM_TWITCH_BASE_URL
-from pytwitchify.constants import TITLE_MAX_LENGTH
+from src.twitch import helpers
+from src.twitch.constants import API_TWITCH_BASE_URL
+from src.twitch.constants import CHAT_TWITCH_BASE_URL
+from src.twitch.constants import LIVE_ICON
+from src.twitch.constants import LIVE_ICON_COLOR
+from src.twitch.constants import SEPARATOR
+from src.twitch.constants import STREAM_TWITCH_BASE_URL
+from src.twitch.constants import TITLE_MAX_LENGTH
 
 
 @dataclass
