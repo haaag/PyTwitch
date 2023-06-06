@@ -24,9 +24,8 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "pyselector>=0.0.11",
+  "pyselector==0.0.13",
   "httpx==0.23.3",
-  "python-dotenv==1.0.0",
 ]
 
 [project.scripts]

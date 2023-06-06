@@ -12,7 +12,6 @@ from typing import Any
 from typing import Union
 
 import httpx
-from dotenv import load_dotenv
 from httpx import URL
 
 from src.twitch.constants import API_TWITCH_BASE_URL
@@ -24,7 +23,6 @@ if typing.TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-load_dotenv()
 
 MAX_ITEMS_PER_REQUEST = 100
 DEFAULT_REQUESTED_ITEMS = 200
