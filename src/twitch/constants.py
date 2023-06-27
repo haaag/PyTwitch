@@ -2,18 +2,23 @@
 
 from __future__ import annotations
 
+import os
 from typing import Text
 
-from httpx import URL
+import httpx
 
 # others
 TITLE_MAX_LENGTH = 50
 
-# api
-STREAM_TWITCH_BASE_URL = URL("https://www.twitch.tv/")
-CHAT_TWITCH_BASE_URL = URL("https://www.twitch.tv/popout/")
-API_TWITCH_BASE_URL = URL("https://api.twitch.tv/helix/")
+# api urls
+TWITCH_STREAM_BASE_URL = httpx.URL("https://www.twitch.tv/")
+TWITCH_CHAT_BASE_URL = httpx.URL("https://www.twitch.tv/popout/")
+TWITCH_API_BASE_URL = httpx.URL("https://api.twitch.tv/helix/")
 
+# api credentials
+TWITCH_ACCESS_TOKEN = os.environ.get("TWITCH_ACCESS_TOKEN")
+TWITCH_CLIENT_ID = os.environ.get("TWITCH_CLIENT_ID")
+TWITCH_USER_ID = os.environ.get("TWITCH_USER_ID")
 
 # ui
 BACK: Text = "\u21B6"

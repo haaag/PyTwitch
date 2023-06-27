@@ -8,13 +8,13 @@ from typing import Union
 from pyselector.markup import PangoSpan
 
 from src.twitch import helpers
-from src.twitch.constants import API_TWITCH_BASE_URL
-from src.twitch.constants import CHAT_TWITCH_BASE_URL
 from src.twitch.constants import LIVE_ICON
 from src.twitch.constants import LIVE_ICON_COLOR
 from src.twitch.constants import SEPARATOR
-from src.twitch.constants import STREAM_TWITCH_BASE_URL
 from src.twitch.constants import TITLE_MAX_LENGTH
+from src.twitch.constants import TWITCH_API_BASE_URL
+from src.twitch.constants import TWITCH_CHAT_BASE_URL
+from src.twitch.constants import TWITCH_STREAM_BASE_URL
 
 
 @dataclass
@@ -53,7 +53,7 @@ class FollowedChannelInfo:
 
     @property
     def url(self) -> str:
-        return str(API_TWITCH_BASE_URL.join(self.broadcaster_name))
+        return str(TWITCH_API_BASE_URL.join(self.broadcaster_name))
 
     @property
     def category(self) -> str:
@@ -65,7 +65,7 @@ class FollowedChannelInfo:
 
     @property
     def chat(self) -> str:
-        return str(CHAT_TWITCH_BASE_URL.join(f"{self.broadcaster_login}/chat"))
+        return str(TWITCH_CHAT_BASE_URL.join(f"{self.broadcaster_login}/chat"))
 
 
 @dataclass
@@ -98,11 +98,11 @@ class FollowedChannel:
 
     @property
     def url(self) -> str:
-        return str(STREAM_TWITCH_BASE_URL.join(self.broadcaster_name))
+        return str(TWITCH_STREAM_BASE_URL.join(self.broadcaster_name))
 
     @property
     def chat(self) -> str:
-        return str(CHAT_TWITCH_BASE_URL.join(f"{self.broadcaster_login}/chat"))
+        return str(TWITCH_CHAT_BASE_URL.join(f"{self.broadcaster_login}/chat"))
 
 
 @dataclass
@@ -150,6 +150,7 @@ class FollowedStream:
     @property
     def live_since(self) -> str:
         since = helpers.calculate_live_time(self.started_at)
+        # since = self.started_at
         return PangoSpan(f"({since})", sub=True, size="x-large", style="italic") if self.markup else f"({since})"
 
     @property
@@ -163,7 +164,7 @@ class FollowedStream:
 
     @property
     def url(self) -> str:
-        return str(STREAM_TWITCH_BASE_URL.join(self.user_name))
+        return str(TWITCH_STREAM_BASE_URL.join(self.user_name))
 
     @property
     def category(self) -> str:
@@ -172,7 +173,7 @@ class FollowedStream:
 
     @property
     def chat(self) -> str:
-        return str(CHAT_TWITCH_BASE_URL.join(f"{self.user_login}/chat"))
+        return str(TWITCH_CHAT_BASE_URL.join(f"{self.user_login}/chat"))
 
 
 @dataclass
@@ -220,3 +221,30 @@ class Category:
             if self.online
             else f"{self.name_str}{self.sep}{LIVE_ICON} {offline}"
         )
+
+
+game_from_search = {
+    "broadcaster_language": "en",
+    "broadcaster_login": "12g_live",
+    "display_name": "12G_Live",
+    "game_id": "504461",
+    "game_name": "Super Smash Bros. Ultimate",
+    "id": "866258853",
+    "is_live": True,
+    "tag_ids": [],
+    "tags": [
+        "Shooter",
+        "teamplay",
+        "Tournament",
+        "Smashbrosultimate",
+        "Bracket",
+        "NewYork",
+        "BrookLAN",
+        "12G",
+        "FightingsGames",
+        "English",
+    ],
+    "thumbnail_url": "https://static-cdn.jtvnw.net/jtv_user_pictures/11c7516e-88bd-46f2-bbfc-428db7e467f8-profile_image-300x300.png",
+    "title": "BrookLAN Brawls #73 ft.  Ho3K | John Numbers, WPC | Vivi, Sho, Kamex, 5teelix and the 12G crew! $200 pot bonus for Gen beating Riddles!",
+    "started_at": "2023-04-23T19:29:28Z",
+}

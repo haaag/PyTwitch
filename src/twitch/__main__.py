@@ -7,6 +7,8 @@ import sys
 
 from src.twitch import helpers
 from src.twitch import logger
+from src.twitch.api import CONNECTION_EXCEPTION
+from src.twitch.api import EXCEPTIONS
 from src.twitch.app import App
 from src.twitch.app import Keys
 from src.twitch.client import TwitchClient
@@ -99,9 +101,14 @@ def main() -> int:
     try:
         item = twitch.run()
         twitch.play(item)
-        # twitch.record(item, path="~/dev/python/twitch")
     except KeyboardInterrupt:
         log.info("Terminated by user")
+    except EXCEPTIONS as err:
+        prompt(items=[f"{err!r}"])
+        log.error(err)
+    except CONNECTION_EXCEPTION as err:
+        prompt(items=[f"{err!r}"], markup=False)
+        log.error(err)
     finally:
         client.api.client.close()
     return 0

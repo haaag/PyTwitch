@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import typing
 from dataclasses import dataclass
 from datetime import datetime
@@ -13,8 +12,12 @@ from typing import Union
 
 import httpx
 from httpx import URL
+from pyselector.interfaces import ExecutableNotFoundError
 
-from src.twitch.constants import API_TWITCH_BASE_URL
+from src.twitch.constants import TWITCH_ACCESS_TOKEN
+from src.twitch.constants import TWITCH_API_BASE_URL
+from src.twitch.constants import TWITCH_CLIENT_ID
+from src.twitch.constants import TWITCH_USER_ID
 
 if typing.TYPE_CHECKING:
     from src.twitch.datatypes import HeaderTypes
@@ -32,17 +35,31 @@ class ValidationEnvError(Exception):
     pass
 
 
+# exceptions
+CONNECTION_EXCEPTION = (httpx.ConnectError, httpx.HTTPStatusError)
+EXCEPTIONS = (ExecutableNotFoundError, ValidationEnvError)
+
+
+def validate_credentials(credentials: dict[str, str]) -> None:
+    for key, value in credentials.items():
+        if not value:
+            raise ValidationEnvError(f"Environment variable {key!r} is not set")
+
+
 @dataclass
 class TwitchApiCredentials:
     access_token: str
     client_id: str
     user_id: Union[int, str]
 
-    def __post_init__(self):
-        credentials = [self.access_token, self.client_id, self.user_id]
-        # if not all(env_var is not None and env_var != "" for env_var in credentials):
-        if not all(env_var is not None and env_var != "" for env_var in credentials):
-            raise ValidationEnvError("There's something wrong with the .env file")
+    def __post_init__(self) -> None:
+        return validate_credentials(
+            {
+                "access_token": self.access_token,
+                "client_id": self.client_id,
+                "user_id": self.user_id,
+            }
+        )
 
 
 class API:
@@ -50,15 +67,15 @@ class API:
     credentials: TwitchApiCredentials
 
     def __init__(self) -> None:
-        self.credentials = self.validate_credentials()
-        self.base_url = API_TWITCH_BASE_URL
+        self.credentials = self.get_credentials()
+        self.base_url = TWITCH_API_BASE_URL
         self.client = httpx.Client(headers=self._get_request_headers)
 
-    def validate_credentials(self) -> TwitchApiCredentials:
+    def get_credentials(self) -> TwitchApiCredentials:
         return TwitchApiCredentials(
-            access_token=os.environ.get("TWITCH_ACCESS_TOKEN", ""),
-            client_id=os.environ.get("TWITCH_CLIENT_ID", ""),
-            user_id=os.environ.get("TWITCH_USER_ID", ""),
+            access_token=TWITCH_ACCESS_TOKEN,
+            client_id=TWITCH_CLIENT_ID,
+            user_id=TWITCH_USER_ID,
         )
 
     @property
