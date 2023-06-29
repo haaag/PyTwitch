@@ -9,13 +9,11 @@ from datetime import datetime
 from datetime import timezone
 from pathlib import Path
 
+from pyselector.interfaces import ExecutableNotFoundError
+
 from src.twitch import helpers
 
 log = logging.getLogger(__name__)
-
-
-class ExecutableNotFoundError(Exception):
-    pass
 
 
 class TwitchPlayableContent(typing.Protocol):
@@ -33,7 +31,7 @@ class Player:
     def bin(self) -> str:
         bin = shutil.which(self.name)
         if not bin:
-            raise ExecutableNotFoundError(self.name)
+            raise ExecutableNotFoundError(f"player={self.name!r} not found")
         return bin
 
     def add_options(self, args: str) -> None:
@@ -81,12 +79,21 @@ class Mpv(Player):
         super().__init__()
 
 
-def create_player(name: str) -> Player:
-    players: dict[str, Player] = {
-        "streamlink": StreamLink(),
-        "mpvs": Mpv(),
-    }
-    return players.get(name, Player(name))
+PLAYERS: dict[str, Player] = {}
+
+
+class FactoryPlayer:
+    @staticmethod
+    def create(name: str) -> Player:
+        return PLAYERS.get(name, Player(name))
+
+    @staticmethod
+    def register(player: Player) -> None:
+        PLAYERS[player.name] = player
+
+
+FactoryPlayer.register(Mpv())
+FactoryPlayer.register(StreamLink())
 
 
 # TODO:

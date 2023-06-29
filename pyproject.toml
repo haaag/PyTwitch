@@ -100,3 +100,6 @@ extend-select = [
 force-single-line = true
 order-by-type = true
 required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.per-file-ignores]
+"src/twitch/player.py" = ["S603"]

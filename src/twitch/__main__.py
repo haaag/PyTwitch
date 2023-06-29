@@ -12,7 +12,7 @@ from src.twitch.api import EXCEPTIONS
 from src.twitch.app import App
 from src.twitch.app import Keys
 from src.twitch.client import TwitchClient
-from src.twitch.player import create_player
+from src.twitch.player import FactoryPlayer
 
 keys = Keys(
     channels="alt-a",
@@ -57,8 +57,7 @@ def main() -> int:
 
     menu = helpers.get_launcher(args.menu)
     client = TwitchClient(markup=args.no_markup)
-    player = create_player(args.player)
-    # player.add_options("--no-border --no-keepaspect-window")
+    player = FactoryPlayer.create(args.player)
 
     prompt = functools.partial(
         menu.prompt,
