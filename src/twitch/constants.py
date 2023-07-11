@@ -6,6 +6,9 @@ import os
 from typing import Text
 
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # others
 TITLE_MAX_LENGTH = 50
