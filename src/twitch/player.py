@@ -9,9 +9,8 @@ from datetime import datetime
 from datetime import timezone
 from pathlib import Path
 
-from pyselector.interfaces import ExecutableNotFoundError
-
 from src.twitch import helpers
+from src.twitch._exceptions import ExecutableNotFoundError
 
 log = logging.getLogger(__name__)
 

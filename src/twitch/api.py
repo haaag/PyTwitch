@@ -12,8 +12,8 @@ from typing import Union
 
 import httpx
 from httpx import URL
-from pyselector.interfaces import ExecutableNotFoundError
 
+from src.twitch._exceptions import ValidationEnvError
 from src.twitch.constants import TWITCH_ACCESS_TOKEN
 from src.twitch.constants import TWITCH_API_BASE_URL
 from src.twitch.constants import TWITCH_CLIENT_ID
@@ -31,19 +31,12 @@ MAX_ITEMS_PER_REQUEST = 100
 DEFAULT_REQUESTED_ITEMS = 200
 
 
-class ValidationEnvError(Exception):
-    pass
-
-
-# exceptions
-CONNECTION_EXCEPTION = (httpx.ConnectError, httpx.HTTPStatusError)
-EXCEPTIONS = (ExecutableNotFoundError, ValidationEnvError)
-
-
 def validate_credentials(credentials: dict[str, str]) -> None:
     for key, value in credentials.items():
         if not value:
-            raise ValidationEnvError(f"Environment variable {key!r} is not set")
+            err_msg = f"Environment variable {key!r} is not set"
+            log.error(err_msg)
+            raise ValidationEnvError(err_msg)
 
 
 @dataclass
@@ -52,14 +45,8 @@ class TwitchApiCredentials:
     client_id: str
     user_id: Union[int, str]
 
-    def __post_init__(self) -> None:
-        return validate_credentials(
-            {
-                "access_token": self.access_token,
-                "client_id": self.client_id,
-                "user_id": self.user_id,
-            }
-        )
+    def to_dict(self) -> dict[str, Union[int, str]]:
+        return self.__dict__
 
 
 class API:
@@ -78,12 +65,15 @@ class API:
             user_id=TWITCH_USER_ID,
         )
 
+    def validate_credentials(self) -> None:
+        return validate_credentials(self.credentials.to_dict())
+
     @property
     def _get_request_headers(self) -> HeaderTypes:
         return {
             "Accept": "application/vnd.twitchtv.v5+json",
             "Client-ID": self.credentials.client_id,
-            "Authorization": "Bearer " + self.credentials.access_token,
+            "Authorization": f"Bearer {self.credentials.access_token}",
         }
 
     def request_get(
