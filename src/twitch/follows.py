@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Optional
 from typing import Union
 
 from pyselector.markup import PangoSpan
@@ -28,6 +29,8 @@ class FollowedChannelInfo:
     game_name: str
     title: str
     delay: int
+    content_classification_labels: Optional[list[str]] = None
+    is_branded_content: bool = False
     viewer_count: int = 0
     live: bool = False
     markup: bool = True
