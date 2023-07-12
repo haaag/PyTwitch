@@ -38,27 +38,25 @@ def main() -> int:
     parser.add_argument("--videos", help="Show all videos of the selected channel", default=keys.videos)
     parser.add_argument("--chat", help="Open the chat of the selected stream", default=keys.chat)
 
+    # options
     parser.add_argument("-m", "--menu", choices=["rofi", "dmenu", "fzf"], help="Select a launcher/menu", default="rofi")
     parser.add_argument("-l", "--lines", help="Show menu lines (default: 15)", nargs="?", default=15)
-    parser.add_argument("-p", "--player", default="mpv", choices=["streamlink", "mpv"])
+    parser.add_argument("-p", "--player", default="streamlink", choices=["streamlink", "mpv"])
     parser.add_argument("-t", "--test", action="store_true", help="Test mode")
-    parser.add_argument("-d", "--debug", action="store_true", help="Debug mode")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose mode")
 
     args = parser.parse_args()
 
-    logger.verbose(args.debug)
+    logger.verbose(args.verbose)
     log = logging.getLogger(__name__)
 
-    if args.debug:
+    if args.verbose:
         log.info("arguments: %s", vars(args))
 
     if args.menu in ["fzf", "dmenu"]:
         args.no_markup = False
 
     menu = helpers.get_launcher(args.menu)
-    client = TwitchClient(markup=args.no_markup)
-    player = FactoryPlayer.create(args.player)
-
     prompt = functools.partial(
         menu.prompt,
         prompt="Twitch>",
@@ -67,40 +65,44 @@ def main() -> int:
         height="60%",
         markup=args.no_markup,
         preview=False,
-        theme="dracula",
-    )
-
-    twitch = App(client, prompt, menu, player, keys)
-    twitch.menu.keybind.add(
-        key=args.channels,
-        description="show channels",
-        callback=twitch.get_channels_and_streams,
-    )
-    twitch.menu.keybind.add(
-        key=args.categories,
-        description="show by games",
-        callback=twitch.show_categories,
-    )
-    twitch.menu.keybind.add(
-        key=args.clips,
-        description="show clips",
-        callback=twitch.get_channel_clips,
-    )
-    twitch.menu.keybind.add(
-        key=args.videos,
-        description="show videos",
-        callback=twitch.get_channel_videos,
-    )
-    twitch.menu.keybind.add(
-        key=args.chat,
-        description="launch chat",
-        callback=twitch.chat,
+        theme="gruvbox-new",
+        location="center",
     )
 
     try:
-        twitch.client.api.validate_credentials()
+        client = TwitchClient(markup=args.no_markup)
+        player = FactoryPlayer.create(args.player)
+        twitch = App(client, prompt, menu, player, keys)
+
+        twitch.menu.keybind.add(
+            key=args.channels,
+            description="show channels",
+            callback=twitch.get_channels_and_streams,
+        )
+        twitch.menu.keybind.add(
+            key=args.categories,
+            description="show by games",
+            callback=twitch.show_categories,
+        )
+        twitch.menu.keybind.add(
+            key=args.clips,
+            description="show clips",
+            callback=twitch.get_channel_clips,
+        )
+        twitch.menu.keybind.add(
+            key=args.videos,
+            description="show videos",
+            callback=twitch.get_channel_videos,
+        )
+        twitch.menu.keybind.add(
+            key=args.chat,
+            description="launch chat",
+            callback=twitch.chat,
+        )
+
         item = twitch.run()
         twitch.play(item)
+        client.api.client.close()
     except EXCEPTIONS as err:
         prompt(items=[f"{err!r}"])
     except CONNECTION_EXCEPTION as err:
@@ -108,8 +110,6 @@ def main() -> int:
         log.error(err)
     except KeyboardInterrupt:
         log.info("Terminated by user")
-    finally:
-        client.api.client.close()
     return 0
 
 
