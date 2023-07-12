@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from datetime import timedelta
 from typing import Any
+from typing import Optional
 from typing import Union
 
 import httpx
@@ -52,11 +53,14 @@ class TwitchApiCredentials:
 class API:
     base_url: URL
     credentials: TwitchApiCredentials
+    client: Optional[httpx.Client]
 
     def __init__(self) -> None:
         self.credentials = self.get_credentials()
         self.base_url = TWITCH_API_BASE_URL
-        self.client = httpx.Client(headers=self._get_request_headers)
+
+        self.validate_credentials()
+        self.load_client()
 
     def get_credentials(self) -> TwitchApiCredentials:
         return TwitchApiCredentials(
@@ -68,7 +72,9 @@ class API:
     def validate_credentials(self) -> None:
         return validate_credentials(self.credentials.to_dict())
 
-    @property
+    def load_client(self) -> None:
+        self.client = httpx.Client(headers=self._get_request_headers())
+
     def _get_request_headers(self) -> HeaderTypes:
         return {
             "Accept": "application/vnd.twitchtv.v5+json",
@@ -107,7 +113,10 @@ class API:
         return data
 
 
-class ContentAPI(API):
+class Content:
+    def __init__(self, api: API) -> None:
+        self.api = api
+
     def get_clips(self, user_id: str) -> list[dict[str, Any]]:
         """Gets one or more video clips that were captured from streams."""
         # https://dev.twitch.tv/docs/api/reference#get-clips
@@ -120,7 +129,7 @@ class ContentAPI(API):
             "started_at": started_at,
             "ended_at": ended_at,
         }
-        response = self.request_get(endpoint, params, requested_items=100)
+        response = self.api.request_get(endpoint, params, requested_items=100)
         data = response["data"]
         log.info("clips_len='%s'", len(data))
         return data
@@ -146,13 +155,16 @@ class ContentAPI(API):
         }
         if highlight:
             params["type"] = "highlight"
-        response = self.request_get(endpoint, params, requested_items=100)
+        response = self.api.request_get(endpoint, params, requested_items=100)
         data = response["data"]
         log.info("videos_len='%s'", len(data))
         return data
 
 
-class ChannelsAPI(API):
+class Channels:
+    def __init__(self, api: API) -> None:
+        self.api = api
+
     """
     A class for interacting with the Twitch Channels API.
 
@@ -170,16 +182,16 @@ class ChannelsAPI(API):
         # https://dev.twitch.tv/docs/api/reference#get-followed-streams
         log.debug("getting a list of live streams")
         endpoint = URL("streams/followed")
-        params = {"user_id": self.credentials.user_id}
-        response = self.request_get(endpoint, params)
+        params = {"user_id": self.api.credentials.user_id}
+        response = self.api.request_get(endpoint, params)
         return response["data"]
 
     def get_channels(self) -> list[dict[str, Any]]:
         # https://dev.twitch.tv/docs/api/reference/#get-followed-channels
         log.debug("getting list that user follows")
         endpoint = URL("channels/followed")
-        params = {"user_id": self.credentials.user_id}
-        response = self.request_get(endpoint, params)
+        params = {"user_id": self.api.credentials.user_id}
+        response = self.api.request_get(endpoint, params)
         return response["data"]
 
     def get_channel_info(self, user_id: str) -> list[dict[str, Any]]:
@@ -188,7 +200,7 @@ class ChannelsAPI(API):
         log.debug("getting information about channel")
         endpoint = URL("channels")
         params = {"broadcaster_id": user_id}
-        response = self.request_get(endpoint, params)
+        response = self.api.request_get(endpoint, params)
         return response["data"]
 
     def get_channels_info(self, broadcaster_ids: list[str]) -> list[dict[str, Any]]:
@@ -201,10 +213,12 @@ class ChannelsAPI(API):
         # https://dev.twitch.tv/docs/api/reference#get-channel-information
         endpoint = URL("channels")
         params = {"broadcaster_id": broadcaster_ids}
-        response = self.request_get(endpoint, params)
+        response = self.api.request_get(endpoint, params)
         return response["data"]
 
 
 class TwitchApi(API):
-    content = ContentAPI()
-    channels = ChannelsAPI()
+    def __init__(self) -> None:
+        super().__init__()
+        self.channels = Channels(api=self)
+        self.content = Content(api=self)
