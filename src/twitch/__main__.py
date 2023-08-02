@@ -20,6 +20,7 @@ keys = Keys(
     clips="alt-c",
     videos="alt-v",
     chat="alt-o",
+    information="alt+i",
 )
 
 
@@ -98,6 +99,11 @@ def main() -> int:
             key=args.chat,
             description="launch chat",
             callback=twitch.chat,
+        )
+        twitch.menu.keybind.add(
+            key=keys.information,
+            description="display item info",
+            callback=twitch.get_item_info,
         )
 
         item = twitch.run()

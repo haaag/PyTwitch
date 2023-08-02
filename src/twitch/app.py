@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import logging
+import sys
 import typing
 import webbrowser
+from dataclasses import asdict
 from typing import Callable
 from typing import NamedTuple
 from typing import Union
@@ -33,6 +35,7 @@ class Keys(NamedTuple):
     clips: str
     videos: str
     chat: str
+    information: str
 
 
 class App:
@@ -145,3 +148,17 @@ class App:
         item = kwargs.pop("item")
         webbrowser.open_new_tab(item.chat)
         raise SystemExit
+
+    def get_item_info(self, **kwargs) -> None:
+        item = kwargs.get("item")
+        item_dict = asdict(item)
+        formatted_item = helpers.stringify_dict(item_dict, sep=SEPARATOR)
+        formatted_item.append(f"{'url':<18}{SEPARATOR}\t{item.url:<30}")
+        selected, keycode = self.prompt(
+            items=formatted_item,
+            mesg="Item information",
+            markup=False,
+        )
+        selected = selected.split(SEPARATOR, maxsplit=1)[1].strip()
+        helpers.copy_to_clipboard(selected)
+        sys.exit(0)
