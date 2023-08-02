@@ -46,7 +46,7 @@ class Player:
     def play(self, item: TwitchPlayableContent) -> int:
         args = self.args(item.url)
         log.info("executing: %s", args)
-        return subprocess.call(args, stderr=subprocess.DEVNULL)
+        return subprocess.run(args, stderr=subprocess.DEVNULL)
 
     def record(self, item: TwitchPlayableContent, path: str) -> int:
         raise NotImplementedError
@@ -69,7 +69,7 @@ class StreamLink(Player):
         now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         filepath = Path(path).expanduser() / f"{now}_{item.name}.ts"
         args = [self.bin, self.player, "--record", str(filepath), item.url, self.quality]
-        return subprocess.call(args, stderr=subprocess.DEVNULL)
+        return subprocess.run(args, stderr=subprocess.DEVNULL)
 
 
 class Mpv(Player):
