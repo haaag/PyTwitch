@@ -160,12 +160,3 @@ def format_datetime(dt_string: str) -> str:
     if dt.date() == now.date():
         return f"Today: {dt.strftime('%H:%M')}"
     return dt.strftime("%Y-%m-%d: %H:%M")
-
-
-def get_launcher(name: str):
-    launchers = {
-        "rofi": Menu.rofi(),
-        "dmenu": Menu.dmenu(),
-        "fzf": Menu.fzf(),
-    }
-    return launchers[name]

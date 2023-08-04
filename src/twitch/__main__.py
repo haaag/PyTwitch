@@ -5,6 +5,8 @@ import functools
 import logging
 import sys
 
+from pyselector import Menu
+
 from src.twitch import helpers
 from src.twitch import logger
 from src.twitch._exceptions import CONNECTION_EXCEPTION
@@ -57,7 +59,7 @@ def main() -> int:
     if args.menu in ["fzf", "dmenu"]:
         args.no_markup = False
 
-    menu = helpers.get_launcher(args.menu)
+    menu = Menu.get(args.menu)
     prompt = functools.partial(
         menu.prompt,
         prompt="Twitch>",
