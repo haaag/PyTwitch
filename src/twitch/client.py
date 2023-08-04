@@ -101,13 +101,17 @@ class TwitchClient:
     def get_channel_info(self, channel_id: str) -> FollowedChannelInfo:
         data = self.api.channels.get_channel_info(user_id=channel_id)
         if not data:
-            raise ValueError(f"{channel_id=} not found")
+            err_msg = f"{channel_id=} not found"
+            log.error(err_msg)
+            raise ValueError(err_msg)
         return FollowedChannelInfo(**data[0], markup=self.markup)
 
     def get_channels_info(self, channels_id: list[str]) -> Iterable[FollowedChannelInfo]:
         data = self.api.channels.get_channels_info(broadcaster_ids=channels_id)
         if not data:
-            raise ValueError(f"{channels_id=} not found")
+            err_msg = f"{channels_id=} not found"
+            log.error(err_msg)
+            raise ValueError(err_msg)
         return (FollowedChannelInfo(**broadcaster, markup=self.markup) for broadcaster in data)
 
     def get_channels_with_info(self) -> Iterable[FollowedChannelInfo]:
@@ -122,7 +126,7 @@ class TwitchClient:
     def get_channel_videos(self, user_id: str) -> Iterable[FollowedContentVideo]:
         data = self.api.content.get_videos(user_id=user_id)
         if not data:
-            # FIX:
+            # FIX: Handle request when there is no data.
             log.critical("need to find a way to handle request returns 0 data")
             raise NotImplementedError
         return (FollowedContentVideo(**video, markup=self.markup) for video in data)
@@ -130,7 +134,7 @@ class TwitchClient:
     def get_channel_clips(self, user_id: str) -> Iterable[FollowedContentClip]:
         data = self.api.content.get_clips(user_id=user_id)
         if not data:
-            # FIX:
+            # FIX: Handle request when there is no data.
             log.critical("need to find a way to handle request returns 0 data")
             raise NotImplementedError
         return (FollowedContentClip(**clip, markup=self.markup) for clip in data)

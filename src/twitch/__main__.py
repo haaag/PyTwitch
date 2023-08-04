@@ -42,7 +42,7 @@ def main() -> int:
     # options
     parser.add_argument("-m", "--menu", choices=["rofi", "dmenu", "fzf"], help="Select a launcher/menu", default="rofi")
     parser.add_argument("-l", "--lines", help="Show menu lines (default: 15)", nargs="?", default=15)
-    parser.add_argument("-p", "--player", default="streamlink", choices=["streamlink", "mpv"])
+    parser.add_argument("-p", "--player", default="mpv", choices=["streamlink", "mpv"])
     parser.add_argument("-t", "--test", action="store_true", help="Test mode")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose mode")
 

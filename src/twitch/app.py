@@ -147,7 +147,7 @@ class App:
     def chat(self, **kwargs) -> None:
         item = kwargs.pop("item")
         webbrowser.open_new_tab(item.chat)
-        raise SystemExit
+        sys.exit(0)
 
     def get_item_info(self, **kwargs) -> None:
         item = kwargs.get("item")
