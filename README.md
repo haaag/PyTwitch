@@ -8,13 +8,13 @@
 
 </div>
 
-# Twitch Menu
+## Twitch Menu
 
-## ⭐ About
+### ⭐ About
 
 A user-friendly tool for easily accessing and watching live streams, videos, and clips from Twitch, it presents a menu interface for seamless browsing and streaming.
 
-## ⚡️ Requirements
+### ⚡️ Requirements
 
 - Player:
   - ⭐ [mpv](https://mpv.io/) _(default)_
@@ -24,35 +24,38 @@ A user-friendly tool for easily accessing and watching live streams, videos, and
   - [Rofi](https://github.com/davatorium/rofi)
   - [fzf](https://github.com/junegunn/fzf) _(WIP)_
 
-## ➕ Dependencies
+### ➕ Dependencies
 
 - [httpx](https://www.python-httpx.org/)
 - [python-dotenv](https://pypi.org/project/python-dotenv/)
 - [pyselector](https://pypi.org/project/pyselector/)
 
-## 🔒Credentials
+### 🔒Credentials
 
-For authentication, this program reads the environment variables set in your shell:
+For authentication, you can set environment vars in your `shell` or use
+the `.env` file.
+
+[env-template](https://github.com/haaag/pytwitch/blob/main/env-template) file
 
 ```{bash}
 # Twitch credentials
-TWITCH_CLIENT_ID=xxxxx
-TWITCH_ACCESS_TOKEN=xxx
-TWITCH_USER_ID=00000
+TWITCH_CLIENT_ID="xxxxx"
+TWITCH_ACCESS_TOKEN="xxx"
+TWITCH_USER_ID="123456"
 ```
 
-### 🔓Credentials directions
+#### 🔓Credentials directions
 
 - [Twitch token generator](https://twitchtokengenerator.com/)
   - Scope: `user:read:follows`
 - [Twitch Channel ID and User ID Convertor](https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/)
 
-## 📦 Installation
+### 📦 Installation
 
 ```{bash}
 # Clone repository
-$ git clone "https://github.com/haaag/twitch-menu.git"
-$ cd twitch-menu
+$ git clone "https://github.com/haaag/pytwitch.git"
+$ cd pytwitch
 
 # Create virtual environment & source
 $ python -m venv .venv
@@ -62,46 +65,43 @@ $ source .venv/bin/activate
 (.venv) $ pip install -r requirements.txt
 ```
 
-## 🛠️ Usage
+### 🛠️ Usage
+
+After installation you can use the command `pytwitch`
 
 ```{bash}
-# Run main.py with default launcher 'dmenu'
-(.venv) $ python main.py
+# Use rofi menu by default
+(.venv) $ pytwitch
 
-# Run main.py with launcher 'rofi'
-(.venv) $ python main.py --rofi
+# You can use it with dmenu or rofi
+(.venv) $ pytwitch -m dmenu
 
-# help
-(.venv) $ python main.py --help
+# or
+(.venv) $ pytwitch --menu=fzf
 
-# Output
-usage: main.py [-h] [--rofi] [--lines [LINES]] [--player [PLAYER]] [--live]
-
-Simple tool menu for watching streams live, video or clips from Twitch.
-
-options:
-  --rofi             Set launcher to Rofi (default: dmenu)
-  --lines            Show dmenu in lines (default: 12 lines)
-  --player           Player (default: mpv)
-  --live             Show live streams only
-  -v, --verbose      Verbose mode
-  -h, --help         show this help message and exit
+# Help
+(.venv) $ pytwitch --help
 ```
 
-## 🖼️ Gifs
+### 🖼️ ~~Gifs~~
 
 ![demo](https://github.com/haaag/twitch-menu/raw/main/.github/images/rofi-live.gif)
 
-## 🔗 References
+### 🔗 References
 
 - [Twitch API](https://dev.twitch.tv/docs/api/)
 - [Twitch API Reference](https://dev.twitch.tv/docs/api/reference)
 
-## 🧰 TODO
+### 🧰 TODO
 
 - [x] Create/Update requirements/dependencies
 - [x] Complete Usage
 - [x] Update screenshots
 - [x] Better logging
 - [ ] Finish tests
+- [ ] Update GIFs
+- [ ] Update `argparse` help
+
+  - [ ] Display `keybinds`
+
 - [ignore](https://raw.githubusercontent.com/haaag/{repo_name}/{branch}/.github/images/{asset_name}.{asset_extension})

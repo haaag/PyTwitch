@@ -5,7 +5,7 @@ requires = [
 ]
 
 [project]
-name = "pytwitchify"
+name = "pytwitch"
 description = "Simple menu tool for launching Twitch streams."
 readme = "README.md"
 keywords = [
