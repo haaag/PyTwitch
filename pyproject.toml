@@ -57,6 +57,7 @@ ignore_missing_imports = true
 pretty = true
 warn_no_return = false
 warn_unused_ignores = true
+exclude = "removed"
 
 [tool.ruff]
 fix = false
@@ -71,6 +72,33 @@ exclude = [
     ".pytest_cache",
 ]
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+select = [
+  "A",
+  "ARG",
+  "B",
+  "C",
+  "DTZ",
+  "E",
+  "EM",
+  "F",
+  "FBT",
+  "I",
+  "ICN",
+  "ISC",
+  "N",
+  "PLC",
+  "PLE",
+  "PLR",
+  "PLW",
+  "Q",
+  "RUF",
+  "S",
+  "T",
+  "TID",
+  "UP",
+  "W",
+  "YTT",
+]
 extend-select = [
     "B",    # (flake8-bugbear)
     "BLE",  # (flake8-blind-except)
@@ -104,3 +132,6 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.per-file-ignores]
 "src/twitch/player.py" = ["S603"]
+
+[tool.ruff.flake8-tidy-imports]
+ban-relative-imports = "all"

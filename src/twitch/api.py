@@ -7,14 +7,13 @@ import typing
 from dataclasses import dataclass
 from datetime import datetime
 from datetime import timedelta
+from datetime import timezone
 from typing import Any
-from typing import Optional
-from typing import Union
 
 import httpx
 from httpx import URL
 
-from src.twitch._exceptions import ValidationEnvError
+from src.twitch._exceptions import EnvValidationError
 from src.twitch.constants import TWITCH_ACCESS_TOKEN
 from src.twitch.constants import TWITCH_API_BASE_URL
 from src.twitch.constants import TWITCH_CLIENT_ID
@@ -37,23 +36,23 @@ def validate_credentials(credentials: dict[str, str]) -> None:
         if not value:
             err_msg = f"Environment variable {key!r} is not set"
             log.error(err_msg)
-            raise ValidationEnvError(err_msg)
+            raise EnvValidationError(err_msg)
 
 
 @dataclass
 class TwitchApiCredentials:
     access_token: str
     client_id: str
-    user_id: Union[int, str]
+    user_id: str
 
-    def to_dict(self) -> dict[str, Union[int, str]]:
+    def to_dict(self) -> dict[str, str]:
         return self.__dict__
 
 
 class API:
     base_url: URL
     credentials: TwitchApiCredentials
-    client: Optional[httpx.Client]
+    client: httpx.Client
 
     def __init__(self) -> None:
         self.credentials = self.get_credentials()
@@ -64,9 +63,9 @@ class API:
 
     def get_credentials(self) -> TwitchApiCredentials:
         return TwitchApiCredentials(
-            access_token=TWITCH_ACCESS_TOKEN,
-            client_id=TWITCH_CLIENT_ID,
-            user_id=TWITCH_USER_ID,
+            access_token=TWITCH_ACCESS_TOKEN,  # type: ignore[arg-type]
+            client_id=TWITCH_CLIENT_ID,  # type: ignore[arg-type]
+            user_id=TWITCH_USER_ID,  # type: ignore[arg-type]
         )
 
     def validate_credentials(self) -> None:
@@ -121,8 +120,8 @@ class Content:
         """Gets one or more video clips that were captured from streams."""
         # https://dev.twitch.tv/docs/api/reference#get-clips
         log.debug("getting user_id='%s' clips", user_id)
-        ended_at = datetime.now().isoformat() + "Z"
-        started_at = (datetime.now() - timedelta(days=7)).isoformat() + "Z"
+        ended_at = datetime.now(tz=timezone.utc).isoformat() + "Z"
+        started_at = (datetime.now(tz=timezone.utc) - timedelta(days=7)).isoformat() + "Z"
         endpoint = URL("clips")
         params = {
             "broadcaster_id": user_id,

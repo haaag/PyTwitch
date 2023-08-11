@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
-from typing import Optional
 
 from pyselector.markup import PangoSpan
 
@@ -30,7 +29,7 @@ class FollowedContentClip:
     url: str
     video_id: str
     view_count: int
-    vod_offset: Optional[int]
+    vod_offset: int | None
     markup: bool = True
 
     @property
@@ -139,8 +138,8 @@ class FollowedContentVideo:
 
     @property
     def published_fmt(self) -> str:
-        published_fmt = helpers.format_datetime(self.published_at)
-        pass
+        # published_fmt = helpers.format_datetime(self.published_at)
+        return helpers.format_datetime(self.published_at)
 
     def __str__(self) -> str:
         return (

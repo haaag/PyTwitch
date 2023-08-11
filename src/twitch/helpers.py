@@ -16,8 +16,6 @@ from typing import Any
 from typing import Callable
 from typing import NamedTuple
 
-from pyselector import Menu
-
 log = logging.getLogger(__name__)
 
 

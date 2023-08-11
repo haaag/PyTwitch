@@ -4,17 +4,22 @@ import argparse
 import functools
 import logging
 import sys
+from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Callable
 
 from pyselector import Menu
 
-from src.twitch import helpers
 from src.twitch import logger
 from src.twitch._exceptions import CONNECTION_EXCEPTION
 from src.twitch._exceptions import EXCEPTIONS
-from src.twitch.app import App
 from src.twitch.app import Keys
+from src.twitch.app import TwitchApp
 from src.twitch.client import TwitchClient
 from src.twitch.player import FactoryPlayer
+
+if TYPE_CHECKING:
+    from pyselector.interfaces import MenuInterface
 
 keys = Keys(
     channels="alt-a",
@@ -26,7 +31,42 @@ keys = Keys(
 )
 
 
-def main() -> int:
+
+def _set_keybinds(twitch: TwitchApp, args: argparse.Namespace) -> TwitchApp:
+    twitch.menu.keybind.add(
+        key=args.channels,
+        description="show channels",
+        callback=twitch.get_channels_and_streams,
+    )
+    twitch.menu.keybind.add(
+        key=args.categories,
+        description="show by games",
+        callback=twitch.show_categories,
+    )
+    twitch.menu.keybind.add(
+        key=args.clips,
+        description="show clips",
+        callback=twitch.get_channel_clips,
+    )
+    twitch.menu.keybind.add(
+        key=args.videos,
+        description="show videos",
+        callback=twitch.get_channel_videos,
+    )
+    twitch.menu.keybind.add(
+        key=args.chat,
+        description="launch chat",
+        callback=twitch.chat,
+    )
+    twitch.menu.keybind.add(
+        key=keys.information,
+        description="display item info",
+        callback=twitch.get_item_info,
+    )
+    return twitch
+
+
+def _setup_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Simple tool menu for watching streams live, video or clips from src.twitch.",
     )
@@ -50,15 +90,12 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    logger.verbose(args.verbose)
-    log = logging.getLogger(__name__)
-
-    if args.verbose:
-        log.info("arguments: %s", vars(args))
-
     if args.menu in ["fzf", "dmenu"]:
         args.no_markup = False
+    return args
 
+
+def _setup_menu(args: argparse.Namespace) -> tuple[MenuInterface, Callable]:
     menu = Menu.get(args.menu)
     prompt = functools.partial(
         menu.prompt,
@@ -71,46 +108,41 @@ def main() -> int:
         theme="gruvbox-new",
         location="center",
     )
+    return menu, prompt
+
+
+def main() -> int:
+    args = _setup_args()
+
+    if args.env_file:
+        with args.env_file.open(mode="r") as fp:
+            data = fp.readlines()
+            print(data)
+            sys.exit()
+
+    logger.verbose(args.verbose)
+    log = logging.getLogger(__name__)
+
+    if args.verbose:
+        log.info("arguments: %s", vars(args))
+
+    menu, prompt = _setup_menu(args)
 
     try:
-        client = TwitchClient(markup=args.no_markup)
-        player = FactoryPlayer.create(args.player)
-        twitch = App(client, prompt, menu, player, keys)
+        # client = TwitchClient(markup=args.no_markup)
+        # player = FactoryPlayer.create(args.player)
+        twitch = TwitchApp(
+            client=TwitchClient(markup=args.no_markup),
+            prompt=prompt,
+            menu=menu,
+            player=FactoryPlayer.create(args.player),
+            keys=keys,
+        )
+        twitch = _set_keybinds(twitch, args)
 
-        twitch.menu.keybind.add(
-            key=args.channels,
-            description="show channels",
-            callback=twitch.get_channels_and_streams,
-        )
-        twitch.menu.keybind.add(
-            key=args.categories,
-            description="show by games",
-            callback=twitch.show_categories,
-        )
-        twitch.menu.keybind.add(
-            key=args.clips,
-            description="show clips",
-            callback=twitch.get_channel_clips,
-        )
-        twitch.menu.keybind.add(
-            key=args.videos,
-            description="show videos",
-            callback=twitch.get_channel_videos,
-        )
-        twitch.menu.keybind.add(
-            key=args.chat,
-            description="launch chat",
-            callback=twitch.chat,
-        )
-        twitch.menu.keybind.add(
-            key=keys.information,
-            description="display item info",
-            callback=twitch.get_item_info,
-        )
-
-        item = twitch.run()
+        item = twitch.run_loop()
         twitch.play(item)
-        client.api.client.close()
+        twitch.close()
     except EXCEPTIONS as err:
         prompt(items=[f"{err!r}"])
     except CONNECTION_EXCEPTION as err:

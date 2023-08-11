@@ -9,10 +9,10 @@ import webbrowser
 from dataclasses import asdict
 from typing import Callable
 from typing import NamedTuple
-from typing import Union
 
 from src.twitch import helpers
 from src.twitch.constants import SEPARATOR
+from src.twitch.constants import UserHitEscapeCode
 
 if typing.TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
@@ -38,15 +38,22 @@ class Keys(NamedTuple):
     information: str
 
 
-class App:
-    def __init__(self, client: TwitchClient, prompt: Callable, menu: MenuInterface, player: Player, keys: Keys):
+class TwitchApp:
+    def __init__(
+        self,
+        client: TwitchClient,
+        prompt: Callable,
+        menu: MenuInterface,
+        player: Player,
+        keys: Keys,
+    ):
         self.client = client
         self.prompt = prompt
         self.menu = menu
         self.player = player
         self.key = keys
 
-    def run(self) -> TwitchPlayableContent:
+    def run_loop(self) -> TwitchPlayableContent:
         channels, mesg = self.get_channels_and_streams()
         item, keycode = self.display(items=channels, mesg=mesg)
 
@@ -63,7 +70,7 @@ class App:
             item = self.show_channel_videos(item=item)
         return item
 
-    def display(self, items, mesg: str = ""):
+    def display(self, items, mesg: str = "") -> tuple[str, int]:
         if not mesg:
             mesg = f"> Showing ({len(items)}) items"
 
@@ -73,19 +80,24 @@ class App:
             markup=self.client.markup,
         )
 
+        if keycode == UserHitEscapeCode(1):
+            self.close()
+            sys.exit(keycode)
+
         name = helpers.extract_key_from_str(selected, sep=SEPARATOR)
         log.debug("name='%s' extracted from (self.display)", name)
 
         try:
             item = items[name]
         except KeyError as err:
-            log.error("item='%s' not found", selected)
-            raise ValueError(f"item='{selected}' not found") from err
+            err_msg = f"item='{selected}' not found"
+            log.error(err_msg)
+            raise ValueError(err_msg) from err
         return item, keycode
 
     def show_categories(
         self, keybind: Keybind, **kwargs
-    ) -> tuple[dict[str, Union[FollowedChannelInfo, FollowedStream]], str]:
+    ) -> tuple[dict[str, FollowedChannelInfo | FollowedStream], str]:
         keybinds = self.menu.keybind.unregister_all()
         categories = self.client.games
         mesg = f"> Showing ({len(categories)}) <categories> or <games>"
@@ -104,7 +116,7 @@ class App:
         video_selected, _ = self.display(items=videos, mesg=mesg)
         return video_selected
 
-    def get_channels_and_streams(self, **kwargs) -> tuple[dict[str, Union[FollowedChannelInfo, FollowedStream]], str]:
+    def get_channels_and_streams(self, **kwargs) -> tuple[dict[str, FollowedChannelInfo | FollowedStream], str]:
         self.menu.keybind.get_keybind_by_bind(self.key.channels).toggle_hidden()
         data = self.client.channels_and_streams
         return data, f"> Showing ({self.client.online}) streams from {len(data)} channels"
@@ -132,7 +144,7 @@ class App:
         log.warning(f"recording content {follow.url=}")
         return self.player.record(follow, path)
 
-    def toggle_key(self, binds: Union[str, list[str]]) -> None:
+    def toggle_key(self, binds: str | list[str]) -> None:
         if isinstance(binds, str):
             binds = [binds]
         for bind in binds:
@@ -162,3 +174,7 @@ class App:
         selected = selected.split(SEPARATOR, maxsplit=1)[1].strip()
         helpers.copy_to_clipboard(selected)
         sys.exit(0)
+
+    def close(self) -> None:
+        log.debug("closing connection")
+        self.client.api.client.close()

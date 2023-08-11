@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
-from typing import Union
 
 from pyselector.markup import PangoSpan
 
@@ -29,7 +27,7 @@ class FollowedChannelInfo:
     game_name: str
     title: str
     delay: int
-    content_classification_labels: Optional[list[str]] = None
+    content_classification_labels: list[str] | None = None
     is_branded_content: bool = False
     viewer_count: int = 0
     live: bool = False
@@ -182,7 +180,7 @@ class FollowedStream:
 @dataclass
 class Category:
     name: str
-    channels: dict[str, Union[FollowedStream, FollowedChannelInfo]]
+    channels: dict[str, FollowedStream | FollowedChannelInfo]
     markup: bool = True
 
     def __hash__(self) -> int:
@@ -224,30 +222,3 @@ class Category:
             if self.online
             else f"{self.name_str}{self.sep}{LIVE_ICON} {offline}"
         )
-
-
-game_from_search = {
-    "broadcaster_language": "en",
-    "broadcaster_login": "12g_live",
-    "display_name": "12G_Live",
-    "game_id": "504461",
-    "game_name": "Super Smash Bros. Ultimate",
-    "id": "866258853",
-    "is_live": True,
-    "tag_ids": [],
-    "tags": [
-        "Shooter",
-        "teamplay",
-        "Tournament",
-        "Smashbrosultimate",
-        "Bracket",
-        "NewYork",
-        "BrookLAN",
-        "12G",
-        "FightingsGames",
-        "English",
-    ],
-    "thumbnail_url": "https://static-cdn.jtvnw.net/jtv_user_pictures/11c7516e-88bd-46f2-bbfc-428db7e467f8-profile_image-300x300.png",
-    "title": "BrookLAN Brawls #73 ft.  Ho3K | John Numbers, WPC | Vivi, Sho, Kamex, 5teelix and the 12G crew! $200 pot bonus for Gen beating Riddles!",
-    "started_at": "2023-04-23T19:29:28Z",
-}

@@ -4,7 +4,9 @@
 ![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=Flat&logo=sqlite&logoColor=white)
 [![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg)](https://github.com/pypa/hatch)
 [![linting - Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v0.json)](https://github.com/charliermarsh/ruff)
-[![code style - Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![types - Mypy](https://img.shields.io/badge/types-Mypy-blue.svg)](https://github.com/python/mypy) [![License - MIT](https://img.shields.io/badge/license-MIT-9400d3.svg)](https://spdx.org/licenses/)
+[![code style - Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![types - Mypy](https://img.shields.io/badge/types-Mypy-blue.svg)](https://github.com/python/mypy)
+[![License - MIT](https://img.shields.io/badge/license-MIT-9400d3.svg)](https://spdx.org/licenses/)
 
 </div>
 
@@ -12,7 +14,9 @@
 
 ### ⭐ About
 
-A user-friendly tool for easily accessing and watching live streams, videos, and clips from Twitch, it presents a menu interface for seamless browsing and streaming.
+A user-friendly tool for easily accessing and watching live streams, videos, and
+clips from Twitch, it presents a menu interface for seamless browsing and
+streaming.
 
 ### ⚡️ Requirements
 
@@ -32,8 +36,8 @@ A user-friendly tool for easily accessing and watching live streams, videos, and
 
 ### 🔒Credentials
 
-For authentication, you can set environment vars in your `shell` or use
-the `.env` file.
+For authentication, you can set environment vars in your `shell` or use the
+`.env` file and put it in the root of the project.
 
 [env-template](https://github.com/haaag/pytwitch/blob/main/env-template) file
 
@@ -63,6 +67,9 @@ $ source .venv/bin/activate
 
 # Install requirements
 (.venv) $ pip install -r requirements.txt
+
+# Install
+(.venv) $ pip install .
 ```
 
 ### 🛠️ Usage

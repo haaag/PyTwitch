@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import os
-from typing import Text
+from pathlib import Path
+from typing import NewType
 
 import httpx
 from dotenv import load_dotenv
@@ -11,6 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # others
+UserHitEscapeCode = NewType("UserHitEscapeCode", int)
 TITLE_MAX_LENGTH = 50
 
 # api urls
@@ -24,22 +26,22 @@ TWITCH_CLIENT_ID = os.environ.get("TWITCH_CLIENT_ID")
 TWITCH_USER_ID = os.environ.get("TWITCH_USER_ID")
 
 # ui
-BACK: Text = "\u21B6"
-BULLET_ICON: Text = "\u2022"
-CALENDAR: Text = "\U0001F4C5"
-CIRCLE: Text = "\u25CF"
-CLOCK: Text = "\U0001F559"
-CROSS: Text = "\u2716"
-DELIMITER: Text = "\u2014"
-EXIT: Text = "\uf842"
-EYE: Text = "\U0001F441"
-HEART: Text = "\u2665"
-BELL: Text = "\uf0f3"
-UNBELL: Text = "\uf1f6"
-HYPHEN_BULLET: Text = "\u2043"
-NOBREAK_SPACE: Text = "\u00A0"
-MIDDLE_DOT: Text = "\u00B7"
-BROKEN_BAR: Text = "\u00A6"
+BACK: str = "\u21B6"
+BULLET_ICON: str = "\u2022"
+CALENDAR: str = "\U0001F4C5"
+CIRCLE: str = "\u25CF"
+CLOCK: str = "\U0001F559"
+CROSS: str = "\u2716"
+DELIMITER: str = "\u2014"
+EXIT: str = "\uf842"
+EYE: str = "\U0001F441"
+HEART: str = "\u2665"
+BELL: str = "\uf0f3"
+UNBELL: str = "\uf1f6"
+HYPHEN_BULLET: str = "\u2043"
+NOBREAK_SPACE: str = "\u00A0"
+MIDDLE_DOT: str = "\u00B7"
+BROKEN_BAR: str = "\u00A6"
 
 # icons
 LIVE_ICON = CIRCLE

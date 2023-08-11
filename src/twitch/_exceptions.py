@@ -3,7 +3,7 @@ from __future__ import annotations
 import httpx
 
 
-class ValidationEnvError(Exception):
+class EnvValidationError(Exception):
     pass
 
 
@@ -12,4 +12,4 @@ class ExecutableNotFoundError(Exception):
 
 
 CONNECTION_EXCEPTION = (httpx.ConnectError, httpx.HTTPStatusError)
-EXCEPTIONS = (ExecutableNotFoundError, ValidationEnvError)
+EXCEPTIONS = (ExecutableNotFoundError, EnvValidationError)

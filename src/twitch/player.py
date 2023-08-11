@@ -30,7 +30,9 @@ class Player:
     def bin(self) -> str:
         bin = shutil.which(self.name)
         if not bin:
-            raise ExecutableNotFoundError(f"player={self.name!r} not found")
+            err_msg = f"player={self.name!r} not found"
+            log.error(err_msg)
+            raise ExecutableNotFoundError(err_msg)
         return bin
 
     def add_options(self, args: str) -> None:
@@ -43,12 +45,12 @@ class Player:
         args.extend(self.options)
         return args
 
-    def play(self, item: TwitchPlayableContent) -> int:
+    def play(self, item: TwitchPlayableContent) -> subprocess.CompletedProcess:
         args = self.args(item.url)
         log.info("executing: %s", args)
         return subprocess.run(args, stderr=subprocess.DEVNULL)
 
-    def record(self, item: TwitchPlayableContent, path: str) -> int:
+    def record(self, item: TwitchPlayableContent, path: str) -> subprocess.CompletedProcess:
         raise NotImplementedError
 
 
@@ -65,7 +67,7 @@ class StreamLink(Player):
         args.extend(self.options)
         return args
 
-    def record(self, item: TwitchPlayableContent, path: str) -> int:
+    def record(self, item: TwitchPlayableContent, path: str) -> subprocess.CompletedProcess:
         now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         filepath = Path(path).expanduser() / f"{now}_{item.name}.ts"
         args = [self.bin, self.player, "--record", str(filepath), item.url, self.quality]
