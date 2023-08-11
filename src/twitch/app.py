@@ -1,5 +1,4 @@
 # app.py
-
 from __future__ import annotations
 
 import logging
@@ -7,7 +6,9 @@ import sys
 import typing
 import webbrowser
 from dataclasses import asdict
+from typing import Any
 from typing import Callable
+from typing import Mapping
 from typing import NamedTuple
 
 from src.twitch import helpers
@@ -21,6 +22,8 @@ if typing.TYPE_CHECKING:
     from src.twitch.client import TwitchClient
     from src.twitch.content import FollowedContentClip
     from src.twitch.content import FollowedContentVideo
+    from src.twitch.datatypes import TwitchChannel
+    from src.twitch.datatypes import TwitchContent
     from src.twitch.follows import FollowedChannelInfo
     from src.twitch.follows import FollowedStream
     from src.twitch.player import Player
@@ -70,7 +73,7 @@ class TwitchApp:
             item = self.show_channel_videos(item=item)
         return item
 
-    def display(self, items, mesg: str = "") -> tuple[str, int]:
+    def display(self, items: Mapping[str, Any], mesg: str = "") -> tuple[Any, int]:
         if not mesg:
             mesg = f"> Showing ({len(items)}) items"
 
@@ -162,7 +165,7 @@ class TwitchApp:
         sys.exit(0)
 
     def get_item_info(self, **kwargs) -> None:
-        item = kwargs.get("item")
+        item: TwitchContent | TwitchChannel = kwargs["item"]
         item_dict = asdict(item)
         formatted_item = helpers.stringify_dict(item_dict, sep=SEPARATOR)
         formatted_item.append(f"{'url':<18}{SEPARATOR}\t{item.url:<30}")
