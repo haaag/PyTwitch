@@ -13,7 +13,7 @@ from typing import NamedTuple
 
 from src.twitch import helpers
 from src.twitch.constants import SEPARATOR
-from src.twitch.constants import UserHitEscapeCode
+from src.twitch.constants import UserCancelledSelection
 
 if typing.TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
@@ -74,6 +74,7 @@ class TwitchApp:
         return item
 
     def display(self, items: Mapping[str, Any], mesg: str = "") -> tuple[Any, int]:
+        # FIX: Split me...
         if not mesg:
             mesg = f"> Showing ({len(items)}) items"
 
@@ -83,7 +84,12 @@ class TwitchApp:
             markup=self.client.markup,
         )
 
-        if keycode == UserHitEscapeCode(1):
+        if selected == "":
+            log.debug("Nothing currently selected")
+            self.close()
+            sys.exit(1)
+
+        if keycode == UserCancelledSelection(1):
             self.close()
             sys.exit(keycode)
 

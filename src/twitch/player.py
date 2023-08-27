@@ -18,7 +18,6 @@ log = logging.getLogger(__name__)
 class TwitchPlayableContent(typing.Protocol):
     name: str
     url: str
-    chat: str
 
 
 class Player:

@@ -151,7 +151,6 @@ class FollowedStream:
     @property
     def live_since(self) -> str:
         since = helpers.calculate_live_time(self.started_at)
-        # since = self.started_at
         return PangoSpan(f"({since})", sub=True, size="x-large", style="italic") if self.markup else f"({since})"
 
     @property

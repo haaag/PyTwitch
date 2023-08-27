@@ -95,8 +95,8 @@ def calculate_live_time(dt: str) -> str:
     """
     Calculates the live time of a Twitch channel.
     """
-    started_at = datetime.fromisoformat(dt).replace(tzinfo=None)
-    live_since = dhms_from_seconds(date_diff_in_seconds(datetime.utcnow(), started_at))
+    started_at = datetime.fromisoformat(dt).replace(tzinfo=timezone.utc)
+    live_since = dhms_from_seconds(date_diff_in_seconds(datetime.now(timezone.utc), started_at))
     return f"{live_since} ago"
 
 
@@ -107,6 +107,15 @@ def extract_key_from_str(s: str, sep: str) -> str:
     if match:
         s = match.group(1)
     return s
+
+
+def extract_items(s: str | list[str], sep: str) -> list[str]:
+    items: list[str] = []
+    if isinstance(s, str):
+        items.append(s)
+    if isinstance(s, list):
+        items.extend(s)
+    return [extract_key_from_str(s, sep) for s in items]
 
 
 def remove_emojis(string: str) -> str:

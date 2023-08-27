@@ -27,9 +27,8 @@ keys = Keys(
     clips="alt-c",
     videos="alt-v",
     chat="alt-o",
-    information="alt+i",
+    information="alt-i",
 )
-
 
 
 def _set_keybinds(twitch: TwitchApp, args: argparse.Namespace) -> TwitchApp:
@@ -82,7 +81,9 @@ def _setup_args() -> argparse.Namespace:
     parser.add_argument("--chat", help="Open the chat of the selected stream", default=keys.chat)
 
     # options
-    parser.add_argument("-m", "--menu", choices=["rofi", "dmenu", "fzf"], help="Select a launcher/menu", default="rofi")
+    parser.add_argument(
+        "-m", "--menu", choices=["rofi", "dmenu", "fzf", "rofi_beta"], help="Select a launcher/menu", default="rofi"
+    )
     parser.add_argument("-l", "--lines", help="Show menu lines (default: 15)", nargs="?", default=15)
     parser.add_argument("-p", "--player", default="mpv", choices=["streamlink", "mpv"])
     parser.add_argument("-t", "--test", action="store_true", help="Test mode")
@@ -114,12 +115,6 @@ def _setup_menu(args: argparse.Namespace) -> tuple[MenuInterface, Callable]:
 def main() -> int:
     args = _setup_args()
 
-    if args.env_file:
-        with args.env_file.open(mode="r") as fp:
-            data = fp.readlines()
-            print(data)
-            sys.exit()
-
     logger.verbose(args.verbose)
     log = logging.getLogger(__name__)
 
@@ -129,8 +124,6 @@ def main() -> int:
     menu, prompt = _setup_menu(args)
 
     try:
-        # client = TwitchClient(markup=args.no_markup)
-        # player = FactoryPlayer.create(args.player)
         twitch = TwitchApp(
             client=TwitchClient(markup=args.no_markup),
             prompt=prompt,

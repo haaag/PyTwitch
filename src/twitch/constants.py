@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # others
-UserHitEscapeCode = NewType("UserHitEscapeCode", int)
+UserCancelledSelection = NewType("UserCancelledSelection", int)
 TITLE_MAX_LENGTH = 50
 
 # api urls
