@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import logging
 from typing import Iterable
-from typing import Optional
-from typing import Union
 
 from src.twitch import helpers
 from src.twitch.api import TwitchApi
@@ -21,9 +19,9 @@ log = logging.getLogger(__name__)
 
 
 def group_channels_by_game(
-    channels: dict[str, Union[FollowedChannelInfo, FollowedStream]]
-) -> dict[str, dict[str, Union[FollowedChannelInfo, FollowedStream]]]:
-    output: dict[str, dict[str, Union[FollowedChannelInfo, FollowedStream]]] = {}
+    channels: dict[str, FollowedChannelInfo | FollowedStream]
+) -> dict[str, dict[str, FollowedChannelInfo | FollowedStream]]:
+    output: dict[str, dict[str, FollowedChannelInfo | FollowedStream]] = {}
     for channel_name, channel in channels.items():
         if not channel.game_name:
             continue
@@ -38,11 +36,10 @@ def group_channels_by_game(
 def merge_data(
     channels: dict[str, FollowedChannelInfo],
     streams: dict[str, FollowedStream],
-) -> dict[str, Union[FollowedChannelInfo, FollowedStream]]:
+) -> dict[str, FollowedChannelInfo | FollowedStream]:
     """Merge followed channels with the list of currently live channels."""
     log.info("merging channels and streams from 'get_channels_and_streams'")
     online = {}
-    channels = channels
     for live in streams.values():
         channels.pop(live.name, None)
         online[live.name] = live
@@ -53,10 +50,10 @@ class TwitchClient:
     def __init__(self, markup: bool = True) -> None:
         self.markup = markup
         self.api = TwitchApi()
-        self._channels: Optional[dict[str, FollowedChannelInfo]] = None
-        self._streams: Optional[dict[str, FollowedStream]] = None
-        self._games: Optional[dict[str, Category]] = None
-        self._channels_and_streams: dict[str, Union[FollowedChannelInfo, FollowedStream]] = {}
+        self._channels: dict[str, FollowedChannelInfo] | None = None
+        self._streams: dict[str, FollowedStream] | None = None
+        self._games: dict[str, Category] | None = None
+        self._channels_and_streams: dict[str, FollowedChannelInfo | FollowedStream] = {}
         self.online: int = 0
 
     @property
@@ -80,7 +77,7 @@ class TwitchClient:
 
     @property
     @timeit
-    def channels_and_streams(self) -> dict[str, Union[FollowedChannelInfo, FollowedStream]]:
+    def channels_and_streams(self) -> dict[str, FollowedChannelInfo | FollowedStream]:
         if not self._channels_and_streams:
             log.info("calling api for channels")
             channels = self.channels
