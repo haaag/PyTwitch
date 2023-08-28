@@ -35,7 +35,7 @@ def _set_keybinds(twitch: TwitchApp, args: argparse.Namespace) -> TwitchApp:
     twitch.menu.keybind.add(
         key=args.channels,
         description="show channels",
-        callback=twitch.get_channels_and_streams,
+        callback=twitch.show_content,
     )
     twitch.menu.keybind.add(
         key=args.categories,
@@ -73,7 +73,7 @@ def _set_keybinds(twitch: TwitchApp, args: argparse.Namespace) -> TwitchApp:
 
 def _setup_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Simple tool menu for watching streams live, video or clips from src.twitch.",
+        description="Simple tool menu for watching streams live, video or clips from twitch.",
     )
 
     markup_group = parser.add_argument_group(title="menu options")
@@ -137,7 +137,7 @@ def main() -> int:
             player=FactoryPlayer.create(args.player),
         )
         twitch = _set_keybinds(twitch, args)
-        twitch.run()
+        twitch.show_content()
         twitch.close()
     except EXCEPTIONS as err:
         prompt(items=[f"{err!r}"])
