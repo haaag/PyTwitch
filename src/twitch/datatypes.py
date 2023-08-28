@@ -21,4 +21,4 @@ TwitchApiResponse = Mapping[str, Any]
 
 TwitchChannel = Union[FollowedChannel, FollowedStream, FollowedChannelInfo]
 
-TwitchContent = Union[FollowedContentClip, FollowedContentVideo]
+TwitchContent = Union[FollowedContentClip, FollowedContentVideo, TwitchChannel]

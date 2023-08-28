@@ -32,6 +32,7 @@ class FollowedChannelInfo:
     viewer_count: int = 0
     live: bool = False
     markup: bool = True
+    playable: bool = False
 
     @property
     def name(self) -> str:
@@ -78,6 +79,7 @@ class FollowedChannel:
     viewer_count: int = 0
     live: bool = False
     markup: bool = True
+    playable: bool = False
 
     def __hash__(self):
         return hash((self.user_id, self.name))
@@ -125,6 +127,7 @@ class FollowedStream:
     viewer_count: int
     live: bool = True
     markup: bool = True
+    playable: bool = True
 
     def __hash__(self):
         return hash((self.id, self.name))
@@ -181,6 +184,7 @@ class Category:
     name: str
     channels: dict[str, FollowedStream | FollowedChannelInfo]
     markup: bool = True
+    playable: bool = False
 
     def __hash__(self) -> int:
         return hash(self.name)

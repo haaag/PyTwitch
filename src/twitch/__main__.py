@@ -4,7 +4,6 @@ import argparse
 import functools
 import logging
 import sys
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Callable
 
@@ -28,6 +27,7 @@ keys = Keys(
     videos="alt-v",
     chat="alt-o",
     information="alt-i",
+    multi_selection="alt-m",
 )
 
 
@@ -43,14 +43,14 @@ def _set_keybinds(twitch: TwitchApp, args: argparse.Namespace) -> TwitchApp:
         callback=twitch.show_categories,
     )
     twitch.menu.keybind.add(
-        key=args.clips,
+        key=keys.clips,
         description="show clips",
-        callback=twitch.get_channel_clips,
+        callback=twitch.show_channel_clips,
     )
     twitch.menu.keybind.add(
         key=args.videos,
         description="show videos",
-        callback=twitch.get_channel_videos,
+        callback=twitch.show_channel_videos,
     )
     twitch.menu.keybind.add(
         key=args.chat,
@@ -61,6 +61,12 @@ def _set_keybinds(twitch: TwitchApp, args: argparse.Namespace) -> TwitchApp:
         key=keys.information,
         description="display item info",
         callback=twitch.get_item_info,
+        hidden=True,
+    )
+    twitch.menu.keybind.add(
+        key=keys.multi_selection,
+        description="multiple selection",
+        callback=twitch.multi_selection,
     )
     return twitch
 
@@ -76,7 +82,7 @@ def _setup_args() -> argparse.Namespace:
     # keybinds
     parser.add_argument("--channels", help="Show all channels", default=keys.channels)
     parser.add_argument("--categories", help="Show all categories or games", default=keys.categories)
-    parser.add_argument("--clips", help="Show all clips of the selected channel", default=keys.clips)
+    # parser.add_argument("--clips", help="Show all clips of the selected channel", default=keys.clips)
     parser.add_argument("--videos", help="Show all videos of the selected channel", default=keys.videos)
     parser.add_argument("--chat", help="Open the chat of the selected stream", default=keys.chat)
 
@@ -129,12 +135,9 @@ def main() -> int:
             prompt=prompt,
             menu=menu,
             player=FactoryPlayer.create(args.player),
-            keys=keys,
         )
         twitch = _set_keybinds(twitch, args)
-
-        item = twitch.run_loop()
-        twitch.play(item)
+        twitch.run()
         twitch.close()
     except EXCEPTIONS as err:
         prompt(items=[f"{err!r}"])

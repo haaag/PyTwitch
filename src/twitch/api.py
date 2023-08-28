@@ -117,6 +117,7 @@ class Content:
         self.api = api
 
     def get_clips(self, user_id: str) -> list[dict[str, Any]]:
+        # FIXME:
         """Gets one or more video clips that were captured from streams."""
         # https://dev.twitch.tv/docs/api/reference#get-clips
         log.debug("getting user_id='%s' clips", user_id)
@@ -133,7 +134,7 @@ class Content:
         log.info("clips_len='%s'", len(data))
         return data
 
-    def get_videos(self, user_id: str, highlight: bool = False) -> list[dict[str, Any]]:
+    def get_videos(self, user_id: str) -> list[dict[str, Any]]:
         """
         Gets information about one or more published videos.
 
@@ -152,8 +153,6 @@ class Content:
             "period": "week",
             "type": "archive",
         }
-        if highlight:
-            params["type"] = "highlight"
         response = self.api.request_get(endpoint, params, requested_items=100)
         data = response["data"]
         log.info("videos_len='%s'", len(data))

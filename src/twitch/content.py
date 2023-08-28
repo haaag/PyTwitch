@@ -31,6 +31,7 @@ class FollowedContentClip:
     view_count: int
     vod_offset: int | None
     markup: bool = True
+    playable: bool = True
 
     @property
     def key(self) -> str:
@@ -98,6 +99,7 @@ class FollowedContentVideo:
     description: str
     created_at: str
     markup: bool = True
+    playable: bool = True
 
     @property
     def key(self) -> str:

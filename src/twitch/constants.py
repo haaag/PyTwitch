@@ -12,6 +12,7 @@ load_dotenv()
 
 # others
 UserCancelledSelection = NewType("UserCancelledSelection", int)
+UserHitsEnter = NewType("UserHitsEnter", int)
 TITLE_MAX_LENGTH = 50
 
 # api urls
