@@ -5,9 +5,6 @@ import logging
 import shutil
 import subprocess
 import typing
-from datetime import datetime
-from datetime import timezone
-from pathlib import Path
 
 from src.twitch import helpers
 from src.twitch._exceptions import ExecutableNotFoundError
@@ -16,7 +13,6 @@ log = logging.getLogger(__name__)
 
 
 class TwitchPlayableContent(typing.Protocol):
-    name: str
     url: str
 
 
@@ -49,9 +45,6 @@ class Player:
         log.info("executing: %s", args)
         return subprocess.Popen(args, stderr=subprocess.DEVNULL)
 
-    def record(self, item: TwitchPlayableContent, path: str) -> int:
-        raise NotImplementedError
-
 
 class StreamLink(Player):
     def __init__(self, name: str = "streamlink") -> None:
@@ -65,13 +58,6 @@ class StreamLink(Player):
         args.extend([self.player, url, self.quality])
         args.extend(self.options)
         return args
-
-    def record(self, item: TwitchPlayableContent, path: str) -> int:
-        now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        filepath = Path(path).expanduser() / f"{now}_{item.name}.ts"
-        args = [self.bin, self.player, "--record", str(filepath), item.url, self.quality]
-        proc = subprocess.run(args, stderr=subprocess.DEVNULL, check=True, shell=False)
-        return proc.returncode
 
 
 class Mpv(Player):

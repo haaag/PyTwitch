@@ -173,11 +173,6 @@ class TwitchApp:
         process = self.player.play(follow)
         return process.returncode
 
-    def record(self, follow: TwitchPlayableContent, path: str) -> int:
-        # WIP:
-        logger.warning(f"recording content {follow.url=}")
-        return self.player.record(follow, path)
-
     def get_key(self, keycode: int) -> Keybind:
         return self.menu.keybind.get_keybind_by_code(keycode)
 
