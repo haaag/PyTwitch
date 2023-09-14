@@ -32,8 +32,8 @@ class Player:
 
     def add_options(self, args: str) -> None:
         log.debug("adding player args: %s", args)
-        args_splitted = helpers.secure_split(args)
-        self.options.extend(args_splitted)
+        args_split = helpers.secure_split(args)
+        self.options.extend(args_split)
 
     def args(self, url: str) -> list[str]:
         args = [self.bin, url]

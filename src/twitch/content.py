@@ -76,7 +76,7 @@ class FollowedContentClip:
         return PangoSpan(created, size="large", foreground="orange", sub=True) if self.markup else created
 
     def __str__(self) -> str:
-        return f"{self.item_id}{self.sep}{self.created_date} {self.title_str} ({self.duration_fmt}{self.sep}{self.viewers_fmt})"
+        return f"{self.item_id}{self.sep}{self.created_date} {self.title_str} ({self.duration_fmt}{self.sep}{self.viewers_fmt})"  # noqa: E501
 
 
 @dataclass

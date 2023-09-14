@@ -50,7 +50,7 @@ def copy_to_clipboard(item: str) -> int:
     data = item.encode("utf-8", errors="ignore")
     args = shlex.split(get_clipboard().copy)
     try:
-        with subprocess.Popen(args, stdin=subprocess.PIPE) as proc:
+        with subprocess.Popen(args, stdin=subprocess.PIPE) as proc:  # noqa: S603
             proc.stdin.write(data)  # type: ignore[union-attr]
             log.debug("Copied '%s' to clipboard", item)
     except subprocess.SubprocessError as e:
@@ -72,7 +72,7 @@ def timeit(func: Callable) -> Callable:
 
 
 def stringify_dict(items: dict[str, Any], sep: str) -> list[str]:
-    return [f"{str(k):<18}{sep}\t{str(v):<30}" for k, v in items.items()]
+    return [f"{k:<18}{sep}\t{v!s:<30}" for k, v in items.items()]
 
 
 def date_diff_in_seconds(dt2: datetime, dt1: datetime) -> int:
@@ -148,8 +148,9 @@ def secure_split(command: str) -> list[str]:
     return command_splited
 
 
-def format_number(number) -> str:
-    return f"{number/1000:.1f}K" if int(number) >= 1000 else str(number)
+def format_number(number: int) -> str:
+    max_viewers = 1000
+    return f"{number/max_viewers:.1f}K" if int(number) >= max_viewers else str(number)
 
 
 def remove_punctuation_escape_ampersand(s: str) -> str:

@@ -15,7 +15,7 @@ keywords = [
   "twitch",
   "utility",
 ]
-license = "MIT"
+license = { file = "LICENSE.txt" }
 authors = [
   { name = "haaag", email = "git.haaag@gmail.com" },
 ]
@@ -131,7 +131,15 @@ order-by-type = true
 required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.per-file-ignores]
-"src/twitch/player.py" = ["S603", "A001", "A003"]
+"src/twitch/player.py" = ["S603", "A001"]
+"src/twitch/__about__.py" = ["I002"]
+"src/**/*" = [
+  "ARG002", # unused-method-argument
+  "Q000", # single-quote preferred
+  "FBT001", # boolean-type-hint-positional-argument
+  "FBT002", # boolean-default-value-positional-argument
+  "A003", # builtin-attribute-shadowing
+]
 
 [tool.ruff.flake8-tidy-imports]
 ban-relative-imports = "all"

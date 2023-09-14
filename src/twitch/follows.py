@@ -163,7 +163,7 @@ class FollowedStream:
     @property
     def viewers_fmt(self) -> str:
         viewers = helpers.format_number(self.viewer_count)
-        return PangoSpan(viewers, size="small", weight="bold", foreground=LIVE_ICON_COLOR) if self.markup else viewers
+        return PangoSpan(viewers, size="medium", weight="bold", foreground=LIVE_ICON_COLOR) if self.markup else viewers
 
     @property
     def url(self) -> str:

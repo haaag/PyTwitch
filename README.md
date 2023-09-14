@@ -52,7 +52,7 @@ TWITCH_USER_ID="123456"
 
 - [Twitch token generator](https://twitchtokengenerator.com/)
   - Scope: `user:read:follows`
-- [Twitch Channel ID and User ID Convertor](https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/)
+- [Twitch Channel ID and User ID Converter](https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/)
 
 ### 📦 Installation
 
