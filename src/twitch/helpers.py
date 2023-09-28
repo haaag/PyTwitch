@@ -61,14 +61,15 @@ def copy_to_clipboard(item: str) -> int:
 
 def timeit(func: Callable) -> Callable:
     @wraps(func)
-    def inner(*args, **kwargs):
-        start = time.perf_counter()
+    def timeit_wrapper(*args, **kwargs):
+        start_time = time.perf_counter()
         result = func(*args, **kwargs)
-        elapsed = time.perf_counter() - start
-        log.info("execution time: '%s': %s seconds", func.__name__, elapsed)
+        end_time = time.perf_counter()
+        total_time = end_time - start_time
+        log.info(f"Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds")
         return result
 
-    return inner
+    return timeit_wrapper
 
 
 def stringify_dict(items: dict[str, Any], sep: str) -> list[str]:
@@ -141,11 +142,11 @@ def clean_string(s):
 
 def secure_split(command: str) -> list[str]:
     try:
-        command_splited: list[str] = shlex.split(command)
+        command_split: list[str] = shlex.split(command)
     except ValueError:
         command = command.replace("'", "")
-        command_splited = shlex.split(command)
-    return command_splited
+        command_split = shlex.split(command)
+    return command_split
 
 
 def format_number(number: int) -> str:

@@ -11,8 +11,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # others
-UserCancelledSelection = NewType("UserCancelledSelection", int)
-UserHitsEnter = NewType("UserHitsEnter", int)
+UserCancelSelection = NewType("UserCancelSelection", int)
+UserConfirmsSelection = NewType("UserConfirmsSelection", int)
 TITLE_MAX_LENGTH = 50
 
 # api urls

@@ -13,7 +13,8 @@ from typing import NamedTuple
 
 from src.twitch import helpers
 from src.twitch.constants import SEPARATOR
-from src.twitch.constants import UserHitsEnter
+from src.twitch.constants import UserCancelSelection
+from src.twitch.constants import UserConfirmsSelection
 
 if typing.TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
@@ -24,7 +25,6 @@ if typing.TYPE_CHECKING:
     from src.twitch.content import FollowedContentVideo
     from src.twitch.datatypes import TwitchChannel
     from src.twitch.datatypes import TwitchContent
-    from src.twitch.follows import Category
     from src.twitch.follows import FollowedChannelInfo
     from src.twitch.follows import FollowedStream
     from src.twitch.player import Player
@@ -54,63 +54,74 @@ class TwitchApp:
         items, mesg = self.get_channels_and_streams()
         item, keycode = self.select_from_items(items=items, mesg=mesg)
 
-        if keycode == UserHitsEnter(0) and item.playable:
-            self.play(item)
-            sys.exit()
+        if keycode == UserCancelSelection(1):
+            sys.exit(keycode)
 
         if not item.playable:
-            item, keycode = self.show_channel_videos(item=item)
+            return self.show_channel_videos(item=item)
+
+        if keycode == UserConfirmsSelection(0):
+            returncode = self.play(item)
+            sys.exit(returncode)
 
         keybind = self.get_key(keycode)
-        keybind.callback(items=items, item=item)
+        return keybind.callback(items=items, item=item)
 
-    def show_channel_videos(self, **kwargs) -> tuple[TwitchContent, int]:
+    def show_channel_videos(self, **kwargs) -> None:
         item: TwitchChannel = kwargs.pop("item")
         self.menu.keybind.toggle_all()
         videos, mesg = self.get_channel_videos(item=item)
-        video_selected, keycode = self.select_from_items(items=videos, mesg=mesg)
-        if keycode != UserHitsEnter(0):
-            self.menu.keybind.get_keybind_by_code(keycode).callback(items=videos, item=video_selected)
-        return video_selected, UserHitsEnter(0)
+        self.show_and_play(items=videos, mesg=mesg)
 
-    def show_channel_clips(self, **kwargs) -> tuple[TwitchContent, int]:
+    def show_channel_clips(self, **kwargs) -> None:
+        # FIXME:
         item: TwitchChannel = kwargs.pop("item")
         self.menu.keybind.toggle_all()
         clips, mesg = self.get_channel_clips(item=item)
-        clip_selected, keycode = self.select_from_items(items=clips, mesg=mesg)
-        if keycode != UserHitsEnter(0):
-            self.menu.keybind.get_keybind_by_code(keycode).callback(items=clips)
-        return clip_selected, UserHitsEnter(0)
+        self.show_and_play(items=clips, mesg=mesg)
 
-    def show_categories(self, **kwargs) -> tuple[TwitchContent, int]:
-        category: Category
+    def show_categories(self, **kwargs) -> None:
         self.menu.keybind.toggle_all()
         categories = self.client.games
         mesg = f"> Showing ({len(categories)}) <categories> or <games>"
         category, keycode = self.select_from_items(items=categories, mesg=mesg)
-        item, keycode = self.select_from_items(items=category.channels)
-        if keycode != UserHitsEnter(0):
-            self.menu.keybind.get_keybind_by_code(keycode).callback(items=category.channels)
-        return item, keycode
+        self.show_and_play(category.channels)
 
-    def get_channels_and_streams(self, **kwargs) -> tuple[dict[str, FollowedChannelInfo | FollowedStream], str]:
+    def show_and_play(self, items: Mapping[str, TwitchPlayableContent], mesg: str = "") -> None:
+        item, keycode = self.select_from_items(items=items, mesg=mesg)
+        if keycode == UserCancelSelection(1):
+            return
+        if keycode != UserConfirmsSelection(0):
+            self.menu.keybind.get_keybind_by_code(keycode).callback(items=items)
+        self.play(item)
+
+    def get_channels_and_streams(self, **kwargs) -> tuple[Mapping[str, FollowedChannelInfo | FollowedStream], str]:
         data = self.client.channels_and_streams
         return data, f"> Showing ({self.client.online}) streams from {len(data)} channels"
 
-    def get_channel_clips(self, **kwargs) -> tuple[dict[str, FollowedContentClip], str]:
+    def get_channel_clips(self, **kwargs) -> tuple[Mapping[str, FollowedContentClip], str]:
         item: TwitchChannel = kwargs.pop("item")
         logger.info("processing user='%s' clips", item.name)
         clips = self.client.get_channel_clips(user_id=item.user_id)
         data = {c.key: c for c in clips}
         return data, f"> Showing ({len(data)}) clips from <{item.name}> channel"
 
-    def get_channel_videos(self, **kwargs) -> tuple[dict[str, FollowedContentVideo], str]:
+    def get_channel_videos(self, **kwargs) -> tuple[Mapping[str, FollowedContentVideo], str]:
         item = kwargs.pop("item")
         videos = self.client.get_channel_videos(user_id=item.user_id)
         data = {v.key: v for v in videos}
         return data, f"> Showing ({len(data)}) videos from <{item.name}> channel"
 
-    def select_from_items(self, items: Mapping[str, Any], mesg: str = "") -> tuple[TwitchContent, int]:
+    def select_from_items(self, items: Mapping[str, Any], mesg: str = "") -> tuple[Any, int]:
+        item, keycode = self.prompt(
+            items=list(items.values()),
+            mesg=mesg,
+            markup=self.client.markup,
+        )
+        return item, keycode
+
+    def old_select_from_items(self, items: Mapping[str, Any], mesg: str = "") -> tuple[Any, int]:
+        # FIX: DeleteMe
         item, keycode = self.prompt(
             items=list(items.values()),
             mesg=mesg,
@@ -128,17 +139,18 @@ class TwitchApp:
     def multi_selection(self, **kwargs) -> None:
         self.menu.keybind.toggle_all()
         items = kwargs.get("items", self.client.streams)
-        mesg = f"> Showing ({self.client.online}) streams."
-        mesg += "\n>> Use 'Shift'+'Enter' for multi-select"
-        selected, keycode = self.prompt(
-            items=list(items.values()),
+        mesg = f"> Showing ({len(items)}) items.\n>> Use 'Shift'+'Enter' for multi-select"
+        selections, keycode = self.prompt(
+            items=tuple(items.values()),
             mesg=mesg,
             multi_select=True,
             markup=self.client.markup,
         )
-        for item_selected in selected:
-            name = helpers.extract_key_from_str(item_selected, sep=SEPARATOR)
-            item = self.get_item(items, name)
+
+        if keycode == 1 or not selections:
+            sys.exit(1)
+
+        for item in selections:
             if not item.playable:
                 logger.info(f"{item.name=} is offline.")
                 continue
@@ -159,7 +171,8 @@ class TwitchApp:
         helpers.copy_to_clipboard(selected)
         sys.exit(0)
 
-    def get_item(self, items: dict[str, Any], name: str) -> Any:
+    def get_item(self, items: Mapping[str, Any], name: str) -> Any:
+        # FIX: DeleteMe
         try:
             item = items[name]
         except KeyError as err:
