@@ -42,6 +42,7 @@ HYPHEN_BULLET: str = "\u2043"
 NOBREAK_SPACE: str = "\u00A0"
 MIDDLE_DOT: str = "\u00B7"
 BROKEN_BAR: str = "\u00A6"
+SQUARE: str = "■"
 
 # icons
 LIVE_ICON = CIRCLE

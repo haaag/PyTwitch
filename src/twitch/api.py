@@ -92,7 +92,7 @@ class API:
 
         query_params["first"] = min(MAX_ITEMS_PER_REQUEST, requested_items)
         log.debug("params: %s", query_params)
-        response = self.client.get(url, params=query_params)
+        response = self.client.get(url, params=query_params, timeout=5)
         response.raise_for_status()
         data = response.json()
         accumulated_items += len(data["data"])
