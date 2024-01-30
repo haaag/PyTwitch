@@ -6,8 +6,8 @@ import shutil
 import subprocess
 import typing
 
-from src.twitch import helpers
-from src.twitch._exceptions import ExecutableNotFoundError
+from twitch import helpers
+from twitch._exceptions import ExecutableNotFoundError
 
 log = logging.getLogger(__name__)
 

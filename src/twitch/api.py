@@ -12,17 +12,16 @@ from typing import Any
 
 import httpx
 from httpx import URL
-
-from src.twitch._exceptions import EnvValidationError
-from src.twitch.constants import TWITCH_ACCESS_TOKEN
-from src.twitch.constants import TWITCH_API_BASE_URL
-from src.twitch.constants import TWITCH_CLIENT_ID
-from src.twitch.constants import TWITCH_USER_ID
+from twitch._exceptions import EnvValidationError
+from twitch.constants import TWITCH_ACCESS_TOKEN
+from twitch.constants import TWITCH_API_BASE_URL
+from twitch.constants import TWITCH_CLIENT_ID
+from twitch.constants import TWITCH_USER_ID
 
 if typing.TYPE_CHECKING:
-    from src.twitch.datatypes import HeaderTypes
-    from src.twitch.datatypes import QueryParamTypes
-    from src.twitch.datatypes import TwitchApiResponse
+    from twitch.datatypes import HeaderTypes
+    from twitch.datatypes import QueryParamTypes
+    from twitch.datatypes import TwitchApiResponse
 
 log = logging.getLogger(__name__)
 
@@ -63,9 +62,9 @@ class API:
 
     def get_credentials(self) -> TwitchApiCredentials:
         return TwitchApiCredentials(
-            access_token=TWITCH_ACCESS_TOKEN,  # type: ignore[arg-type]
-            client_id=TWITCH_CLIENT_ID,  # type: ignore[arg-type]
-            user_id=TWITCH_USER_ID,  # type: ignore[arg-type]
+            access_token=TWITCH_ACCESS_TOKEN,
+            client_id=TWITCH_CLIENT_ID,
+            user_id=TWITCH_USER_ID,
         )
 
     def validate_credentials(self) -> None:

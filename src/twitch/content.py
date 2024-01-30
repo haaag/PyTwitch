@@ -6,10 +6,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from pyselector.markup import PangoSpan
-
-from src.twitch import helpers
-from src.twitch.constants import SEPARATOR
-from src.twitch.constants import TITLE_MAX_LENGTH
+from twitch import helpers
+from twitch.constants import SEPARATOR
+from twitch.constants import TITLE_MAX_LENGTH
 
 
 @dataclass

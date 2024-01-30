@@ -11,24 +11,23 @@ from typing import Callable
 from typing import Mapping
 from typing import NamedTuple
 
-from src.twitch import helpers
-from src.twitch.constants import SEPARATOR
-from src.twitch.constants import UserCancelSelection
-from src.twitch.constants import UserConfirmsSelection
+from twitch import helpers
+from twitch.constants import SEPARATOR
+from twitch.constants import UserCancelSelection
+from twitch.constants import UserConfirmsSelection
 
 if typing.TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
     from pyselector.key_manager import Keybind
-
-    from src.twitch.client import TwitchClient
-    from src.twitch.content import FollowedContentClip
-    from src.twitch.content import FollowedContentVideo
-    from src.twitch.datatypes import TwitchChannel
-    from src.twitch.datatypes import TwitchContent
-    from src.twitch.follows import FollowedChannelInfo
-    from src.twitch.follows import FollowedStream
-    from src.twitch.player import Player
-    from src.twitch.player import TwitchPlayableContent
+    from twitch.client import TwitchClient
+    from twitch.content import FollowedContentClip
+    from twitch.content import FollowedContentVideo
+    from twitch.datatypes import TwitchChannel
+    from twitch.datatypes import TwitchContent
+    from twitch.follows import FollowedChannelInfo
+    from twitch.follows import FollowedStream
+    from twitch.player import Player
+    from twitch.player import TwitchPlayableContent
 
 logger = logging.getLogger(__name__)
 

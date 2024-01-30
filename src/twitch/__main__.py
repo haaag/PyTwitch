@@ -8,14 +8,13 @@ from typing import TYPE_CHECKING
 from typing import Callable
 
 from pyselector import Menu
-
-from src.twitch import logger
-from src.twitch._exceptions import CONNECTION_EXCEPTION
-from src.twitch._exceptions import EXCEPTIONS
-from src.twitch.app import Keys
-from src.twitch.app import TwitchApp
-from src.twitch.client import TwitchClient
-from src.twitch.player import FactoryPlayer
+from twitch import logger
+from twitch._exceptions import CONNECTION_EXCEPTION
+from twitch._exceptions import EXCEPTIONS
+from twitch.app import Keys
+from twitch.app import TwitchApp
+from twitch.client import TwitchClient
+from twitch.player import FactoryPlayer
 
 if TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
@@ -88,7 +87,7 @@ def _setup_args() -> argparse.Namespace:
 
     # options
     parser.add_argument(
-        "-m", "--menu", choices=["rofi", "dmenu", "fzf", "rofi_beta"], help="Select a launcher/menu", default="rofi"
+        "-m", "--menu", choices=list(Menu.registered().keys()), help="Select a launcher/menu", default="rofi"
     )
     parser.add_argument("-l", "--lines", help="Show menu lines (default: 15)", nargs="?", default=15)
     parser.add_argument("-p", "--player", default="mpv", choices=["streamlink", "mpv"])

@@ -5,15 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from pyselector.markup import PangoSpan
-
-from src.twitch import helpers
-from src.twitch.constants import LIVE_ICON
-from src.twitch.constants import LIVE_ICON_COLOR
-from src.twitch.constants import SEPARATOR
-from src.twitch.constants import TITLE_MAX_LENGTH
-from src.twitch.constants import TWITCH_API_BASE_URL
-from src.twitch.constants import TWITCH_CHAT_BASE_URL
-from src.twitch.constants import TWITCH_STREAM_BASE_URL
+from twitch import helpers
+from twitch.constants import LIVE_ICON
+from twitch.constants import LIVE_ICON_COLOR
+from twitch.constants import SEPARATOR
+from twitch.constants import TITLE_MAX_LENGTH
+from twitch.constants import TWITCH_API_BASE_URL
+from twitch.constants import TWITCH_CHAT_BASE_URL
+from twitch.constants import TWITCH_STREAM_BASE_URL
 
 
 @dataclass

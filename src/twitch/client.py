@@ -5,21 +5,21 @@ from __future__ import annotations
 import logging
 from typing import Iterable
 
-from src.twitch import helpers
-from src.twitch.api import TwitchApi
-from src.twitch.content import FollowedContentClip
-from src.twitch.content import FollowedContentVideo
-from src.twitch.follows import Category
-from src.twitch.follows import FollowedChannel
-from src.twitch.follows import FollowedChannelInfo
-from src.twitch.follows import FollowedStream
-from src.twitch.helpers import timeit
+from twitch import helpers
+from twitch.api import TwitchApi
+from twitch.content import FollowedContentClip
+from twitch.content import FollowedContentVideo
+from twitch.follows import Category
+from twitch.follows import FollowedChannel
+from twitch.follows import FollowedChannelInfo
+from twitch.follows import FollowedStream
+from twitch.helpers import timeit
 
 log = logging.getLogger(__name__)
 
 
 def group_channels_by_game(
-    channels: dict[str, FollowedChannelInfo | FollowedStream]
+    channels: dict[str, FollowedChannelInfo | FollowedStream],
 ) -> dict[str, dict[str, FollowedChannelInfo | FollowedStream]]:
     output: dict[str, dict[str, FollowedChannelInfo | FollowedStream]] = {}
     for channel_name, channel in channels.items():
