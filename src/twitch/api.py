@@ -208,10 +208,15 @@ class Channels:
             broadcaster_ids (str): The ID of the broadcaster.
         """
         # https://dev.twitch.tv/docs/api/reference#get-channel-information
+        batch_size = MAX_ITEMS_PER_REQUEST
+        data: list[dict[str, Any]] = []
         endpoint = URL("channels")
-        params = {"broadcaster_id": broadcaster_ids}
-        response = self.api.request_get(endpoint, params)
-        return response["data"]
+
+        for i in range(0, len(broadcaster_ids), batch_size):
+            batch = broadcaster_ids[i : i + batch_size]
+            response = self.api.request_get(endpoint, {"broadcaster_id": batch})
+            data.extend(response.get("data", []))
+        return data
 
 
 class TwitchApi(API):
