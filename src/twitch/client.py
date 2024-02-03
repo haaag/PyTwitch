@@ -84,7 +84,7 @@ class TwitchClient:
     @timeit
     def channels_and_streams(self) -> dict[str, FollowedChannelInfo | FollowedStream]:
         if not self._channels_and_streams:
-            logger.info("calling api for channels")
+            logger.info('calling api for channels')
             channels = self.channels
             streams = self.streams
             self._channels_and_streams = merge_data(channels, streams)
@@ -103,7 +103,7 @@ class TwitchClient:
     def get_channel_info(self, channel_id: str) -> FollowedChannelInfo:
         data = self.api.channels.get_channel_info(user_id=channel_id)
         if not data:
-            err_msg = f"{channel_id=} not found"
+            err_msg = f'{channel_id=} not found'
             logger.error(err_msg)
             raise ValueError(err_msg)
         return FollowedChannelInfo(**data[0], markup=self.markup)
@@ -111,7 +111,7 @@ class TwitchClient:
     def get_channels_info(self, channels_id: list[str]) -> Iterable[FollowedChannelInfo]:
         data = self.api.channels.get_channels_info(broadcaster_ids=channels_id)
         if not data:
-            err_msg = f"{channels_id=} not found"
+            err_msg = f'{channels_id=} not found'
             logger.error(err_msg)
             raise ValueError(err_msg)
         return (FollowedChannelInfo(**broadcaster, markup=self.markup) for broadcaster in data)
@@ -129,7 +129,7 @@ class TwitchClient:
         data = self.api.content.get_videos(user_id=user_id)
         if not data:
             # FIX: Handle request when there is no data.
-            logger.critical("need to find a way to handle request returns 0 data")
+            logger.critical('need to find a way to handle request returns 0 data')
             raise NotImplementedError
         return (FollowedContentVideo(**video, markup=self.markup) for video in data)
 
@@ -137,12 +137,12 @@ class TwitchClient:
         data = self.api.content.get_clips(user_id=user_id)
         if not data:
             # FIX: Handle request when there is no data.
-            logger.critical("need to find a way to handle request returns 0 data")
+            logger.critical('need to find a way to handle request returns 0 data')
             raise NotImplementedError
         return (FollowedContentClip(**clip, markup=self.markup) for clip in data)
 
     def get_streams_by_game_id(self, game_id: str) -> Iterable[FollowedStream]:
-        logger.debug("getting streams by game_id: %s", game_id)
+        logger.debug('getting streams by game_id: %s', game_id)
         data = self.api.content.get_streams_by_game_id(game_id)
         return (FollowedStream(**item, markup=self.markup) for item in data)
 
@@ -152,4 +152,4 @@ class TwitchClient:
 
     def get_channels_by_query(self, query: str, live_only: bool = True) -> Iterable[FollowedChannel]:
         data = self.api.content.search_channels(query, live_only=live_only)
-        return (Channel(**item, markup=self.markup) for item in data if item["game_name"])
+        return (Channel(**item, markup=self.markup) for item in data if item['game_name'])

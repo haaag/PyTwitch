@@ -52,7 +52,7 @@ class PangoSpan:
     markup: bool = True
 
     def __hash__(self):
-        attrs = tuple(self.__dict__[attr] for attr in sorted(self.__dict__.keys()) if attr not in ("text", "sub"))
+        attrs = tuple(self.__dict__[attr] for attr in sorted(self.__dict__.keys()) if attr not in ('text', 'sub'))
         return hash((self.text, attrs))
 
     def __str__(self) -> str:
@@ -61,10 +61,10 @@ class PangoSpan:
 
         attrs = []
         for attr in self.__dict__:
-            if attr != "text" and attr != "markup" and attr != "sub" and self.__dict__[attr] is not None:
+            if attr != 'text' and attr != 'markup' and attr != 'sub' and self.__dict__[attr] is not None:
                 attrs.append(f'{attr}="{self.__dict__[attr]}"')
 
         text = self.text
         if self.sub:
-            text = f"<sub>{text}</sub>"
+            text = f'<sub>{text}</sub>'
         return f'<span {"".join(attrs)}>{text}</span>'

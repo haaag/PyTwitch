@@ -70,13 +70,13 @@ class TwitchApp:
         return keybind.callback(items=items, item=item)
 
     def show_channel_videos(self, **kwargs) -> None:
-        item: TwitchChannel = kwargs.pop("item")
+        item: TwitchChannel = kwargs.pop('item')
         self.menu.keybind.toggle_all()
         videos, mesg = self.get_channel_videos(item=item)
         self.show_and_play(items=videos, mesg=mesg)
 
     def show_channel_clips(self, **kwargs) -> None:
-        item: TwitchChannel = kwargs.pop("item")
+        item: TwitchChannel = kwargs.pop('item')
         self.menu.keybind.toggle_all()
         clips, mesg = self.get_channel_clips(item=item)
         self.show_and_play(items=clips, mesg=mesg)
@@ -84,7 +84,7 @@ class TwitchApp:
     def show_categories(self, **kwargs) -> None:
         self.menu.keybind.toggle_all()
         categories = self.client.games
-        mesg = f"> Showing ({len(categories)}) <categories> or <games>"
+        mesg = f'> Showing ({len(categories)}) <categories> or <games>'
         category, keycode = self.select_from_items(items=categories, mesg=mesg)
         if not category:
             return
@@ -95,7 +95,7 @@ class TwitchApp:
         keybinds: dict[int, Keybind] = self.menu.keybind.keys
         for _, key in keybinds.items():
             items[key.bind] = key
-        mesg = f"> Showing ({len(keybinds)}) <keybinds>"
+        mesg = f'> Showing ({len(keybinds)}) <keybinds>'
 
         while True:
             keybind, keycode = self.select_from_items(items=items, mesg=mesg)
@@ -108,7 +108,7 @@ class TwitchApp:
 
             keybind.callback(**kwargs)
 
-    def show_and_play(self, items: Mapping[str, TwitchPlayableContent], mesg: str = "") -> None:
+    def show_and_play(self, items: Mapping[str, TwitchPlayableContent], mesg: str = '') -> None:
         item, keycode = self.select_from_items(items=items, mesg=mesg)
         if keycode == UserCancelSelection(1):
             self.quit(keycode=keycode)
@@ -118,9 +118,9 @@ class TwitchApp:
 
     def show_channels_by_query(self, **kwargs) -> None:
         # self.menu.keybind.toggle_all()
-        query = kwargs.get("query")
+        query = kwargs.get('query')
         if not query:
-            query = self.get_user_input(mesg="Search <channels> by query", prompt="TwitchChannel>")
+            query = self.get_user_input(mesg='Search <channels> by query', prompt='TwitchChannel>')
 
         if not query:
             return
@@ -137,16 +137,16 @@ class TwitchApp:
         self.play(item)
 
     def show_channels_by_game(self, **kwargs) -> None:
-        game = kwargs.get("game")
+        game = kwargs.get('game')
         if not game:
-            game = self.get_user_input(mesg="Search <games> or <categories>", prompt="TwitchGame>")
-        logger.debug("searching by game: %s", game)
+            game = self.get_user_input(mesg='Search <games> or <categories>', prompt='TwitchGame>')
+        logger.debug('searching by game: %s', game)
         if not game:
             return
 
         data = self.client.get_games_by_query(game)
         games = {g.id: g for g in data}
-        selected, _ = self.select_from_items(games, mesg=f"> Showing ({len(games)}) <games> or <categories>")
+        selected, _ = self.select_from_items(games, mesg=f'> Showing ({len(games)}) <games> or <categories>')
         if not selected:
             return
 
@@ -155,30 +155,30 @@ class TwitchApp:
         if not streams:
             return
 
-        mesg = f"> Showing ({len(streams)}) <streams> from <{selected.name}> game"
+        mesg = f'> Showing ({len(streams)}) <streams> from <{selected.name}> game'
         self.show_and_play({s.id: s for s in streams}, mesg=mesg)
 
     def get_channels_and_streams(self, **kwargs) -> tuple[Mapping[str, FollowedChannelInfo | FollowedStream], str]:
         data = self.client.channels_and_streams
-        return data, f"> Showing ({self.client.online}) streams from {len(data)} channels"
+        return data, f'> Showing ({self.client.online}) streams from {len(data)} channels'
 
     def get_channel_clips(self, **kwargs) -> tuple[Mapping[str, FollowedContentClip], str]:
-        item: TwitchChannel = kwargs.pop("item")
+        item: TwitchChannel = kwargs.pop('item')
         logger.info("processing user='%s' clips", item.name)
         clips = self.client.get_channel_clips(user_id=item.user_id)
         data = {c.key: c for c in clips}
-        return data, f"> Showing ({len(data)}) clips from <{item.name}> channel"
+        return data, f'> Showing ({len(data)}) clips from <{item.name}> channel'
 
     def get_channel_videos(self, **kwargs) -> tuple[Mapping[str, FollowedContentVideo], str]:
-        item = kwargs.pop("item")
+        item = kwargs.pop('item')
         videos = self.client.get_channel_videos(user_id=item.user_id)
         data = {v.key: v for v in videos}
-        return data, f"> Showing ({len(data)}) videos from <{item.name}> channel"
+        return data, f'> Showing ({len(data)}) videos from <{item.name}> channel'
 
-    def select_from_items(self, items: Mapping[str, Any], mesg: str = "") -> tuple[Any, int]:
+    def select_from_items(self, items: Mapping[str, Any], mesg: str = '') -> tuple[Any, int]:
         if not items:
             _, _ = self.prompt(
-                items=["err: no items"],
+                items=['err: no items'],
                 mesg=mesg,
                 markup=False,
             )
@@ -193,7 +193,7 @@ class TwitchApp:
 
     def multi_selection(self, **kwargs) -> None:
         self.menu.keybind.toggle_all()
-        items = kwargs.get("items", self.client.streams)
+        items = kwargs.get('items', self.client.streams)
         mesg = f"> Showing ({len(items)}) items.\n>> Use 'Shift'+'Enter' for multi-select"
         selections, keycode = self.prompt(
             items=tuple(items.values()),
@@ -207,35 +207,35 @@ class TwitchApp:
 
         for item in selections:
             if not item.playable:
-                logger.info(f"{item.name=} is offline.")
+                logger.info(f'{item.name=} is offline.')
                 continue
             self.play(item)
         sys.exit(0)
 
     def get_item_info(self, **kwargs) -> None:
-        item: TwitchContent | TwitchChannel = kwargs["item"]
+        item: TwitchContent | TwitchChannel = kwargs['item']
         item_dict = asdict(item)
         formatted_item = helpers.stringify_dict(item_dict, sep=SEPARATOR)
         formatted_item.append(f"{'url':<18}{SEPARATOR}\t{item.url:<30}")
         selected, keycode = self.prompt(
             items=formatted_item,
-            mesg="Item information",
+            mesg='Item information',
             markup=False,
         )
         selected = selected.split(SEPARATOR, maxsplit=1)[1].strip()
         helpers.copy_to_clipboard(selected)
         sys.exit(0)
 
-    def get_user_input(self, mesg: str = "", prompt: str = "Query>") -> str:
+    def get_user_input(self, mesg: str = '', prompt: str = 'Query>') -> str:
         self.menu.keybind.toggle_all()
         user_input, keycode = self.prompt(
-            items={}, mesg=mesg, prompt=prompt, lines=1, width="30%", height="8%", markup=self.client.markup
+            items={}, mesg=mesg, prompt=prompt, lines=1, width='30%', height='8%', markup=self.client.markup
         )
         self.menu.keybind.toggle_all()
         return user_input
 
     def play(self, follow) -> int:
-        logger.warning(f"playing content {follow.url=}")
+        logger.warning(f'playing content {follow.url=}')
         process = self.player.play(follow)
         return process.returncode
 
@@ -246,16 +246,16 @@ class TwitchApp:
         return self.menu.keybind.get_keybind_by_bind(bind)
 
     def chat(self, **kwargs) -> None:
-        item = kwargs.pop("item")
+        item = kwargs.pop('item')
         webbrowser.open_new_tab(item.chat)
         sys.exit(0)
 
     def close(self) -> None:
-        logger.debug("closing connection")
+        logger.debug('closing connection')
         self.client.api.client.close()
 
     def quit(self, **kwargs) -> None:
-        keycode = kwargs.get("keycode", 1)
-        logger.debug("terminated by user")
+        keycode = kwargs.get('keycode', 1)
+        logger.debug('terminated by user')
         self.close()
         sys.exit(keycode)

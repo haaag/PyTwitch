@@ -43,12 +43,12 @@ class FollowedChannelInfo:
 
     @property
     def sep(self) -> str:
-        return PangoSpan(SEPARATOR, alpha="100%", markup=self.markup)
+        return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
 
     def __str__(self) -> str:
-        user = PangoSpan(self.name, weight="bold", size="large", markup=self.markup)
-        offline = PangoSpan("Offline", foreground="grey", size="x-large", sub=True, alpha="45%", markup=self.markup)
-        return f"{user}{self.sep}{self.offline_icon} {offline}"
+        user = PangoSpan(self.name, weight='bold', size='large', markup=self.markup)
+        offline = PangoSpan('Offline', foreground='grey', size='x-large', sub=True, alpha='45%', markup=self.markup)
+        return f'{user}{self.sep}{self.offline_icon} {offline}'
 
     @property
     def url(self) -> str:
@@ -56,15 +56,16 @@ class FollowedChannelInfo:
 
     @property
     def category(self) -> str:
-        return PangoSpan(helpers.clean_string(self.game_name), size="large") if self.markup else self.game_name
+        game = helpers.clean_string(self.game_name) if self.markup else self.game_name
+        return PangoSpan(game, size='large', markup=self.markup)
 
     @property
     def offline_icon(self) -> str:
-        return PangoSpan(LIVE_ICON, foreground="grey", size="large", alpha="50%", markup=self.markup)
+        return PangoSpan(LIVE_ICON, foreground='grey', size='large', alpha='50%', markup=self.markup)
 
     @property
     def chat(self) -> str:
-        return str(TWITCH_CHAT_BASE_URL.join(f"{self.broadcaster_login}/chat"))
+        return str(TWITCH_CHAT_BASE_URL.join(f'{self.broadcaster_login}/chat'))
 
 
 @dataclass
@@ -91,7 +92,7 @@ class FollowedChannel:
 
     @property
     def offline_icon(self) -> str:
-        return PangoSpan(LIVE_ICON, foreground="grey", size="large", alpha="50%") if self.markup else LIVE_ICON
+        return PangoSpan(LIVE_ICON, foreground='grey', size='large', alpha='50%') if self.markup else LIVE_ICON
 
     def __str__(self) -> str:
         return self.broadcaster_name
@@ -102,7 +103,7 @@ class FollowedChannel:
 
     @property
     def chat(self) -> str:
-        return str(TWITCH_CHAT_BASE_URL.join(f"{self.broadcaster_login}/chat"))
+        return str(TWITCH_CHAT_BASE_URL.join(f'{self.broadcaster_login}/chat'))
 
 
 @dataclass
@@ -135,28 +136,28 @@ class FollowedStream:
 
     @property
     def sep(self) -> str:
-        return PangoSpan(SEPARATOR, alpha="100%", markup=self.markup)
+        return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
 
     @property
     def title_str(self) -> str:
-        title = self.title[: TITLE_MAX_LENGTH - 3] + "..." if len(self.title) > TITLE_MAX_LENGTH else self.title
+        title = self.title[: TITLE_MAX_LENGTH - 3] + '...' if len(self.title) > TITLE_MAX_LENGTH else self.title
         if self.markup:
             title = helpers.clean_string(title)
-        return PangoSpan(title, size="medium", foreground="grey", markup=self.markup)
+        return PangoSpan(title, size='medium', foreground='grey', markup=self.markup)
 
     @property
     def live_since(self) -> str:
         since = helpers.calculate_live_time(self.started_at)
-        return PangoSpan(f"({since})", sub=True, size="x-large", style="italic", markup=self.markup)
+        return PangoSpan(f'({since})', sub=True, size='x-large', style='italic', markup=self.markup)
 
     @property
     def live_icon(self) -> str:
-        return PangoSpan(LIVE_ICON, foreground=LIVE_ICON_COLOR, size="large", markup=self.markup)
+        return PangoSpan(LIVE_ICON, foreground=LIVE_ICON_COLOR, size='large', markup=self.markup)
 
     @property
     def viewers_fmt(self) -> str:
         viewers = helpers.format_number(self.viewer_count)
-        return PangoSpan(viewers, size="medium", weight="bold", foreground=LIVE_ICON_COLOR, markup=self.markup)
+        return PangoSpan(viewers, size='medium', weight='bold', foreground=LIVE_ICON_COLOR, markup=self.markup)
 
     @property
     def url(self) -> str:
@@ -165,15 +166,15 @@ class FollowedStream:
     @property
     def category(self) -> str:
         game = helpers.clean_string(self.game_name) if self.markup else self.game_name
-        return PangoSpan(game, foreground="orange", size="x-large", sub=True, markup=self.markup)
+        return PangoSpan(game, foreground='orange', size='x-large', sub=True, markup=self.markup)
 
     @property
     def chat(self) -> str:
-        return str(TWITCH_CHAT_BASE_URL.join(f"{self.user_login}/chat"))
+        return str(TWITCH_CHAT_BASE_URL.join(f'{self.user_login}/chat'))
 
     def __str__(self) -> str:
-        user = PangoSpan(self.name, weight="bold", size="large", markup=self.markup)
-        return f"{user}{self.sep}{self.live_icon} {self.viewers_fmt} {self.title_str} {self.live_since} {self.category}"
+        user = PangoSpan(self.name, weight='bold', size='large', markup=self.markup)
+        return f'{user}{self.sep}{self.live_icon} {self.viewers_fmt} {self.title_str} {self.live_since} {self.category}'
 
 
 @dataclass
@@ -193,32 +194,32 @@ class Category:
     @property
     def viewers_fmt(self) -> str:
         if self.online == 0:
-            return ""
+            return ''
         viewers_str = helpers.format_number(sum(c.viewer_count for c in self.channels.values()))
-        viewers = f"{viewers_str} viewers"
-        return PangoSpan(viewers, size="small", weight="bold", foreground="grey", markup=self.markup)
+        viewers = f'{viewers_str} viewers'
+        return PangoSpan(viewers, size='small', weight='bold', foreground='grey', markup=self.markup)
 
     @property
     def online_str(self) -> str:
         if self.online == 0:
-            return ""
-        live = f"{LIVE_ICON} {self.online}"
-        return PangoSpan(live, foreground=LIVE_ICON_COLOR, size="medium", weight="bold", markup=self.markup)
+            return ''
+        live = f'{LIVE_ICON} {self.online}'
+        return PangoSpan(live, foreground=LIVE_ICON_COLOR, size='medium', weight='bold', markup=self.markup)
 
     @property
     def name_str(self) -> str:
-        return PangoSpan(self.name, weight="bold", size="large", markup=self.markup)
+        return PangoSpan(self.name, weight='bold', size='large', markup=self.markup)
 
     @property
     def sep(self) -> str:
-        return PangoSpan(SEPARATOR, alpha="100%", markup=self.markup)
+        return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
 
     def __str__(self) -> str:
-        offline = PangoSpan("Offline", foreground="grey", size="x-large", sub=True, alpha="45%", markup=self.markup)
+        offline = PangoSpan('Offline', foreground='grey', size='x-large', sub=True, alpha='45%', markup=self.markup)
         return (
-            f"{self.name_str}{self.sep}{self.online_str} {self.viewers_fmt}"
+            f'{self.name_str}{self.sep}{self.online_str} {self.viewers_fmt}'
             if self.online
-            else f"{self.name_str}{self.sep}{LIVE_ICON} {offline}"
+            else f'{self.name_str}{self.sep}{LIVE_ICON} {offline}'
         )
 
 
@@ -231,10 +232,10 @@ class Game:
 
     @property
     def name_str(self) -> str:
-        return PangoSpan(self.name, weight="bold", size="medium", markup=self.markup)
+        return PangoSpan(self.name, weight='bold', size='medium', markup=self.markup)
 
     def __str__(self) -> str:
-        return f"{self.name_str}"
+        return f'{self.name_str}'
 
 
 @dataclass
@@ -259,28 +260,28 @@ class Channel:
 
     @property
     def name(self) -> str:
-        return PangoSpan(self.display_name, weight="bold", size="large", markup=self.markup)
+        return PangoSpan(self.display_name, weight='bold', size='large', markup=self.markup)
 
     @property
     def sep(self) -> str:
-        return PangoSpan(SEPARATOR, alpha="100%", markup=self.markup)
+        return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
 
     @property
     def offline_icon(self) -> str:
-        return PangoSpan(LIVE_ICON, foreground="grey", size="large", alpha="50%", markup=self.markup)
+        return PangoSpan(LIVE_ICON, foreground='grey', size='large', alpha='50%', markup=self.markup)
 
     @property
     def offline_str(self) -> str:
-        return PangoSpan("Offline", foreground="grey", size="x-large", sub=True, alpha="45%", markup=self.markup)
+        return PangoSpan('Offline', foreground='grey', size='x-large', sub=True, alpha='45%', markup=self.markup)
 
     @property
     def online_icon(self) -> str:
-        return PangoSpan(LIVE_ICON, foreground=LIVE_ICON_COLOR, size="large", alpha="100%", markup=self.markup)
+        return PangoSpan(LIVE_ICON, foreground=LIVE_ICON_COLOR, size='large', alpha='100%', markup=self.markup)
 
     @property
     def online_str(self) -> str:
         return PangoSpan(
-            "Online", foreground=LIVE_ICON_COLOR, size="x-large", sub=True, alpha="100%", markup=self.markup
+            'Online', foreground=LIVE_ICON_COLOR, size='x-large', sub=True, alpha='100%', markup=self.markup
         )
 
     @property
@@ -292,13 +293,13 @@ class Channel:
         return self.online_str if self.is_live else self.offline_str
 
     def category(self) -> str:
-        color = "orange" if self.is_live else "grey"
+        color = 'orange' if self.is_live else 'grey'
         game = helpers.clean_string(self.game_name)
-        return PangoSpan(game, foreground=color, size="x-large", sub=True, markup=self.markup)
+        return PangoSpan(game, foreground=color, size='x-large', sub=True, markup=self.markup)
 
     @property
     def url(self) -> str:
         return str(TWITCH_STREAM_BASE_URL.join(self.broadcaster_login))
 
     def __str__(self) -> str:
-        return f"{self.name}{self.sep}{self.icon} {self.status}{self.sep}{self.category()}"
+        return f'{self.name}{self.sep}{self.icon} {self.status}{self.sep}{self.category()}'

@@ -22,7 +22,7 @@ def main() -> int:
     log = logging.getLogger(__name__)
 
     if args.verbose:
-        log.info("arguments: %s", vars(args))
+        log.info('arguments: %s', vars(args))
 
     try:
         menu, prompt = setup.menu(args)
@@ -48,15 +48,15 @@ def main() -> int:
             twitch.show_all_streams()
         twitch.close()
     except EXCEPTIONS as err:
-        prompt(items=[f"{err!r}"])
+        prompt(items=[f'{err!r}'])
         log.error(err)
     except CONNECTION_EXCEPTION as err:
-        prompt(items=[f"{err!r}"], markup=False)
+        prompt(items=[f'{err!r}'], markup=False)
         log.error(err)
     except KeyboardInterrupt:
-        log.info("terminated by user")
+        log.info('terminated by user')
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())

@@ -41,7 +41,7 @@ For authentication, you can set environment vars in your `shell` or use the
 
 [env-template](https://github.com/haaag/pytwitch/blob/main/env-template) file
 
-```{bash}
+```bash
 # Twitch credentials
 TWITCH_CLIENT_ID="xxxxx"
 TWITCH_ACCESS_TOKEN="xxx"
@@ -56,7 +56,7 @@ TWITCH_USER_ID="123456"
 
 ### 📦 Installation
 
-```{bash}
+```bash
 # Clone repository
 $ git clone "https://github.com/haaag/pytwitch.git"
 $ cd pytwitch
@@ -76,7 +76,7 @@ $ source .venv/bin/activate
 
 After installation you can use the command `pytwitch`
 
-```{bash}
+```bash
 # Use rofi menu by default
 (.venv) $ pytwitch
 

@@ -17,7 +17,7 @@ class TwitchPlayableContent(typing.Protocol):
 
 
 class Player:
-    def __init__(self, name: str = "player") -> None:
+    def __init__(self, name: str = 'player') -> None:
         self.name = name
         self.options: list[str] = []
 
@@ -25,13 +25,13 @@ class Player:
     def bin(self) -> str:
         bin = shutil.which(self.name)
         if not bin:
-            err_msg = f"player={self.name!r} not found"
+            err_msg = f'player={self.name!r} not found'
             log.error(err_msg)
             raise ExecutableNotFoundError(err_msg)
         return bin
 
     def add_options(self, args: str) -> None:
-        log.debug("adding player args: %s", args)
+        log.debug('adding player args: %s', args)
         args_split = helpers.secure_split(args)
         self.options.extend(args_split)
 
@@ -42,15 +42,15 @@ class Player:
 
     def play(self, item: TwitchPlayableContent) -> subprocess.Popen:
         args = self.args(item.url)
-        log.info("executing: %s", args)
+        log.info('executing: %s', args)
         return subprocess.Popen(args, stderr=subprocess.DEVNULL)
 
 
 class StreamLink(Player):
-    def __init__(self, name: str = "streamlink") -> None:
+    def __init__(self, name: str = 'streamlink') -> None:
         self.name = name
-        self.player = "--player=mpv"
-        self.quality = "best"
+        self.player = '--player=mpv'
+        self.quality = 'best'
         super().__init__(self.name)
 
     def args(self, url: str) -> list[str]:
@@ -61,7 +61,7 @@ class StreamLink(Player):
 
 
 class Mpv(Player):
-    def __init__(self, name: str = "mpv") -> None:
+    def __init__(self, name: str = 'mpv') -> None:
         self.name = name
         super().__init__()
 
