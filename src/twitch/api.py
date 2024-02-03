@@ -157,6 +157,30 @@ class Content:
         log.info("videos_len='%s'", len(data))
         return data
 
+    def search_categories(self, query: str) -> dict[str, Any]:
+        # https://dev.twitch.tv/docs/api/reference/#search-categories
+        endpoint = URL("search/categories")
+        params = {"query": query}
+        response = self.api.request_get(endpoint, params)
+        return response["data"]
+
+    def search_channels(self, query: str, live_only: bool = True) -> dict[str, Any]:
+        # https://dev.twitch.tv/docs/api/reference/#search-channels
+        endpoint = URL("search/channels")
+        params = {
+            "query": query,
+            "live_only": live_only,
+        }
+        response = self.api.request_get(endpoint, params)
+        return response["data"]
+
+    def get_streams_by_game_id(self, game_id: int) -> dict[str, Any]:
+        # https://dev.twitch.tv/docs/api/reference/#get-streams
+        endpoint = URL("streams")
+        params = {"game_id": game_id}
+        response = self.api.request_get(endpoint, params)
+        return response["data"]
+
 
 class Channels:
     def __init__(self, api: API) -> None:
