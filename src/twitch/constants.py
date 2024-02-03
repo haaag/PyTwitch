@@ -10,10 +10,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# app
+DESC = "Simple tool menu for watching streams live, video from twitch."
+
 # others
 UserCancelSelection = NewType("UserCancelSelection", int)
 UserConfirmsSelection = NewType("UserConfirmsSelection", int)
-TITLE_MAX_LENGTH = 50
+TITLE_MAX_LENGTH = 80
 
 # api urls
 TWITCH_STREAM_BASE_URL = httpx.URL("https://www.twitch.tv/")

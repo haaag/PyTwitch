@@ -9,6 +9,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 from typing import Any
+from typing import Iterator
 
 import httpx
 from httpx import URL
@@ -30,12 +31,28 @@ MAX_ITEMS_PER_REQUEST = 100
 DEFAULT_REQUESTED_ITEMS = 200
 
 
+def _group_into_batches(ids: list[str]) -> Iterator[list[str]]:
+    """
+    Splits a list into batches of the maximum size allowed by the API.
+    """
+    batch_size = MAX_ITEMS_PER_REQUEST
+    for i in range(0, len(ids), batch_size):
+        yield ids[i : i + batch_size]
+
+
 def validate_credentials(credentials: dict[str, str]) -> None:
-    for key, value in credentials.items():
-        if not value:
-            err_msg = f"Environment variable {key!r} is not set"
-            log.error(err_msg)
-            raise EnvValidationError(err_msg)
+    """
+    Validates that all required environment variables are set.
+
+    Raises:
+        EnvValidationError: If any required variable is not set.
+    """
+
+    missing_vars = [key for key, value in credentials.items() if not value]
+    if missing_vars:
+        err_msg = f"Missing required environment variables: {', '.join(missing_vars)}"
+        log.error(err_msg)
+        raise EnvValidationError(err_msg)
 
 
 @dataclass
@@ -57,7 +74,6 @@ class API:
         self.credentials = self.get_credentials()
         self.base_url = TWITCH_API_BASE_URL
 
-        self.validate_credentials()
         self.load_client()
 
     def get_credentials(self) -> TwitchApiCredentials:
@@ -128,7 +144,7 @@ class Content:
             "started_at": started_at,
             "ended_at": ended_at,
         }
-        response = self.api.request_get(endpoint, params, requested_items=100)
+        response = self.api.request_get(endpoint, params, requested_items=MAX_ITEMS_PER_REQUEST)
         data = response["data"]
         log.info("clips_len='%s'", len(data))
         return data
@@ -232,12 +248,10 @@ class Channels:
             broadcaster_ids (str): The ID of the broadcaster.
         """
         # https://dev.twitch.tv/docs/api/reference#get-channel-information
-        batch_size = MAX_ITEMS_PER_REQUEST
         data: list[dict[str, Any]] = []
         endpoint = URL("channels")
 
-        for i in range(0, len(broadcaster_ids), batch_size):
-            batch = broadcaster_ids[i : i + batch_size]
+        for batch in _group_into_batches(broadcaster_ids):
             response = self.api.request_get(endpoint, {"broadcaster_id": batch})
             data.extend(response.get("data", []))
         return data
