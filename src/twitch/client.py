@@ -6,7 +6,7 @@ import logging
 from typing import TYPE_CHECKING
 from typing import Iterable
 
-from twitch import helpers
+from twitch import format
 from twitch.content import FollowedContentClip
 from twitch.content import FollowedContentVideo
 from twitch.follows import Category
@@ -30,7 +30,7 @@ def group_channels_by_game(
     for channel_name, channel in channels.items():
         if not channel.game_name:
             continue
-        game_name = helpers.clean_string(channel.game_name)
+        game_name = format.sanitize(channel.game_name)
         if game_name not in output:
             output[game_name] = {}
         output[game_name][channel_name] = channel

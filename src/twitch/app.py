@@ -11,6 +11,7 @@ from typing import Callable
 from typing import Mapping
 from typing import NamedTuple
 
+from twitch import format
 from twitch import helpers
 from twitch.constants import SEPARATOR
 from twitch.constants import UserCancelSelection
@@ -215,7 +216,7 @@ class TwitchApp:
     def get_item_info(self, **kwargs) -> None:
         item: TwitchContent | TwitchChannel = kwargs['item']
         item_dict = asdict(item)
-        formatted_item = helpers.stringify_dict(item_dict, sep=SEPARATOR)
+        formatted_item = format.stringify(item_dict, sep=SEPARATOR)
         formatted_item.append(f"{'url':<18}{SEPARATOR}\t{item.url:<30}")
         selected, keycode = self.prompt(
             items=formatted_item,

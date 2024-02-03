@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from twitch import helpers
+from twitch import format
 from twitch.constants import LIVE_ICON
 from twitch.constants import LIVE_ICON_COLOR
 from twitch.constants import SEPARATOR
@@ -56,7 +56,7 @@ class FollowedChannelInfo:
 
     @property
     def category(self) -> str:
-        game = helpers.clean_string(self.game_name) if self.markup else self.game_name
+        game = format.sanitize(self.game_name) if self.markup else self.game_name
         return PangoSpan(game, size='large', markup=self.markup)
 
     @property
@@ -142,12 +142,12 @@ class FollowedStream:
     def title_str(self) -> str:
         title = self.title[: TITLE_MAX_LENGTH - 3] + '...' if len(self.title) > TITLE_MAX_LENGTH else self.title
         if self.markup:
-            title = helpers.clean_string(title)
+            title = format.sanitize(title)
         return PangoSpan(title, size='medium', foreground='grey', markup=self.markup)
 
     @property
     def live_since(self) -> str:
-        since = helpers.calculate_live_time(self.started_at)
+        since = format.calculate_live_time(self.started_at)
         return PangoSpan(f'({since})', sub=True, size='x-large', style='italic', markup=self.markup)
 
     @property
@@ -156,7 +156,7 @@ class FollowedStream:
 
     @property
     def viewers_fmt(self) -> str:
-        viewers = helpers.format_number(self.viewer_count)
+        viewers = format.number(self.viewer_count)
         return PangoSpan(viewers, size='medium', weight='bold', foreground=LIVE_ICON_COLOR, markup=self.markup)
 
     @property
@@ -165,7 +165,7 @@ class FollowedStream:
 
     @property
     def category(self) -> str:
-        game = helpers.clean_string(self.game_name) if self.markup else self.game_name
+        game = format.sanitize(self.game_name) if self.markup else self.game_name
         return PangoSpan(game, foreground='orange', size='x-large', sub=True, markup=self.markup)
 
     @property
@@ -195,7 +195,7 @@ class Category:
     def viewers_fmt(self) -> str:
         if self.online == 0:
             return ''
-        viewers_str = helpers.format_number(sum(c.viewer_count for c in self.channels.values()))
+        viewers_str = format.number(sum(c.viewer_count for c in self.channels.values()))
         viewers = f'{viewers_str} viewers'
         return PangoSpan(viewers, size='small', weight='bold', foreground='grey', markup=self.markup)
 
@@ -294,7 +294,7 @@ class Channel:
 
     def category(self) -> str:
         color = 'orange' if self.is_live else 'grey'
-        game = helpers.clean_string(self.game_name)
+        game = format.sanitize(self.game_name)
         return PangoSpan(game, foreground=color, size='x-large', sub=True, markup=self.markup)
 
     @property

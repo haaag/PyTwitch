@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from pyselector.markup import PangoSpan
-from twitch import helpers
+from twitch import format
 from twitch.constants import SEPARATOR
 from twitch.constants import TITLE_MAX_LENGTH
 
@@ -52,12 +52,12 @@ class FollowedContentClip:
     def title_str(self) -> str:
         title = self.title[: TITLE_MAX_LENGTH - 3] + '...' if len(self.title) > TITLE_MAX_LENGTH else f'{self.title} '
         if self.markup:
-            title = helpers.clean_string(title)
+            title = format.sanitize(title)
         return PangoSpan(title, size='large', foreground='silver') if self.markup else title
 
     @property
     def viewers_fmt(self) -> str:
-        viewers = f'views: {helpers.format_number(self.view_count)}'
+        viewers = f'views: {format.number(self.view_count)}'
         return PangoSpan(viewers, size='medium', weight='light') if self.markup else viewers
 
     @property
@@ -71,7 +71,7 @@ class FollowedContentClip:
 
     @property
     def created_date(self) -> str:
-        created = helpers.format_datetime(self.created_at)
+        created = format.date(self.created_at)
         return PangoSpan(created, size='large', foreground='orange', sub=True) if self.markup else created
 
     def __str__(self) -> str:
@@ -116,12 +116,12 @@ class FollowedContentVideo:
     def title_str(self) -> str:
         title = self.title[: TITLE_MAX_LENGTH - 3] + '...' if len(self.title) > TITLE_MAX_LENGTH else f'{self.title} '
         if self.markup:
-            title = helpers.clean_string(title)
+            title = format.sanitize(title)
         return PangoSpan(title, size='large', foreground='silver') if self.markup else title
 
     @property
     def viewers_fmt(self) -> str:
-        viewers = helpers.format_number(self.view_count)
+        viewers = format.number(self.view_count)
         return PangoSpan(viewers, size='medium', weight='light') if self.markup else viewers
 
     @property
@@ -134,13 +134,12 @@ class FollowedContentVideo:
 
     @property
     def created_date(self) -> str:
-        created = helpers.format_datetime(self.created_at)
+        created = format.date(self.created_at)
         return PangoSpan(created, size='x-large', foreground='orange', sub=True) if self.markup else created
 
     @property
     def published_fmt(self) -> str:
-        # published_fmt = helpers.format_datetime(self.published_at)
-        return helpers.format_datetime(self.published_at)
+        return format.date(self.published_at)
 
     def __str__(self) -> str:
         return (
