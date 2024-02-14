@@ -7,10 +7,6 @@ from twitch import logger
 from twitch import setup
 from twitch._exceptions import CONNECTION_EXCEPTION
 from twitch._exceptions import EXCEPTIONS
-from twitch.api import TwitchApi
-from twitch.app import TwitchApp
-from twitch.client import TwitchClient
-from twitch.player import FactoryPlayer
 
 # TODO:
 # Read https://dev.twitch.tv/docs/api/reference/#get-games
@@ -26,19 +22,11 @@ def main() -> int:
 
     try:
         menu, prompt = setup.menu(args)
-        api = TwitchApi()
-        api.validate_credentials()
-        twitch = TwitchApp(
-            client=TwitchClient(api=api, markup=args.no_markup),
-            prompt=prompt,
-            menu=menu,
-            player=FactoryPlayer.create(args.player),
-        )
+        twitch = setup.twitch(prompt, menu, args.player, args.no_markup)
         twitch = setup.keybinds(twitch)
 
         if args.test:
             setup.test()
-            sys.exit()
 
         if args.channel:
             twitch.show_channels_by_query()

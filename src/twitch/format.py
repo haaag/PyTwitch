@@ -70,9 +70,6 @@ def number(number: int) -> str:
     """
     Formats the given integer number as a string with 'K' suffix if >= 1000.
 
-    Args:
-        number (int): The integer to be formatted.
-
     Returns:
         str: Formatted number as a string.
     """

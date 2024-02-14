@@ -47,7 +47,7 @@ class Keys(NamedTuple):
 
 
 class TwitchApp:
-    def __init__(self, client: TwitchClient, prompt: Callable, menu: MenuInterface, player: Player):
+    def __init__(self, client: TwitchClient, prompt: Callable[..., Any], menu: MenuInterface, player: Player):
         self.client = client
         self.prompt = prompt
         self.menu = menu
@@ -55,7 +55,7 @@ class TwitchApp:
 
     def show_all_streams(self, **kwargs) -> None:
         items, mesg = self.get_channels_and_streams()
-        item, keycode = self.select_from_items(items=items, mesg=mesg)
+        item, keycode = self.select_from_items(items=items, mesg=mesg)  # , preprocessor=lambda i: f'XXXXXX - {i.name}')
 
         if keycode == UserCancelSelection(1):
             self.quit(keycode=keycode)
@@ -176,12 +176,15 @@ class TwitchApp:
         data = {v.key: v for v in videos}
         return data, f'> Showing ({len(data)}) videos from <{item.name}> channel'
 
-    def select_from_items(self, items: Mapping[str, Any], mesg: str = '') -> tuple[Any, int]:
+    def select_from_items(
+        self, items: Mapping[str, Any], mesg: str = '', preprocessor: Callable[..., Any] | None = None
+    ) -> tuple[Any, int]:
         if not items:
             _, _ = self.prompt(
                 items=['err: no items'],
                 mesg=mesg,
                 markup=False,
+                preprocessor=preprocessor,
             )
             return None, UserCancelSelection(1)
 
@@ -189,6 +192,7 @@ class TwitchApp:
             items=list(items.values()),
             mesg=mesg,
             markup=self.client.markup,
+            preprocessor=preprocessor,
         )
         return item, keycode
 
@@ -223,6 +227,8 @@ class TwitchApp:
             mesg='Item information',
             markup=False,
         )
+        if selected is None:
+            return
         selected = selected.split(SEPARATOR, maxsplit=1)[1].strip()
         helpers.copy_to_clipboard(selected)
         sys.exit(0)
@@ -230,7 +236,7 @@ class TwitchApp:
     def get_user_input(self, mesg: str = '', prompt: str = 'Query>') -> str:
         self.menu.keybind.toggle_all()
         user_input, keycode = self.prompt(
-            items={}, mesg=mesg, prompt=prompt, lines=1, width='30%', height='8%', markup=self.client.markup
+            items=[], mesg=mesg, prompt=prompt, lines=1, width='30%', height='8%', markup=self.client.markup
         )
         self.menu.keybind.toggle_all()
         return user_input

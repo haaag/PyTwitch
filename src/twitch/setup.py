@@ -3,12 +3,18 @@ from __future__ import annotations
 
 import argparse
 import functools
+import sys
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Callable
 
 from pyselector import Menu
+from twitch.api import TwitchApi
 from twitch.app import Keys
 from twitch.app import TwitchApp
+from twitch.client import TwitchClient
+from twitch.constants import Settings
+from twitch.player import FactoryPlayer
 
 if TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
@@ -28,9 +34,7 @@ keys = Keys(
 
 
 def args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description='Simple tool menu for watching streams live, video from twitch.',
-    )
+    parser = argparse.ArgumentParser(description=Settings.desc, add_help=False)
 
     markup_group = parser.add_argument_group(title='menu options')
     markup_group.add_argument('--no-markup', action='store_false', help='Disable pango markup')
@@ -128,3 +132,11 @@ def menu(args: argparse.Namespace) -> tuple[MenuInterface, Callable]:
 
 def test(**kwargs) -> None:  # noqa: ARG001
     print('Testing mode, not launching menu')  # noqa: T201
+    sys.exit()
+
+
+def twitch(prompt: Callable[..., Any], menu: MenuInterface, player: str, markup: bool) -> TwitchApp:
+    api = TwitchApi()
+    api.validate_credentials()
+    client = TwitchClient(api, markup)
+    return TwitchApp(client=client, prompt=prompt, menu=menu, player=FactoryPlayer.create(player))
