@@ -11,11 +11,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# app
-class Settings:
-    desc = 'Simple tool menu for watching streams live, video from twitch.'
-
-
 # others
 UserCancelSelection = NewType('UserCancelSelection', int)
 UserConfirmsSelection = NewType('UserConfirmsSelection', int)

@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import functools
 import sys
+import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
@@ -13,11 +14,30 @@ from twitch.api import TwitchApi
 from twitch.app import Keys
 from twitch.app import TwitchApp
 from twitch.client import TwitchClient
-from twitch.constants import Settings
 from twitch.player import FactoryPlayer
 
 if TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
+
+# app
+DESC = 'Simple tool menu for watching streams, videos from twitch.'
+HELP = DESC
+HELP += textwrap.dedent(
+    """
+
+options:
+    -c, --channel   search by channel query
+    -g, --games     search by game or category
+    -m, --menu      select menu [rofi|dmenu] (default: rofi)
+    -p, --player    select player [mpv|streamlink] (default: mpv)
+    -v, --verbose   verbose mode
+    -h, --help      show this help
+
+menu options:
+    --no-markup     disable pango markup
+    """
+)
+
 
 keys = Keys(
     quit='alt-q',
@@ -34,20 +54,26 @@ keys = Keys(
 
 
 def args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=Settings.desc, add_help=False)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=HELP,
+        description=DESC,
+        add_help=False,
+    )
 
     markup_group = parser.add_argument_group(title='menu options')
-    markup_group.add_argument('--no-markup', action='store_false', help='Disable pango markup')
+    markup_group.add_argument('--no-markup', action='store_false')
 
     # experimental
-    parser.add_argument('--channel', '-c', help='Search by channel query', action='store_true')
-    parser.add_argument('--games', '-g', help='Search by game or category', action='store_true')
+    parser.add_argument('--channel', '-c', action='store_true')
+    parser.add_argument('--games', '-g', action='store_true')
 
     # options
-    parser.add_argument('-m', '--menu', choices=['rofi', 'dmenu'], help='Select a launcher/menu', default='rofi')
+    parser.add_argument('-m', '--menu', choices=['rofi', 'dmenu'], default='rofi')
     parser.add_argument('-p', '--player', default='mpv', choices=['streamlink', 'mpv'])
-    parser.add_argument('-t', '--test', action='store_true', help='Test mode')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose mode')
+    parser.add_argument('-t', '--test', action='store_true')
+    parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('-h', '--help', action='store_true')
 
     args = parser.parse_args()
 
@@ -124,7 +150,7 @@ def menu(args: argparse.Namespace) -> tuple[MenuInterface, Callable]:
         height='60%',
         markup=args.no_markup,
         preview=False,
-        # theme="catppuccin-macchiato",
+        # theme='catppuccin-macchiato',
         location='center',
     )
     return menu, prompt
@@ -140,3 +166,8 @@ def twitch(prompt: Callable[..., Any], menu: MenuInterface, player: str, markup:
     api.validate_credentials()
     client = TwitchClient(api, markup)
     return TwitchApp(client=client, prompt=prompt, menu=menu, player=FactoryPlayer.create(player))
+
+
+def help() -> int:  # noqa: A001
+    print(HELP)  # noqa: T201
+    return 0
