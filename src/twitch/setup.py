@@ -69,7 +69,7 @@ def args() -> argparse.Namespace:
     parser.add_argument('--games', '-g', action='store_true')
 
     # options
-    parser.add_argument('-m', '--menu', choices=['rofi', 'dmenu'], default='rofi')
+    parser.add_argument('-m', '--menu', choices=['rofi', 'dmenu', 'fzf'], default='rofi')
     parser.add_argument('-p', '--player', default='mpv', choices=['streamlink', 'mpv'])
     parser.add_argument('-t', '--test', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true')
@@ -77,7 +77,7 @@ def args() -> argparse.Namespace:
 
     args = parser.parse_args()
 
-    if args.menu in ['fzf', 'dmenu']:
+    if args.menu in ['fzf', 'dmenu', 'fzf']:
         args.no_markup = False
     return args
 

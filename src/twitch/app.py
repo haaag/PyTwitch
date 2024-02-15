@@ -118,12 +118,12 @@ class TwitchApp:
         self.play(item)
 
     def show_channels_by_query(self, **kwargs) -> None:
-        # self.menu.keybind.toggle_all()
         query = kwargs.get('query')
         if not query:
             query = self.get_user_input(mesg='Search <channels> by query', prompt='TwitchChannel>')
 
         if not query:
+            logger.debug('cancelled by user')
             return
 
         data = self.client.get_channels_by_query(query, live_only=False)
@@ -141,6 +141,7 @@ class TwitchApp:
         game = kwargs.get('game')
         if not game:
             game = self.get_user_input(mesg='Search <games> or <categories>', prompt='TwitchGame>')
+
         logger.debug('searching by game: %s', game)
         if not game:
             return
@@ -154,6 +155,7 @@ class TwitchApp:
         data = self.client.get_streams_by_game_id(selected.id)
         streams = list(data)
         if not streams:
+            self.select_from_items(items={}, mesg='> No <streams> found')
             return
 
         mesg = f'> Showing ({len(streams)}) <streams> from <{selected.name}> game'
@@ -177,15 +179,13 @@ class TwitchApp:
         return data, f'> Showing ({len(data)}) videos from <{item.name}> channel'
 
     def select_from_items(
-        self, items: Mapping[str, Any], mesg: str = '', preprocessor: Callable[..., Any] | None = None
+        self,
+        items: Mapping[str, Any],
+        mesg: str = '',
+        preprocessor: Callable[..., Any] | None = None,
     ) -> tuple[Any, int]:
         if not items:
-            _, _ = self.prompt(
-                items=['err: no items'],
-                mesg=mesg,
-                markup=False,
-                preprocessor=preprocessor,
-            )
+            self.prompt(items=['err: no items'], mesg=mesg, markup=False)
             return None, UserCancelSelection(1)
 
         item, keycode = self.prompt(
@@ -194,6 +194,7 @@ class TwitchApp:
             markup=self.client.markup,
             preprocessor=preprocessor,
         )
+
         return item, keycode
 
     def multi_selection(self, **kwargs) -> None:
@@ -236,8 +237,16 @@ class TwitchApp:
     def get_user_input(self, mesg: str = '', prompt: str = 'Query>') -> str:
         self.menu.keybind.toggle_all()
         user_input, keycode = self.prompt(
-            items=[], mesg=mesg, prompt=prompt, lines=1, width='30%', height='8%', markup=self.client.markup
+            items=[],
+            mesg=mesg,
+            prompt=prompt,
+            lines=1,
+            width='30%',
+            height='8%',
+            print_query=True,
+            markup=self.client.markup,
         )
+
         self.menu.keybind.toggle_all()
         return user_input
 

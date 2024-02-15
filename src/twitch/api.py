@@ -31,11 +31,10 @@ MAX_ITEMS_PER_REQUEST = 100
 DEFAULT_REQUESTED_ITEMS = 200
 
 
-def _group_into_batches(ids: list[str]) -> Iterator[list[str]]:
+def _group_into_batches(ids: list[str], batch_size: int) -> Iterator[list[str]]:
     """
     Splits a list into batches of the maximum size allowed by the API.
     """
-    batch_size = MAX_ITEMS_PER_REQUEST
     for i in range(0, len(ids), batch_size):
         yield ids[i : i + batch_size]
 
@@ -251,7 +250,7 @@ class Channels:
         data: list[dict[str, Any]] = []
         endpoint = URL('channels')
 
-        for batch in _group_into_batches(broadcaster_ids):
+        for batch in _group_into_batches(broadcaster_ids, MAX_ITEMS_PER_REQUEST):
             response = self.api.request_get(endpoint, {'broadcaster_id': batch})
             data.extend(response.get('data', []))
         return data

@@ -11,7 +11,7 @@ license = { file = "LICENSE.txt" }
 authors = [{ name = "haaag", email = "git.haaag@gmail.com" }]
 requires-python = ">=3.8"
 dynamic = ["version"]
-dependencies = ["pyselector==0.0.23", "httpx==0.23.3", "python-dotenv"]
+dependencies = ["pyselector==0.0.25", "httpx==0.23.3", "python-dotenv"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/twitch"]
@@ -106,7 +106,7 @@ extend-select = [
   "TID", # (flake8-tidy-imports)
   "YTT", # (flake8-2020)
 ]
-ignore = ["Q000", "Q003"]
+ignore = ["Q000", "Q003", "FBT001", "FBT002", "ARG002"]
 
 [tool.ruff.lint.isort]
 force-single-line = true
@@ -116,7 +116,8 @@ required-imports = ["from __future__ import annotations"]
 [tool.ruff.lint.per-file-ignores]
 "src/twitch/player.py" = ["S603", "A001"]
 "src/twitch/__about__.py" = ["I002"]
-"src/**/*" = [
+"tests/**/*" = [
+  "S101",   # use of `assert` detected
   "ARG002", # unused-method-argument
   "Q000",   # single-quote preferred
   "FBT001", # boolean-type-hint-positional-argument
