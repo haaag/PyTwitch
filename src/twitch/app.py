@@ -11,8 +11,8 @@ from typing import Callable
 from typing import Mapping
 from typing import NamedTuple
 
+from twitch import clipboard
 from twitch import format
-from twitch import helpers
 from twitch.constants import SEPARATOR
 from twitch.constants import UserCancelSelection
 from twitch.constants import UserConfirmsSelection
@@ -178,6 +178,28 @@ class TwitchApp:
         data = {v.key: v for v in videos}
         return data, f'> Showing ({len(data)}) videos from <{item.name}> channel'
 
+    def get_item_info(self, **kwargs) -> None:
+        item: TwitchContent | TwitchChannel = kwargs['item']
+        item_dict = asdict(item)
+        formatted_item = format.stringify(item_dict, sep=SEPARATOR)
+        formatted_item.append(f"{'url':<18}{SEPARATOR}\t{item.url:<30}")
+        selected, keycode = self.menu.selection(
+            items=formatted_item,
+            mesg='Item information',
+        )
+        if selected is None:
+            return self.quit(keycode=keycode)
+
+        selected = selected.split(SEPARATOR, maxsplit=1)[1].strip()
+        clipboard.copy(selected)
+        return self.quit(keycode=keycode)
+
+    def get_key_by_code(self, keycode: int) -> Keybind:
+        return self.menu.keybind.get_keybind_by_code(keycode)
+
+    def get_key_by_bind(self, bind: str) -> Keybind:
+        return self.menu.keybind.get_keybind_by_bind(bind)
+
     def select_from_items(
         self,
         items: Mapping[str, Any],
@@ -216,23 +238,7 @@ class TwitchApp:
                 logger.info(f'{item.name=} is offline.')
                 continue
             self.play(item)
-        sys.exit(0)
-
-    def get_item_info(self, **kwargs) -> None:
-        item: TwitchContent | TwitchChannel = kwargs['item']
-        item_dict = asdict(item)
-        formatted_item = format.stringify(item_dict, sep=SEPARATOR)
-        formatted_item.append(f"{'url':<18}{SEPARATOR}\t{item.url:<30}")
-        selected, keycode = self.prompt(
-            items=formatted_item,
-            mesg='Item information',
-            markup=False,
-        )
-        if selected is None:
-            return
-        selected = selected.split(SEPARATOR, maxsplit=1)[1].strip()
-        helpers.copy_to_clipboard(selected)
-        sys.exit(0)
+        return self.quit(keycode=keycode)
 
     def get_user_input(self, mesg: str = '', prompt: str = 'Query>') -> str:
         self.menu.keybind.toggle_all()
@@ -254,12 +260,6 @@ class TwitchApp:
         logger.warning(f'playing content {follow.url=}')
         process = self.player.play(follow)
         return process.returncode
-
-    def get_key_by_code(self, keycode: int) -> Keybind:
-        return self.menu.keybind.get_keybind_by_code(keycode)
-
-    def get_key_by_bind(self, bind: str) -> Keybind:
-        return self.menu.keybind.get_keybind_by_bind(bind)
 
     def chat(self, **kwargs) -> None:
         item = kwargs.pop('item')
