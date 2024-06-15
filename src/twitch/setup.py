@@ -162,7 +162,8 @@ def test(**kwargs) -> None:  # noqa: ARG001
 
 
 def load_credentials(file: str) -> Credentials:
-    envs(file)
+    if file:
+        read_env_file(file)
     load_dotenv()
     access_token = os.environ.get('TWITCH_ACCESS_TOKEN')
     cliend_id = os.environ.get('TWITCH_CLIENT_ID')
@@ -188,7 +189,7 @@ def help() -> int:  # noqa: A001
     return 0
 
 
-def envs(path: str | None = None) -> None:
+def read_env_file(path: str | None = None) -> None:
     """Load envs if path"""
     if not path:
         return

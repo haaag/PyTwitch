@@ -92,7 +92,7 @@ class TwitchApp:
         self.show_and_play(category.channels)
 
     def show_keybinds(self, **kwargs) -> None:
-        item: TwitchChannel = kwargs.pop('item')
+        item: TwitchChannel = kwargs.get('item')
         key: Keybind = kwargs.pop('keybind')
         key.toggle_hidden()
         items: dict[str, str] = {}
@@ -183,9 +183,9 @@ class TwitchApp:
         item_dict = asdict(item)
         formatted_item = format.stringify(item_dict, sep=SEPARATOR)
         formatted_item.append(f"{'url':<18}{SEPARATOR}\t{item.url:<30}")
-        selected, keycode = self.menu.selection(
+        selected, keycode = self.menu.prompt(
             items=formatted_item,
-            mesg='Item information',
+            mesg=f'> item <{item.name}> information\n> Hit enter to copy',
         )
         if selected is None:
             return self.quit(keycode=keycode)
