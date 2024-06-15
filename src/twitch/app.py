@@ -49,7 +49,6 @@ class Keys(NamedTuple):
 class TwitchApp:
     def __init__(self, client: TwitchClient, prompt: Callable[..., Any], menu: MenuInterface, player: Player):
         self.client = client
-        self.prompt = prompt
         self.menu = menu
         self.player = player
 
@@ -207,10 +206,10 @@ class TwitchApp:
         preprocessor: Callable[..., Any] | None = None,
     ) -> tuple[Any, int]:
         if not items:
-            self.prompt(items=['err: no items'], mesg=mesg, markup=False)
+            self.menu.prompt(items=['err: no items'], mesg=mesg, markup=False)
             return None, UserCancelSelection(1)
 
-        item, keycode = self.prompt(
+        item, keycode = self.menu.prompt(
             items=list(items.values()),
             mesg=mesg,
             markup=self.client.markup,
@@ -223,7 +222,7 @@ class TwitchApp:
         self.menu.keybind.toggle_all()
         items = kwargs.get('items', self.client.streams)
         mesg = f"> Showing ({len(items)}) items.\n>> Use 'Shift'+'Enter' for multi-select"
-        selections, keycode = self.prompt(
+        selections, keycode = self.menu.prompt(
             items=tuple(items.values()),
             mesg=mesg,
             multi_select=True,
@@ -242,7 +241,7 @@ class TwitchApp:
 
     def get_user_input(self, mesg: str = '', prompt: str = 'Query>') -> str:
         self.menu.keybind.toggle_all()
-        user_input, keycode = self.prompt(
+        user_input, keycode = self.menu.prompt(
             items=[],
             mesg=mesg,
             prompt=prompt,

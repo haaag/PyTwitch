@@ -20,9 +20,10 @@ def main() -> int:
     if args.verbose:
         log.info('arguments: %s', vars(args))
 
+    menu = setup.menu(args)
+
     try:
-        menu, prompt = setup.menu(args)
-        twitch = setup.twitch(prompt, menu, args.player, args.no_markup)
+        twitch = setup.app(menu, args.player, args.no_markup)
         twitch = setup.keybinds(twitch)
 
         if args.test:
@@ -38,11 +39,8 @@ def main() -> int:
         else:
             twitch.show_all_streams()
         twitch.close()
-    except EXCEPTIONS as err:
-        prompt(items=[f'{err!r}'])
-        log.error(err)
-    except CONNECTION_EXCEPTION as err:
-        prompt(items=[f'{err!r}'], markup=False)
+    except (*CONNECTION_EXCEPTION, *EXCEPTIONS) as err:
+        menu.prompt(items=[f'{err!r}'], markup=False)
         log.error(err)
     except KeyboardInterrupt:
         log.info('terminated by user')

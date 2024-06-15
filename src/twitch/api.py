@@ -39,19 +39,18 @@ def _group_into_batches(ids: list[str], batch_size: int) -> Iterator[list[str]]:
         yield ids[i : i + batch_size]
 
 
-def validate_credentials(credentials: dict[str, str]) -> None:
+def _validate_credentials(credentials: dict[str, str]) -> None:
     """
     Validates that all required environment variables are set.
 
     Raises:
         EnvValidationError: If any required variable is not set.
     """
-
-    missing_vars = [key for key, value in credentials.items() if not value]
-    if missing_vars:
-        err_msg = f"Missing required environment variables: {', '.join(missing_vars)}"
-        log.error(err_msg)
-        raise EnvValidationError(err_msg)
+    for k, v in credentials.items():
+        if not v:
+            err_msg = f"Missing required environment variables: {k}"
+            log.error(err_msg)
+            raise EnvValidationError(err_msg)
 
 
 @dataclass
@@ -73,6 +72,7 @@ class API:
         self.credentials = self.get_credentials()
         self.base_url = TWITCH_API_BASE_URL
 
+        self.validate_credentials()
         self.load_client()
 
     def get_credentials(self) -> TwitchApiCredentials:
@@ -83,7 +83,7 @@ class API:
         )
 
     def validate_credentials(self) -> None:
-        return validate_credentials(self.credentials.to_dict())
+        return _validate_credentials(self.credentials.to_dict())
 
     def load_client(self) -> None:
         self.client = httpx.Client(headers=self._get_request_headers())

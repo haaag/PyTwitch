@@ -6,8 +6,6 @@ import functools
 import sys
 import textwrap
 from typing import TYPE_CHECKING
-from typing import Any
-from typing import Callable
 
 from pyselector import Menu
 from twitch.api import TwitchApi
@@ -69,15 +67,14 @@ def args() -> argparse.Namespace:
     parser.add_argument('--games', '-g', action='store_true')
 
     # options
-    parser.add_argument('-m', '--menu', choices=['rofi', 'dmenu', 'fzf'], default='rofi')
+    parser.add_argument('-m', '--menu', choices=['rofi', 'dmenu'], default='rofi')
     parser.add_argument('-p', '--player', default='mpv', choices=['streamlink', 'mpv'])
     parser.add_argument('-t', '--test', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-h', '--help', action='store_true')
 
     args = parser.parse_args()
-
-    if args.menu in ['fzf', 'dmenu', 'fzf']:
+    if args.menu in ['fzf', 'dmenu']:
         args.no_markup = False
     return args
 
@@ -140,9 +137,9 @@ def keybinds(twitch: TwitchApp) -> TwitchApp:
     return twitch
 
 
-def menu(args: argparse.Namespace) -> tuple[MenuInterface, Callable]:
+def menu(args: argparse.Namespace) -> MenuInterface:
     menu = Menu.get(args.menu)
-    prompt = functools.partial(
+    menu.prompt = functools.partial(
         menu.prompt,
         prompt='Twitch>',
         lines=15,
@@ -150,24 +147,22 @@ def menu(args: argparse.Namespace) -> tuple[MenuInterface, Callable]:
         height='60%',
         markup=args.no_markup,
         preview=False,
-        # theme='catppuccin-macchiato',
         location='center',
     )
-    return menu, prompt
+    return menu
 
 
 def test(**kwargs) -> None:  # noqa: ARG001
-    print('Testing mode, not launching menu')  # noqa: T201
+    print('Testing mode, not launching menu')
     sys.exit()
 
 
-def twitch(prompt: Callable[..., Any], menu: MenuInterface, player: str, markup: bool) -> TwitchApp:
+def app(menu: MenuInterface, player: str, markup: bool) -> TwitchApp:
     api = TwitchApi()
-    api.validate_credentials()
     client = TwitchClient(api, markup)
-    return TwitchApp(client=client, prompt=prompt, menu=menu, player=FactoryPlayer.create(player))
+    return TwitchApp(client=client, menu=menu, player=FactoryPlayer.create(player))
 
 
 def help() -> int:  # noqa: A001
-    print(HELP)  # noqa: T201
+    print(HELP)
     return 0
