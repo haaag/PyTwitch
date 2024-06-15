@@ -44,10 +44,11 @@ class Keys(NamedTuple):
     search_by_query: str
     show_all: str
     videos: str
+    show_keys: str
 
 
 class TwitchApp:
-    def __init__(self, client: TwitchClient, prompt: Callable[..., Any], menu: MenuInterface, player: Player):
+    def __init__(self, client: TwitchClient, menu: MenuInterface, player: Player):
         self.client = client
         self.menu = menu
         self.player = player
@@ -59,12 +60,12 @@ class TwitchApp:
         if keycode == UserCancelSelection(1):
             self.quit(keycode=keycode)
 
-        if not item.playable:
+        if not item.playable and keycode == 0:
             return self.show_channel_videos(item=item)
 
         if keycode == UserConfirmsSelection(0):
             returncode = self.play(item)
-            sys.exit(returncode)
+            self.quit(keycode=returncode)
 
         keybind = self.get_key_by_code(keycode)
         return keybind.callback(items=items, item=item)
@@ -99,10 +100,8 @@ class TwitchApp:
 
         while True:
             keybind, keycode = self.select_from_items(items=items, mesg=mesg)
-
             if keycode == UserCancelSelection(1):
                 self.quit(keycode=keycode)
-
             if keycode != 0:
                 keybind = self.get_key_by_code(keycode)
 
@@ -230,7 +229,7 @@ class TwitchApp:
         )
 
         if keycode == 1 or not selections:
-            sys.exit(1)
+            self.quit(keycode=keycode)
 
         for item in selections:
             if not item.playable:
@@ -263,7 +262,7 @@ class TwitchApp:
     def chat(self, **kwargs) -> None:
         item = kwargs.pop('item')
         webbrowser.open_new_tab(item.chat)
-        sys.exit(0)
+        self.quit(keycode=0)
 
     def close(self) -> None:
         logger.debug('closing connection')
@@ -272,5 +271,8 @@ class TwitchApp:
     def quit(self, **kwargs) -> None:
         keycode = kwargs.get('keycode', 1)
         logger.debug('terminated by user')
-        self.close()
         sys.exit(keycode)
+
+    def show_keys(self, **kwargs) -> None:
+        keys = self.menu.keybind.registered_keys
+        __import__('pprint').pprint(keys)

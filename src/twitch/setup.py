@@ -48,6 +48,7 @@ keys = Keys(
     show_all='alt-u',
     search_by_game='alt-s',
     search_by_query='alt-c',
+    show_keys='alt-k'
 )
 
 
@@ -84,11 +85,13 @@ def keybinds(twitch: TwitchApp) -> TwitchApp:
         key=keys.channels,
         description='show channels',
         callback=twitch.show_all_streams,
+        hidden=True,
     )
     twitch.menu.keybind.add(
         key=keys.categories,
         description='show by games',
         callback=twitch.show_categories,
+        hidden=True,
     )
     twitch.menu.keybind.add(
         key=keys.videos,
@@ -118,21 +121,31 @@ def keybinds(twitch: TwitchApp) -> TwitchApp:
         key=keys.search_by_game,
         description='search games or categories',
         callback=twitch.show_channels_by_game,
+        hidden=True,
     )
     twitch.menu.keybind.add(
         key=keys.search_by_query,
         description='search by channel',
         callback=twitch.show_channels_by_query,
+        hidden=True,
     )
     twitch.menu.keybind.add(
         key=keys.show_all,
         description='show all keybinds',
         callback=twitch.show_keybinds,
+        hidden=True,
     )
     twitch.menu.keybind.add(
         key=keys.quit,
         description='quit',
         callback=twitch.quit,
+        hidden=True,
+    )
+    twitch.menu.keybind.add(
+        key=keys.show_keys,
+        description='show available keybinds',
+        callback=twitch.show_keybinds,
+        hidden=False,
     )
     return twitch
 

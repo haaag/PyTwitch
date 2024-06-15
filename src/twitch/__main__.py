@@ -21,7 +21,6 @@ def main() -> int:
         log.info('arguments: %s', vars(args))
 
     menu = setup.menu(args)
-
     try:
         twitch = setup.app(menu, args.player, args.no_markup)
         twitch = setup.keybinds(twitch)
@@ -38,7 +37,7 @@ def main() -> int:
             twitch.show_channels_by_game()
         else:
             twitch.show_all_streams()
-        twitch.close()
+        twitch.quit(keycode=0)
     except (*CONNECTION_EXCEPTION, *EXCEPTIONS) as err:
         menu.prompt(items=[f'{err!r}'], markup=False)
         log.error(err)
