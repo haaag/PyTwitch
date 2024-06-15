@@ -3,11 +3,16 @@ from __future__ import annotations
 
 import argparse
 import functools
+import logging
+import os
 import sys
-import textwrap
+from pathlib import Path
 from typing import TYPE_CHECKING
 
+from dotenv import load_dotenv
 from pyselector import Menu
+from twitch import constants
+from twitch.api import Credentials
 from twitch.api import TwitchApi
 from twitch.app import Keys
 from twitch.app import TwitchApp
@@ -17,24 +22,7 @@ from twitch.player import FactoryPlayer
 if TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
 
-# app
-DESC = 'Simple tool menu for watching streams, videos from twitch.'
-HELP = DESC
-HELP += textwrap.dedent(
-    """
-
-options:
-    -c, --channel   search by channel query
-    -g, --games     search by game or category
-    -m, --menu      select menu [rofi|dmenu] (default: rofi)
-    -p, --player    select player [mpv|streamlink] (default: mpv)
-    -v, --verbose   verbose mode
-    -h, --help      show this help
-
-menu options:
-    --no-markup     disable pango markup
-    """
-)
+log = logging.getLogger(__name__)
 
 
 keys = Keys(
@@ -48,15 +36,15 @@ keys = Keys(
     show_all='alt-u',
     search_by_game='alt-s',
     search_by_query='alt-c',
-    show_keys='alt-k'
+    show_keys='alt-k',
 )
 
 
 def args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
-        epilog=HELP,
-        description=DESC,
+        epilog=constants.HELP,
+        description=constants.DESC,
         add_help=False,
     )
 
@@ -64,15 +52,17 @@ def args() -> argparse.Namespace:
     markup_group.add_argument('--no-markup', action='store_false')
 
     # experimental
-    parser.add_argument('--channel', '-c', action='store_true')
-    parser.add_argument('--games', '-g', action='store_true')
+    parser.add_argument('-C', '--channel', action='store_true')
+    parser.add_argument('-G', '--games', action='store_true')
 
     # options
     parser.add_argument('-m', '--menu', choices=['rofi', 'dmenu'], default='rofi')
     parser.add_argument('-p', '--player', default='mpv', choices=['streamlink', 'mpv'])
+    parser.add_argument('--player-args')
     parser.add_argument('-t', '--test', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true')
-    parser.add_argument('-h', '--help', action='store_true')
+    parser.add_argument('-c', '--config')
+    # parser.add_argument('-h', '--help', action='store_true')
 
     args = parser.parse_args()
     if args.menu in ['fzf', 'dmenu']:
@@ -170,12 +160,45 @@ def test(**kwargs) -> None:  # noqa: ARG001
     sys.exit()
 
 
-def app(menu: MenuInterface, player: str, markup: bool) -> TwitchApp:
-    api = TwitchApi()
-    client = TwitchClient(api, markup)
-    return TwitchApp(client=client, menu=menu, player=FactoryPlayer.create(player))
+def load_credentials(file: str) -> Credentials:
+    envs(file)
+    load_dotenv()
+    access_token = os.environ.get('TWITCH_ACCESS_TOKEN')
+    cliend_id = os.environ.get('TWITCH_CLIENT_ID')
+    user_id = os.environ.get('TWITCH_USER_ID')
+    return Credentials(
+        access_token=access_token,
+        client_id=cliend_id,
+        user_id=user_id,
+    )
+
+
+def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
+    credentials = load_credentials(args.config)
+    api = TwitchApi(credentials)
+    client = TwitchClient(api, args.no_markup)
+    return TwitchApp(client=client, menu=menu, player=FactoryPlayer.create(args.player))
 
 
 def help() -> int:  # noqa: A001
-    print(HELP)
+    print(constants.HELP)
     return 0
+
+
+def envs(path: str | None = None) -> None:
+    """Load envs if path"""
+    if not path:
+        return
+
+    p = Path().absolute() / Path(path)
+    if not p.exists():
+        err = f'{p=!s} not found'
+        log.error(err)
+        raise FileNotFoundError(err)
+    if not p.is_file():
+        err = f'{p=!s} is not a file'
+        log.error(err)
+        raise ValueError(err)
+
+    log.debug(f'loading envs from {p=!s}')
+    load_dotenv(dotenv_path=p.as_posix())

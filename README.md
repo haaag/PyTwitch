@@ -36,8 +36,7 @@ streaming.
 
 ### 🔒Credentials
 
-For authentication, you can set environment vars in your `shell` or use the
-`.env` file and put it in the root of the project.
+For authentication, use a `.env` file and put it in the root of the project.
 
 [env-template](https://github.com/haaag/pytwitch/blob/main/env-template) file
 
@@ -82,9 +81,6 @@ After installation you can use the command `pytwitch`
 
 # You can use it with dmenu or rofi
 (.venv) $ pytwitch -m dmenu
-
-# or
-(.venv) $ pytwitch --menu=fzf
 
 # Help
 (.venv) $ pytwitch --help

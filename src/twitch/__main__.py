@@ -21,16 +21,15 @@ def main() -> int:
         log.info('arguments: %s', vars(args))
 
     menu = setup.menu(args)
+
     try:
-        twitch = setup.app(menu, args.player, args.no_markup)
+        twitch = setup.app(menu, args)
         twitch = setup.keybinds(twitch)
 
         if args.test:
             setup.test()
-
-        if args.help:
-            return setup.help()
-
+        # if args.help:
+        #     return setup.help()
         if args.channel:
             twitch.show_channels_by_query()
         elif args.games:
@@ -40,7 +39,6 @@ def main() -> int:
         twitch.quit(keycode=0)
     except (*CONNECTION_EXCEPTION, *EXCEPTIONS) as err:
         menu.prompt(items=[f'{err!r}'], markup=False)
-        log.error(err)
     except KeyboardInterrupt:
         log.info('terminated by user')
     return 0

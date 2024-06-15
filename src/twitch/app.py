@@ -68,7 +68,7 @@ class TwitchApp:
             self.quit(keycode=returncode)
 
         keybind = self.get_key_by_code(keycode)
-        return keybind.callback(items=items, item=item)
+        return keybind.callback(items=items, item=item, keybind=keybind)
 
     def show_channel_videos(self, **kwargs) -> None:
         item: TwitchChannel = kwargs.pop('item')
@@ -92,11 +92,14 @@ class TwitchApp:
         self.show_and_play(category.channels)
 
     def show_keybinds(self, **kwargs) -> None:
+        item: TwitchChannel = kwargs.pop('item')
+        key: Keybind = kwargs.pop('keybind')
+        key.toggle_hidden()
         items: dict[str, str] = {}
         keybinds: dict[int, Keybind] = self.menu.keybind.keys
         for _, key in keybinds.items():
             items[key.bind] = key
-        mesg = f'> Showing ({len(keybinds)}) <keybinds>'
+        mesg = f'> Showing ({len(keybinds)}) <keybinds>\n> item selected: <{item.name}>'
 
         while True:
             keybind, keycode = self.select_from_items(items=items, mesg=mesg)
@@ -104,7 +107,6 @@ class TwitchApp:
                 self.quit(keycode=keycode)
             if keycode != 0:
                 keybind = self.get_key_by_code(keycode)
-
             keybind.callback(**kwargs)
 
     def show_and_play(self, items: Mapping[str, TwitchPlayableContent], mesg: str = '') -> None:
@@ -272,7 +274,3 @@ class TwitchApp:
         keycode = kwargs.get('keycode', 1)
         logger.debug('terminated by user')
         sys.exit(keycode)
-
-    def show_keys(self, **kwargs) -> None:
-        keys = self.menu.keybind.registered_keys
-        __import__('pprint').pprint(keys)

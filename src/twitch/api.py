@@ -14,10 +14,7 @@ from typing import Iterator
 import httpx
 from httpx import URL
 from twitch._exceptions import EnvValidationError
-from twitch.constants import TWITCH_ACCESS_TOKEN
 from twitch.constants import TWITCH_API_BASE_URL
-from twitch.constants import TWITCH_CLIENT_ID
-from twitch.constants import TWITCH_USER_ID
 
 if typing.TYPE_CHECKING:
     from twitch.datatypes import HeaderTypes
@@ -48,13 +45,13 @@ def _validate_credentials(credentials: dict[str, str]) -> None:
     """
     for k, v in credentials.items():
         if not v:
-            err_msg = f"Missing required environment variables: {k}"
+            err_msg = f'Missing required environment variable: {k}'
             log.error(err_msg)
             raise EnvValidationError(err_msg)
 
 
 @dataclass
-class TwitchApiCredentials:
+class Credentials:
     access_token: str
     client_id: str
     user_id: str
@@ -65,22 +62,14 @@ class TwitchApiCredentials:
 
 class API:
     base_url: URL
-    credentials: TwitchApiCredentials
     client: httpx.Client
 
-    def __init__(self) -> None:
-        self.credentials = self.get_credentials()
+    def __init__(self, credentials: Credentials) -> None:
+        self.credentials = credentials
         self.base_url = TWITCH_API_BASE_URL
 
         self.validate_credentials()
         self.load_client()
-
-    def get_credentials(self) -> TwitchApiCredentials:
-        return TwitchApiCredentials(
-            access_token=TWITCH_ACCESS_TOKEN,
-            client_id=TWITCH_CLIENT_ID,
-            user_id=TWITCH_USER_ID,
-        )
 
     def validate_credentials(self) -> None:
         return _validate_credentials(self.credentials.to_dict())
@@ -257,7 +246,7 @@ class Channels:
 
 
 class TwitchApi(API):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, credentials: Credentials) -> None:
+        super().__init__(credentials)
         self.channels = Channels(api=self)
         self.content = Content(api=self)
