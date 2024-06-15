@@ -33,10 +33,12 @@ streaming.
 - [httpx](https://www.python-httpx.org/)
 - [python-dotenv](https://pypi.org/project/python-dotenv/)
 - [pyselector](https://pypi.org/project/pyselector/)
+- [xlib](https://pypi.org/project/xlib/)
 
 ### 🔒Credentials
 
-For authentication, use a `.env` file and put it in the root of the project.
+For authentication, you can set environment vars in your `shell` and export them or use the
+`.env` file and put it in the root of the project.
 
 [env-template](https://github.com/haaag/pytwitch/blob/main/env-template) file
 
@@ -79,11 +81,14 @@ After installation you can use the command `pytwitch`
 # Use rofi menu by default
 (.venv) $ pytwitch
 
-# Using path to .env file
-(.venv) $ pytwitch -c ./.env
-
 # You can use it with dmenu or rofi
 (.venv) $ pytwitch -m dmenu
+
+# Using path to env file
+(.venv) $ pytwitch -c ./.env
+
+# Add args to player (default mpv)
+(.venv) $ pytwitch --player --player-args='--no-resume-playback'
 
 # Help
 (.venv) $ pytwitch --help
