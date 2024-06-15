@@ -79,6 +79,9 @@ After installation you can use the command `pytwitch`
 # Use rofi menu by default
 (.venv) $ pytwitch
 
+# Using path to .env file
+(.venv) $ pytwitch -c ./.env
+
 # You can use it with dmenu or rofi
 (.venv) $ pytwitch -m dmenu
 

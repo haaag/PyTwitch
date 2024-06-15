@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 import logging
+import shlex
 import shutil
 import subprocess
 import typing
 
-from twitch import helpers
 from twitch._exceptions import ExecutableNotFoundError
 
 log = logging.getLogger(__name__)
@@ -30,10 +30,12 @@ class Player:
             raise ExecutableNotFoundError(err_msg)
         return bin
 
-    def add_options(self, args: str) -> None:
+    def add_options(self, args: str | None) -> None:
+        if not args:
+            return
         log.debug('adding player args: %s', args)
-        args_split = helpers.secure_split(args)
-        self.options.extend(args_split)
+        split = shlex.split(args)
+        self.options.extend(split)
 
     def args(self, url: str) -> list[str]:
         args = [self.bin, url]

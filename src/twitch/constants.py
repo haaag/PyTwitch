@@ -14,17 +14,17 @@ HELP += textwrap.dedent(
     """
 
 options:
-    -m, --menu      select menu [rofi|dmenu] (default: rofi)
-    -p, --player    select player [mpv|streamlink] (default: mpv)
-    --player-args   pass arguments to player
-    -c, --config    path to env file
-    -C, --channel   search by channel query
-    -G, --games     search by game or category
-    -v, --verbose   verbose mode
-    -h, --help      show this help
+    -m, --menu          select menu [rofi|dmenu] (default: rofi)
+    -p, --player        select player [mpv|streamlink] (default: mpv)
+    -a, --player-args   pass arguments to player
+    -c, --config        path to env file
+    -C, --channel       search by channel query
+    -G, --games         search by game or category
+    -v, --verbose       verbose mode
+    -h, --help          show this help
 
 menu options:
-    --no-markup     disable pango markup (rofi)
+    --no-markup         disable pango markup (rofi)
     """
 )
 

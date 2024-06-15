@@ -28,8 +28,8 @@ def main() -> int:
 
         if args.test:
             setup.test()
-        # if args.help:
-        #     return setup.help()
+        if args.help:
+            return setup.help()
         if args.channel:
             twitch.show_channels_by_query()
         elif args.games:

@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from dotenv import load_dotenv
 from pyselector import Menu
 from twitch import constants
+from twitch._exceptions import EnvValidationError
 from twitch.api import Credentials
 from twitch.api import TwitchApi
 from twitch.app import Keys
@@ -58,11 +59,11 @@ def args() -> argparse.Namespace:
     # options
     parser.add_argument('-m', '--menu', choices=['rofi', 'dmenu'], default='rofi')
     parser.add_argument('-p', '--player', default='mpv', choices=['streamlink', 'mpv'])
-    parser.add_argument('--player-args')
+    parser.add_argument('-a', '--player-args', type=str)
     parser.add_argument('-t', '--test', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true')
-    parser.add_argument('-c', '--config')
-    # parser.add_argument('-h', '--help', action='store_true')
+    parser.add_argument('-c', '--config', type=str)
+    parser.add_argument('-h', '--help', action='store_true')
 
     args = parser.parse_args()
     if args.menu in ['fzf', 'dmenu']:
@@ -177,7 +178,9 @@ def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
     credentials = load_credentials(args.config)
     api = TwitchApi(credentials)
     client = TwitchClient(api, args.no_markup)
-    return TwitchApp(client=client, menu=menu, player=FactoryPlayer.create(args.player))
+    player = FactoryPlayer.create(args.player)
+    player.add_options(args.player_args)
+    return TwitchApp(client=client, menu=menu, player=player)
 
 
 def help() -> int:  # noqa: A001
@@ -190,15 +193,15 @@ def envs(path: str | None = None) -> None:
     if not path:
         return
 
-    p = Path().absolute() / Path(path)
-    if not p.exists():
-        err = f'{p=!s} not found'
+    fullpath = Path().absolute() / Path(path)
+    if not fullpath.exists():
+        err = f'{fullpath=!s} not found'
         log.error(err)
-        raise FileNotFoundError(err)
-    if not p.is_file():
-        err = f'{p=!s} is not a file'
+        raise EnvValidationError(err)
+    if not fullpath.is_file():
+        err = f'{fullpath=!s} is not a file'
         log.error(err)
-        raise ValueError(err)
+        raise EnvValidationError(err)
 
-    log.debug(f'loading envs from {p=!s}')
-    load_dotenv(dotenv_path=p.as_posix())
+    log.debug(f'loading envs from {fullpath=!s}')
+    load_dotenv(dotenv_path=fullpath.as_posix())
