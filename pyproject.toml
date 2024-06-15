@@ -11,7 +11,12 @@ license = { file = "LICENSE.txt" }
 authors = [{ name = "haaag", email = "git.haaag@gmail.com" }]
 requires-python = ">=3.8"
 dynamic = ["version"]
-dependencies = ["pyselector==0.0.25", "httpx==0.23.3", "python-dotenv"]
+dependencies = [
+  "pyselector==0.0.25",
+  "httpx==0.23.3",
+  "python-dotenv",
+  "xlib==0.21",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/twitch"]
@@ -42,7 +47,6 @@ exclude = "removed"
 [tool.ruff]
 fix = false
 line-length = 120
-# output-format = "full"
 show-fixes = true
 target-version = "py37"
 exclude = [".venv", ".mypy_cache", ".pytest_cache"]
@@ -73,7 +77,7 @@ select = [
   "PLE",
   "PLR",
   "PLW",
-  "Q",
+  # "Q",
   "RUF",
   "S",
   "T",
@@ -95,7 +99,7 @@ extend-select = [
   "PGH", # (pygrep-hooks)
   "PIE", # (flake8-pie)
   "PTH", # (flake8-use-pathlib)
-  "Q",   # (flake8-quotes)
+  # "Q",   # (flake8-quotes)
   "RET", # (flake8-return)
   "RSE", # (flake8-raise)
   "RUF", # (ruff-specific-rules)
@@ -106,7 +110,7 @@ extend-select = [
   "TID", # (flake8-tidy-imports)
   "YTT", # (flake8-2020)
 ]
-ignore = ["Q000", "Q003", "FBT001", "FBT002", "ARG002"]
+ignore = ["Q000", "Q003", "FBT001", "FBT002", "ARG002", "FBT003"]
 
 [tool.ruff.lint.isort]
 force-single-line = true
@@ -116,6 +120,8 @@ required-imports = ["from __future__ import annotations"]
 [tool.ruff.lint.per-file-ignores]
 "src/twitch/player.py" = ["S603", "A001"]
 "src/twitch/__about__.py" = ["I002"]
+"src/twitch/setup.py" = ["T201"]
+"src/twitch/app.py" = ["FBT003"]
 "tests/**/*" = [
   "S101",   # use of `assert` detected
   "ARG002", # unused-method-argument
