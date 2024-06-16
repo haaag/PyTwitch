@@ -59,6 +59,9 @@ class Credentials:
     def to_dict(self) -> dict[str, str]:
         return self.__dict__
 
+    def validate(self) -> None:
+        return _validate_credentials(self.to_dict())
+
 
 class API:
     base_url: URL
@@ -67,12 +70,6 @@ class API:
     def __init__(self, credentials: Credentials) -> None:
         self.credentials = credentials
         self.base_url = TWITCH_API_BASE_URL
-
-        self.validate_credentials()
-        self.load_client()
-
-    def validate_credentials(self) -> None:
-        return _validate_credentials(self.credentials.to_dict())
 
     def load_client(self) -> None:
         self.client = httpx.Client(headers=self._get_request_headers())
@@ -84,6 +81,19 @@ class API:
             'Authorization': f'Bearer {self.credentials.access_token}',
         }
 
+    def _set_query_params(self, query_params: QueryParamTypes, requested_items: int) -> QueryParamTypes:
+        query_params['first'] = min(MAX_ITEMS_PER_REQUEST, requested_items)
+        log.debug('params: %s', query_params)
+        return query_params
+
+    def send_request(self, url: URL, query_params: QueryParamTypes, timeout: int) -> httpx.Response:
+        response = self.client.get(url, params=query_params, timeout=timeout)
+        response.raise_for_status()
+        return response
+
+    def _has_pagination(self, data: TwitchApiResponse) -> bool:
+        return data.get('pagination', {}).get('cursor') is not None
+
     def request_get(
         self,
         endpoint_url: URL,
@@ -92,26 +102,27 @@ class API:
         accumulated_items: int = 0,
     ) -> TwitchApiResponse:
         url = self.base_url.join(endpoint_url)
-
-        query_params['first'] = min(MAX_ITEMS_PER_REQUEST, requested_items)
-        log.debug('params: %s', query_params)
-        response = self.client.get(url, params=query_params, timeout=5)
-        response.raise_for_status()
+        query_params = self._set_query_params(query_params, requested_items)
+        response = self.send_request(url, query_params, timeout=5)
         data = response.json()
         accumulated_items += len(data['data'])
 
-        if data.get('pagination') and requested_items > accumulated_items:
-            query_params['after'] = data['pagination']['cursor']
+        if not self._has_pagination(data):
+            return data
+
+        if requested_items >= accumulated_items:
+            next_cursor = data['pagination']['cursor']
             remaining_items = requested_items - accumulated_items
-            if remaining_items > 0:
-                query_params['first'] = min(MAX_ITEMS_PER_REQUEST, remaining_items)
-                more_data = self.request_get(
-                    endpoint_url,
-                    query_params,
-                    requested_items=requested_items,
-                    accumulated_items=accumulated_items,
-                )
-                data['data'] += more_data['data'][:remaining_items]
+
+            query_params['after'] = next_cursor
+            query_params['first'] = min(MAX_ITEMS_PER_REQUEST, remaining_items)
+            more_data = self.request_get(
+                endpoint_url=endpoint_url,
+                query_params=query_params,
+                requested_items=requested_items,
+                accumulated_items=accumulated_items,
+            )
+            data['data'] += more_data['data'][:remaining_items]
         return data
 
 
@@ -132,7 +143,7 @@ class Content:
             'started_at': started_at,
             'ended_at': ended_at,
         }
-        response = self.api.request_get(endpoint, params, requested_items=MAX_ITEMS_PER_REQUEST)
+        response = self.api.request_get(endpoint, params)
         data = response['data']
         log.info("clips_len='%s'", len(data))
         return data
@@ -156,7 +167,7 @@ class Content:
             'period': 'week',
             'type': 'archive',
         }
-        response = self.api.request_get(endpoint, params, requested_items=100)
+        response = self.api.request_get(endpoint, params, requested_items=200)
         data = response['data']
         log.info("videos_len='%s'", len(data))
         return data
@@ -171,10 +182,7 @@ class Content:
     def search_channels(self, query: str, live_only: bool = True) -> dict[str, Any]:
         # https://dev.twitch.tv/docs/api/reference/#search-channels
         endpoint = URL('search/channels')
-        params = {
-            'query': query,
-            'live_only': live_only,
-        }
+        params = {'query': query, 'live_only': live_only}
         response = self.api.request_get(endpoint, params)
         return response['data']
 
@@ -205,18 +213,20 @@ class Channels:
             TwitchStreams: A list of live streams.
         """
         # https://dev.twitch.tv/docs/api/reference#get-followed-streams
-        log.debug('getting a list of live streams')
+        max_followed_streams = 500
+        log.debug(f'getting a list of live streams, max={max_followed_streams}')
         endpoint = URL('streams/followed')
         params = {'user_id': self.api.credentials.user_id}
-        response = self.api.request_get(endpoint, params)
+        response = self.api.request_get(endpoint, params, requested_items=max_followed_streams)
         return response['data']
 
     def get_channels(self) -> list[dict[str, Any]]:
         # https://dev.twitch.tv/docs/api/reference/#get-followed-channels
-        log.debug('getting list that user follows')
+        max_followed_channels = 500
+        log.debug(f'getting list that user follows, max={max_followed_channels}')
         endpoint = URL('channels/followed')
         params = {'user_id': self.api.credentials.user_id}
-        response = self.api.request_get(endpoint, params)
+        response = self.api.request_get(endpoint, params, requested_items=max_followed_channels)
         return response['data']
 
     def get_channel_info(self, user_id: str) -> list[dict[str, Any]]:

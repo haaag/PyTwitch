@@ -177,7 +177,9 @@ def load_credentials(file: str) -> Credentials:
 
 def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
     credentials = load_credentials(args.config)
+    credentials.validate()
     api = TwitchApi(credentials)
+    api.load_client()
     client = TwitchClient(api, args.no_markup)
     player = FactoryPlayer.create(args.player)
     player.add_options(args.player_args)

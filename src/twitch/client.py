@@ -127,18 +127,10 @@ class TwitchClient:
 
     def get_channel_videos(self, user_id: str) -> Iterable[FollowedContentVideo]:
         data = self.api.content.get_videos(user_id=user_id)
-        if not data:
-            # FIX: Handle request when there is no data.
-            logger.critical('need to find a way to handle request returns 0 data')
-            raise NotImplementedError
         return (FollowedContentVideo(**video, markup=self.markup) for video in data)
 
     def get_channel_clips(self, user_id: str) -> Iterable[FollowedContentClip]:
         data = self.api.content.get_clips(user_id=user_id)
-        if not data:
-            # FIX: Handle request when there is no data.
-            logger.critical('need to find a way to handle request returns 0 data')
-            raise NotImplementedError
         return (FollowedContentClip(**clip, markup=self.markup) for clip in data)
 
     def get_streams_by_game_id(self, game_id: str) -> Iterable[FollowedStream]:

@@ -12,4 +12,10 @@ class ExecutableNotFoundError(Exception):
 
 
 CONNECTION_EXCEPTION = (httpx.ConnectError, httpx.HTTPStatusError)
-EXCEPTIONS = (ExecutableNotFoundError, EnvValidationError, FileNotFoundError, ValueError)
+EXCEPTIONS = (
+    ExecutableNotFoundError,
+    EnvValidationError,
+    FileNotFoundError,
+    ValueError,
+    NotImplementedError,
+)

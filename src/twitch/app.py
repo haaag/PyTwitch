@@ -92,7 +92,7 @@ class TwitchApp:
         self.show_and_play(category.channels)
 
     def show_keybinds(self, **kwargs) -> None:
-        item: TwitchChannel = kwargs.get('item')
+        item: TwitchChannel = kwargs.pop('item')
         key: Keybind = kwargs.pop('keybind')
         key.toggle_hidden()
         items: dict[str, str] = {}
@@ -107,14 +107,14 @@ class TwitchApp:
                 self.quit(keycode=keycode)
             if keycode != 0:
                 keybind = self.get_key_by_code(keycode)
-            keybind.callback(**kwargs)
+            keybind.callback(**kwargs, keybind=keybind, item=item)
 
     def show_and_play(self, items: Mapping[str, TwitchPlayableContent], mesg: str = '') -> None:
         item, keycode = self.select_from_items(items=items, mesg=mesg)
         if keycode == UserCancelSelection(1):
             self.quit(keycode=keycode)
         if keycode != UserConfirmsSelection(0):
-            self.get_key_by_code(keycode).callback(items=items)
+            self.get_key_by_code(keycode).callback(items=items, item=item)
         self.play(item)
 
     def show_channels_by_query(self, **kwargs) -> None:
