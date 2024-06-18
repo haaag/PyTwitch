@@ -8,8 +8,9 @@ from twitch import setup
 from twitch._exceptions import CONNECTION_EXCEPTION
 from twitch._exceptions import EXCEPTIONS
 
-# TODO:
-# Read https://dev.twitch.tv/docs/api/reference/#get-games
+# TODO)):
+# - [ ] Read https://dev.twitch.tv/docs/api/reference/#get-games
+# - [ ] https://github.com/jaseg/python-mpv
 
 
 def main() -> int:
@@ -20,6 +21,9 @@ def main() -> int:
     if args.verbose:
         log.info('arguments: %s', vars(args))
 
+    if args.help:
+        return setup.help()
+
     menu = setup.menu(args)
 
     try:
@@ -28,8 +32,6 @@ def main() -> int:
 
         if args.test:
             setup.test()
-        if args.help:
-            return setup.help()
         if args.channel:
             twitch.show_channels_by_query()
         elif args.games:
