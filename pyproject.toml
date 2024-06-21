@@ -12,10 +12,11 @@ authors = [{ name = "haaag", email = "git.haaag@gmail.com" }]
 requires-python = ">=3.8"
 dynamic = ["version"]
 dependencies = [
-  "pyselector==0.0.25",
+  "pyselector==0.0.26",
   "httpx==0.23.3",
   "python-dotenv",
   "xlib==0.21",
+  "mpv==1.0.7",
 ]
 
 [tool.hatch.build.targets.wheel]

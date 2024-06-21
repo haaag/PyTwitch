@@ -12,13 +12,13 @@ from typing import TYPE_CHECKING
 from dotenv import load_dotenv
 from pyselector import Menu
 from twitch import constants
+from twitch import player
 from twitch._exceptions import EnvValidationError
 from twitch.api import Credentials
 from twitch.api import TwitchApi
 from twitch.app import Keys
 from twitch.app import TwitchApp
 from twitch.client import TwitchClient
-from twitch.player import FactoryPlayer
 
 if TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
@@ -181,9 +181,7 @@ def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
     api = TwitchApi(credentials)
     api.load_client()
     client = TwitchClient(api, args.no_markup)
-    player = FactoryPlayer.create(args.player)
-    player.add_options(args.player_args)
-    return TwitchApp(client=client, menu=menu, player=player)
+    return TwitchApp(client=client, menu=menu, player=player.get_player())
 
 
 def help() -> int:  # noqa: A001
@@ -195,7 +193,6 @@ def read_env_file(path: str | None = None) -> None:
     """Load envs if path"""
     if not path:
         return
-
     fullpath = Path().absolute() / Path(path)
     if not fullpath.exists():
         err = f'{fullpath=!s} not found'

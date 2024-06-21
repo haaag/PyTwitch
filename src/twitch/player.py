@@ -2,12 +2,9 @@
 from __future__ import annotations
 
 import logging
-import shlex
-import shutil
-import subprocess
 import typing
 
-from twitch._exceptions import ExecutableNotFoundError
+import mpv
 
 log = logging.getLogger(__name__)
 
@@ -16,76 +13,26 @@ class TwitchPlayableContent(typing.Protocol):
     url: str
 
 
-class Player:
-    def __init__(self, name: str = 'player') -> None:
-        self.name = name
-        self.options: list[str] = []
-
-    @property
-    def bin(self) -> str:
-        bin = shutil.which(self.name)
-        if not bin:
-            err_msg = f'player={self.name!r} not found'
-            log.error(err_msg)
-            raise ExecutableNotFoundError(err_msg)
-        return bin
-
-    def add_options(self, args: str | None) -> None:
-        if not args:
-            return
-        log.debug('adding player args: %s', args)
-        split = shlex.split(args)
-        self.options.extend(split)
-
-    def args(self, url: str) -> list[str]:
-        args = [self.bin, url]
-        args.extend(self.options)
-        return args
-
-    def play(self, item: TwitchPlayableContent) -> subprocess.Popen:
-        args = self.args(item.url)
-        log.info('executing: %s', args)
-        return subprocess.Popen(args, stderr=subprocess.DEVNULL)
+def mpv_logger(*args) -> None:
+    message = args[2]
+    log.error(message.rstrip('\n'))
 
 
-class StreamLink(Player):
-    def __init__(self, name: str = 'streamlink') -> None:
-        self.name = name
-        self.player = '--player=mpv'
-        self.quality = 'best'
-        super().__init__(self.name)
+def get_player() -> mpv.MPV:
+    p = mpv.MPV(
+        log_handler=mpv_logger,
+        input_default_bindings=True,
+        input_vo_keyboard=True,
+        osc=True,
+        ytdl=True,
+    )
+    p.set_loglevel('error')
+    p.fullscreen = False
+    p.loop_playlist = 'inf'
+    p['vo'] = 'gpu'
 
-    def args(self, url: str) -> list[str]:
-        args = [self.bin]
-        args.extend([self.player, url, self.quality])
-        args.extend(self.options)
-        return args
+    @p.on_key_press('q')
+    def my_q_binding():
+        p.quit(0)
 
-
-class Mpv(Player):
-    def __init__(self, name: str = 'mpv') -> None:
-        self.name = name
-        super().__init__()
-
-
-PLAYERS: dict[str, Player] = {}
-
-
-class FactoryPlayer:
-    @staticmethod
-    def create(name: str) -> Player:
-        return PLAYERS.get(name, Player(name))
-
-    @staticmethod
-    def register(player: Player) -> None:
-        PLAYERS[player.name] = player
-
-
-FactoryPlayer.register(Mpv())
-FactoryPlayer.register(StreamLink())
-
-
-# TODO:
-# streamlink --record path/to/file.ts example.com/stream best
-# streamlink --player mpv --player-args '--no-border --no-keepaspect-window' twitch.tv/CHANNEL 1080p60
-# streamlink --twitch-low-latency -p mpv -a '--cache=yes --demuxer-max-back-bytes=2G' twitch.tv/CHANNEL best
+    return p

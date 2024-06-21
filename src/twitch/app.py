@@ -18,6 +18,7 @@ from twitch.constants import UserCancelSelection
 from twitch.constants import UserConfirmsSelection
 
 if typing.TYPE_CHECKING:
+    import mpv
     from pyselector.interfaces import MenuInterface
     from pyselector.key_manager import Keybind
     from twitch.client import TwitchClient
@@ -27,7 +28,6 @@ if typing.TYPE_CHECKING:
     from twitch.datatypes import TwitchContent
     from twitch.follows import FollowedChannelInfo
     from twitch.follows import FollowedStream
-    from twitch.player import Player
     from twitch.player import TwitchPlayableContent
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,12 @@ class Keys(NamedTuple):
 
 
 class TwitchApp:
-    def __init__(self, client: TwitchClient, menu: MenuInterface, player: Player):
+    def __init__(
+        self,
+        client: TwitchClient,
+        menu: MenuInterface,
+        player: mpv.Mpv,
+    ):
         self.client = client
         self.menu = menu
         self.player = player
@@ -64,7 +69,7 @@ class TwitchApp:
             return self.show_channel_videos(item=item)
 
         if keycode == UserConfirmsSelection(0):
-            returncode = self.play(item)
+            returncode = self.play(item.url)
             self.quit(keycode=returncode)
 
         keybind = self.get_key_by_code(keycode)
@@ -256,10 +261,12 @@ class TwitchApp:
         self.menu.keybind.toggle_all()
         return user_input
 
-    def play(self, follow) -> int:
-        logger.warning(f'playing content {follow.url=}')
-        process = self.player.play(follow)
-        return process.returncode
+    def play(self, url: str) -> int:
+        logger.warning(f'playing content {url}')
+        self.player.play(url)
+        self.player.wait_for_playback()
+        del self.player
+        return 0
 
     def chat(self, **kwargs) -> None:
         item = kwargs.pop('item')
