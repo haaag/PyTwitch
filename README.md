@@ -18,18 +18,15 @@ streaming.
 
 ### 📼 Video
 
-
 https://github.com/haaag/PyTwitch/assets/81921095/325941d3-adfd-426d-99ed-fb3f40bf91ad
-
-
 
 ### ⚡️ Requirements
 
 - Player:
-  - ▪️[mpv](https://mpv.io/)
+  - 🔹[mpv](https://mpv.io/) _(default)_
 - Launcher:
   - [dmenu](https://tools.suckless.org/dmenu/)
-  - ▪️[Rofi](https://github.com/davatorium/rofi)
+  - 🔹[Rofi](https://github.com/davatorium/rofi) _(default)_
   - [fzf](https://github.com/junegunn/fzf) _(WIP)_
 
 ### ➕ Dependencies

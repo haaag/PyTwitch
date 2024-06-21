@@ -28,9 +28,6 @@ def get_player() -> mpv.MPV:
         ytdl=True,
     )
     p.set_loglevel('error')
-    p.fullscreen = False
-    p.loop_playlist = 'inf'
-    p['vo'] = 'gpu'
 
     @p.on_key_press('q')
     def my_q_binding():
