@@ -58,8 +58,8 @@ def args() -> argparse.Namespace:
 
     # options
     parser.add_argument('-m', '--menu', choices=['rofi', 'dmenu'], default='rofi')
-    parser.add_argument('-p', '--player', default='mpv', choices=['streamlink', 'mpv'])
-    parser.add_argument('-a', '--player-args', type=str)
+    # parser.add_argument('-p', '--player', default='mpv', choices=['mpv'])
+    # parser.add_argument('-a', '--player-args', type=str)
     parser.add_argument('-t', '--test', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-c', '--config', type=str)

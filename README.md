@@ -85,9 +85,6 @@ After installation you can use the command `pytwitch`
 # Using path to env file
 (.venv) $ pytwitch -c ./.env
 
-# Add args to player (default mpv)
-(.venv) $ pytwitch --player --player-args='--no-resume-playback'
-
 # Help
 (.venv) $ pytwitch --help
 ```
