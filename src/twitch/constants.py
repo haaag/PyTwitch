@@ -18,7 +18,7 @@ options:
     -c, --config        path to env file
     -C, --channel       search by channel query
     -G, --games         search by game or category
-    -v, --verbose       verbose mode
+    -v, --verbose       increase verbosity level (use -v, -vv, or -vvv)
     -h, --help          show this help
 
 menu options:

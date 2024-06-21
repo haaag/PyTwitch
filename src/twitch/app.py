@@ -262,7 +262,7 @@ class TwitchApp:
         return user_input
 
     def play(self, url: str) -> int:
-        logger.warning(f'playing content {url}')
+        logger.info(f'playing content {url}')
         self.player.play(url)
         self.player.wait_for_playback()
         del self.player

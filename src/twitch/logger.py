@@ -36,8 +36,7 @@ handler = logging.StreamHandler()
 handler.setFormatter(CustomFormatter())
 
 
-def verbose(verbose: bool = False) -> None:
-    logging.basicConfig(
-        level=logging.DEBUG if verbose else logging.ERROR,
-        handlers=[handler],
-    )
+def verbose(verbose: int) -> None:
+    levels = [logging.WARNING, logging.INFO, logging.DEBUG]
+    level = levels[min(verbose, len(levels) - 1)]
+    logging.basicConfig(level=level, handlers=[handler])

@@ -15,6 +15,7 @@ from twitch.follows import FollowedChannel
 from twitch.follows import FollowedChannelInfo
 from twitch.follows import FollowedStream
 from twitch.follows import Game
+from twitch.helpers import logme
 from twitch.helpers import timeit
 
 if TYPE_CHECKING:
@@ -37,13 +38,12 @@ def group_channels_by_game(
     return output
 
 
-@timeit
+@logme('merging channels and streams')
 def merge_data(
     channels: dict[str, FollowedChannelInfo],
     streams: dict[str, FollowedStream],
 ) -> dict[str, FollowedChannelInfo | FollowedStream]:
     """Merge followed channels with the list of currently live channels."""
-    logger.info("merging channels and streams from 'get_channels_and_streams'")
     online = {}
     for live in streams.values():
         channels.pop(live.name, None)
@@ -91,13 +91,14 @@ class TwitchClient:
         return self._channels_and_streams
 
     def get_streams(self) -> Iterable[FollowedStream]:
-        logger.info("getting streams from 'get_streams'")
         streams = self.api.channels.get_streams()
+        logger.info(f'{self.get_streams.__name__}: got {len(streams)} streams online')
         return (FollowedStream(**stream, markup=self.markup) for stream in streams)
 
+    @logme("getting all user's channels")
     def get_channels(self) -> Iterable[FollowedChannel]:
-        logger.info("getting all channels from 'get_channels'")
         channels = self.api.channels.get_channels()
+        logger.info(f'{self.get_channels.__name__}: got {len(channels)} channels')
         return (FollowedChannel(**channel, markup=self.markup) for channel in channels)
 
     def get_channel_info(self, channel_id: str) -> FollowedChannelInfo:
@@ -120,8 +121,8 @@ class TwitchClient:
         channels_id = [channel.user_id for channel in self.get_channels()]
         return self.get_channels_info(channels_id)
 
+    @logme("getting channels by category")
     def channels_categorized(self) -> Iterable[Category]:
-        logger.info("getting channels by category from 'channels_categorized'")
         channels_by_game = group_channels_by_game(self.channels_and_streams)
         return (Category(name=k, channels=channels_by_game[k], markup=self.markup) for k in channels_by_game)
 
