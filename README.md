@@ -12,7 +12,7 @@
 
 ### ⭐ About
 
-A user-friendly tool for easily accessing and watching live streams, videos, and
+A user-friendly tool for accessing and watching live streams, videos, and
 clips from Twitch, it presents a menu interface for seamless browsing and
 streaming.
 
@@ -91,6 +91,20 @@ After installation you can use the command `pytwitch`
 # Help
 (.venv) $ pytwitch --help
 ```
+
+### ⌨️ Keybinds
+
+| Keybind       | Usage                       |
+| ------------- | --------------------------- |
+| **alt-k**     | list keybinds               |
+| **alt-s**     | search by category or game  |
+| **alt-v**     | list channel's videos       |
+| **alt-t**     | filter by category or game  |
+| **alt-c**     | search by channel           |
+| **alt-o**     | open stream chat in browser |
+| **alt-i**     | show item information       |
+| **alt-q**     | quit                        |
+| ~~**alt-m**~~ | ~~multi-select streams~~    |
 
 ### 🖼️ ~~Gifs~~
 

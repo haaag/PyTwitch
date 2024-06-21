@@ -102,12 +102,12 @@ def keybinds(twitch: TwitchApp) -> TwitchApp:
         callback=twitch.get_item_info,
         hidden=True,
     )
-    twitch.menu.keybind.add(
-        key=keys.multi_selection,
-        description='multiple selection',
-        callback=twitch.multi_selection,
-        hidden=True,
-    )
+    # twitch.menu.keybind.add(
+    #     key=keys.multi_selection,
+    #     description='multiple selection',
+    #     callback=twitch.multi_selection,
+    #     hidden=True,
+    # )
     twitch.menu.keybind.add(
         key=keys.search_by_game,
         description='search games or categories',
