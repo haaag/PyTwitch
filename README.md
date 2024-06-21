@@ -16,6 +16,13 @@ A user-friendly tool for accessing and watching live streams, videos, and
 clips from Twitch, it presents a menu interface for seamless browsing and
 streaming.
 
+### 📼 Video
+
+
+https://github.com/haaag/PyTwitch/assets/81921095/325941d3-adfd-426d-99ed-fb3f40bf91ad
+
+
+
 ### ⚡️ Requirements
 
 - Player:
@@ -103,10 +110,6 @@ After installation you can use the command `pytwitch`
 | **alt-q**     | quit                        |
 | ~~**alt-m**~~ | ~~multi-select streams~~    |
 
-### 🖼️ ~~Gifs~~
-
-![demo](https://github.com/haaag/twitch-menu/raw/main/.github/images/rofi-live.gif)
-
 ### 🔗 References
 
 - [Twitch API](https://dev.twitch.tv/docs/api/)
@@ -119,7 +122,7 @@ After installation you can use the command `pytwitch`
 - [x] Update screenshots
 - [x] Better logging
 - [ ] Finish tests
-- [ ] Update GIFs
+- ~~[ ] Update GIFs~~
 - [ ] Update `argparse` help
 
   - [ ] Display `keybinds`
