@@ -164,7 +164,8 @@ def test(**kwargs) -> None:  # noqa: ARG001
 def load_credentials(file: str) -> Credentials:
     if file:
         read_env_file(file)
-    load_dotenv()
+    else:
+        load_dotenv()
     access_token = os.environ.get('TWITCH_ACCESS_TOKEN')
     cliend_id = os.environ.get('TWITCH_CLIENT_ID')
     user_id = os.environ.get('TWITCH_USER_ID')

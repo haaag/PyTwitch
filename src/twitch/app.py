@@ -253,7 +253,7 @@ class TwitchApp:
             prompt=prompt,
             lines=1,
             width='30%',
-            height='8%',
+            height='14%',
             print_query=True,
             markup=self.client.markup,
         )

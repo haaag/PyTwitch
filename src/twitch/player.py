@@ -20,6 +20,7 @@ def mpv_logger(*args) -> None:
 
 def get_player() -> mpv.MPV:
     p = mpv.MPV(
+        config=True,
         log_handler=mpv_logger,
         input_default_bindings=True,
         input_vo_keyboard=True,
