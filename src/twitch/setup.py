@@ -27,18 +27,18 @@ log = logging.getLogger(__name__)
 
 
 keys = Keys(
-    quit='alt-q',
-    channels='alt-a',
     categories='alt-t',
-    videos='alt-v',
+    channels='alt-a',
     chat='alt-o',
     information='alt-i',
-    # multi_selection='alt-m',
-    show_all='alt-u',
+    quit='alt-q',
     search_by_game='alt-s',
     search_by_query='alt-c',
+    show_all='alt-u',
     show_keys='alt-k',
     top_streams='alt-m',
+    videos='alt-v',
+    # multi_selection='alt-m',
 )
 
 

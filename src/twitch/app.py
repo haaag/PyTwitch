@@ -38,14 +38,14 @@ class Keys(NamedTuple):
     channels: str
     chat: str
     information: str
-    # multi_selection: str
     quit: str
     search_by_game: str
     search_by_query: str
     show_all: str
-    videos: str
     show_keys: str
     top_streams: str
+    videos: str
+    # multi_selection: str
 
 
 class TwitchApp:
@@ -170,7 +170,10 @@ class TwitchApp:
         self.show_and_play({s.id: s for s in streams}, mesg=mesg)
 
     def show_top_streams(self, **kwargs) -> None:
+        key_info = self.menu.keybind.get_keybind_by_bind(self.keys.information)
+        key_info.hidden = False
         self.menu.keybind.unregister_all()
+        self.menu.keybind.register(key_info)
         data = self.client.get_top_streams()
         streams = {s.name: s for s in data}
         mesg = f'> Showing ({len(streams)}) top streams'

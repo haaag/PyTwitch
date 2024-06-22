@@ -18,7 +18,7 @@ def main() -> int:
     log = logging.getLogger(__name__)
 
     if args.verbose:
-        log.info('arguments: %s', vars(args))
+        log.debug('arguments: %s', vars(args))
 
     if args.help:
         return setup.help()
