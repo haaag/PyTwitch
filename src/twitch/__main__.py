@@ -10,7 +10,6 @@ from twitch._exceptions import EXCEPTIONS
 
 # TODO)):
 # - [ ] Read https://dev.twitch.tv/docs/api/reference/#get-games
-# - [ ] https://github.com/jaseg/python-mpv
 
 
 def main() -> int:
@@ -31,7 +30,7 @@ def main() -> int:
         twitch = setup.keybinds(twitch)
 
         if args.test:
-            setup.test()
+            setup.test(t=twitch)
         if args.channel:
             twitch.show_channels_by_query()
         elif args.games:
@@ -40,7 +39,8 @@ def main() -> int:
             twitch.show_all_streams()
         twitch.quit(keycode=0)
     except (*CONNECTION_EXCEPTION, *EXCEPTIONS) as err:
-        menu.prompt(items=[f'{err!r}'], markup=False)
+        menu.keybind.unregister_all()
+        menu.prompt(items=[f'{err!r}'], markup=False, prompt='PyTwitchErr>')
     except KeyboardInterrupt:
         log.info('terminated by user')
     return 0
