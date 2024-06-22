@@ -18,7 +18,7 @@ streaming.
 
 ### 📼 Video
 
-https://github.com/haaag/PyTwitch/assets/81921095/325941d3-adfd-426d-99ed-fb3f40bf91ad
+https://github.com/haaag/PyTwitch/assets/81921095/e8f07a06-d9dd-47e0-a6d4-f9fba455be16
 
 ### ⚡️ Requirements
 
