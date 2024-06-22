@@ -54,10 +54,12 @@ class TwitchApp:
         client: TwitchClient,
         menu: MenuInterface,
         player: mpv.Mpv,
+        keys: Keys,
     ):
         self.client = client
         self.menu = menu
         self.player = player
+        self.keys = keys
 
     def show_all_streams(self, **kwargs) -> None:
         items, mesg = self.get_channels_and_streams()

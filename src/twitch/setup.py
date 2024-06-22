@@ -50,19 +50,18 @@ def args() -> argparse.Namespace:
         add_help=False,
     )
 
-    markup_group = parser.add_argument_group(title='menu options')
-    markup_group.add_argument('--no-markup', action='store_false')
-
-    # experimental
-    parser.add_argument('-C', '--channel', action='store_true')
-    parser.add_argument('-G', '--games', action='store_true')
+    opts_group = parser.add_argument_group(title='options')
+    opts_group.add_argument('--no-markup', action='store_false')
+    opts_group.add_argument('-p', '--no-conf', action='store_false')
 
     # options
     parser.add_argument('-m', '--menu', choices=['rofi', 'dmenu'], default='rofi')
-    parser.add_argument('-t', '--test', action='store_true')
-    parser.add_argument('-v', '--verbose', action='count', default=0)
     parser.add_argument('-c', '--config', type=str)
+    parser.add_argument('-C', '--channel', action='store_true')
+    parser.add_argument('-G', '--games', action='store_true')
+    parser.add_argument('-v', '--verbose', action='count', default=0)
     parser.add_argument('-h', '--help', action='store_true')
+    parser.add_argument('-t', '--test', action='store_true')
 
     args = parser.parse_args()
     if args.menu in ['fzf', 'dmenu']:
@@ -187,7 +186,12 @@ def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
     api = TwitchApi(credentials)
     api.load_client()
     client = TwitchClient(api, args.no_markup)
-    return TwitchApp(client=client, menu=menu, player=player.get_player())
+    return TwitchApp(
+        client=client,
+        menu=menu,
+        player=player.get_player(args.no_conf),
+        keys=keys,
+    )
 
 
 def help() -> int:  # noqa: A001

@@ -18,9 +18,9 @@ def mpv_logger(*args) -> None:
     log.error(message.rstrip('\n'))
 
 
-def get_player() -> mpv.MPV:
+def get_player(config: bool = False) -> mpv.MPV:
     p = mpv.MPV(
-        config=True,
+        config=config,
         log_handler=mpv_logger,
         input_default_bindings=True,
         input_vo_keyboard=True,
@@ -28,7 +28,6 @@ def get_player() -> mpv.MPV:
         ytdl=True,
     )
     p.set_loglevel('error')
-
     @p.on_key_press('q')
     def my_q_binding():
         p.quit(0)

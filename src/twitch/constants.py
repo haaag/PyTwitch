@@ -13,16 +13,17 @@ HELP = DESC
 HELP += textwrap.dedent(
     """
 
-options:
+arguments:
     -m, --menu          select menu [rofi|dmenu] (default: rofi)
     -c, --config        path to env file
     -C, --channel       search by channel query
     -G, --games         search by game or category
-    -v, --verbose       increase verbosity level (use -v, -vv, or -vvv)
+    -v, --verbose       increase verbosity (use -v, -vv, or -vvv)
     -h, --help          show this help
 
-menu options:
+options:
     --no-markup         disable pango markup (rofi)
+    --no-conf           disable `mpv` configuration
     """
 )
 
