@@ -193,6 +193,12 @@ class Content:
         response = self.api.request_get(endpoint, params)
         return response['data']
 
+    def get_top_streams(self) -> dict[str, Any]:
+        # https://dev.twitch.tv/docs/api/reference/#get-streams
+        endpoint = URL('streams')
+        response = self.api.request_get(endpoint, query_params={}, requested_items=100)
+        return response['data']
+
 
 class Channels:
     def __init__(self, api: API) -> None:

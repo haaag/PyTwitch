@@ -121,7 +121,7 @@ class TwitchClient:
         channels_id = [channel.user_id for channel in self.get_channels()]
         return self.get_channels_info(channels_id)
 
-    @logme("getting channels by category")
+    @logme('getting channels by category')
     def channels_categorized(self) -> Iterable[Category]:
         channels_by_game = group_channels_by_game(self.channels_and_streams)
         return (Category(name=k, channels=channels_by_game[k], markup=self.markup) for k in channels_by_game)
@@ -146,3 +146,8 @@ class TwitchClient:
     def get_channels_by_query(self, query: str, live_only: bool = True) -> Iterable[FollowedChannel]:
         data = self.api.content.search_channels(query, live_only=live_only)
         return (Channel(**item, markup=self.markup) for item in data if item['game_name'])
+
+    @logme('getting top streams')
+    def get_top_streams(self) -> Iterable[FollowedStream]:
+        data = self.api.content.get_top_streams()
+        return (FollowedStream(**s, markup=self.markup) for s in data)

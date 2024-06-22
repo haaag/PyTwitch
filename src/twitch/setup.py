@@ -33,11 +33,12 @@ keys = Keys(
     videos='alt-v',
     chat='alt-o',
     information='alt-i',
-    multi_selection='alt-m',
+    # multi_selection='alt-m',
     show_all='alt-u',
     search_by_game='alt-s',
     search_by_query='alt-c',
     show_keys='alt-k',
+    top_streams='alt-m',
 )
 
 
@@ -135,6 +136,12 @@ def keybinds(twitch: TwitchApp) -> TwitchApp:
         description='show available keybinds',
         callback=twitch.show_keybinds,
         hidden=False,
+    )
+    twitch.menu.keybind.add(
+        key=keys.top_streams,
+        description='show top streams',
+        callback=twitch.show_top_streams,
+        hidden=True,
     )
     return twitch
 

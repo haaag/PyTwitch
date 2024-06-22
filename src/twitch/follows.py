@@ -229,6 +229,7 @@ class Game:
     name: str
     box_art_url: str
     markup: bool = True
+    igdb_id: str | None = None
 
     @property
     def name_str(self) -> str:

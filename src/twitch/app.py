@@ -38,13 +38,14 @@ class Keys(NamedTuple):
     channels: str
     chat: str
     information: str
-    multi_selection: str
+    # multi_selection: str
     quit: str
     search_by_game: str
     search_by_query: str
     show_all: str
     videos: str
     show_keys: str
+    top_streams: str
 
 
 class TwitchApp:
@@ -120,7 +121,7 @@ class TwitchApp:
             self.quit(keycode=keycode)
         if keycode != UserConfirmsSelection(0):
             self.get_key_by_code(keycode).callback(items=items, item=item)
-        self.play(item)
+        self.play(item.url)
 
     def show_channels_by_query(self, **kwargs) -> None:
         query = kwargs.get('query')
@@ -165,6 +166,13 @@ class TwitchApp:
 
         mesg = f'> Showing ({len(streams)}) <streams> from <{selected.name}> game'
         self.show_and_play({s.id: s for s in streams}, mesg=mesg)
+
+    def show_top_streams(self, **kwargs) -> None:
+        self.menu.keybind.unregister_all()
+        data = self.client.get_top_streams()
+        streams = {s.name: s for s in data}
+        mesg = f'> Showing ({len(streams)}) top streams'
+        return self.show_and_play(items=streams, mesg=mesg)
 
     def get_channels_and_streams(self, **kwargs) -> tuple[Mapping[str, FollowedChannelInfo | FollowedStream], str]:
         data = self.client.channels_and_streams
