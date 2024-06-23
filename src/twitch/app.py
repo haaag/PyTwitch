@@ -22,12 +22,12 @@ if typing.TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
     from pyselector.key_manager import Keybind
     from twitch.client import TwitchClient
-    from twitch.content import FollowedContentClip
-    from twitch.content import FollowedContentVideo
     from twitch.datatypes import TwitchChannel
     from twitch.datatypes import TwitchContent
-    from twitch.follows import FollowedChannelInfo
-    from twitch.follows import FollowedStream
+    from twitch.models.channels import FollowedChannelInfo
+    from twitch.models.content import FollowedContentClip
+    from twitch.models.content import FollowedContentVideo
+    from twitch.models.streams import FollowedStream
     from twitch.player import TwitchPlayableContent
 
 logger = logging.getLogger(__name__)

@@ -7,16 +7,16 @@ from typing import TYPE_CHECKING
 from typing import Iterable
 
 from twitch import format
-from twitch.content import FollowedContentClip
-from twitch.content import FollowedContentVideo
-from twitch.follows import Category
-from twitch.follows import Channel
-from twitch.follows import FollowedChannel
-from twitch.follows import FollowedChannelInfo
-from twitch.follows import FollowedStream
-from twitch.follows import Game
 from twitch.helpers import logme
 from twitch.helpers import timeit
+from twitch.models.category import Category
+from twitch.models.category import Game
+from twitch.models.channels import Channel
+from twitch.models.channels import FollowedChannel
+from twitch.models.channels import FollowedChannelInfo
+from twitch.models.content import FollowedContentClip
+from twitch.models.content import FollowedContentVideo
+from twitch.models.streams import FollowedStream
 
 if TYPE_CHECKING:
     from twitch.api import TwitchApi

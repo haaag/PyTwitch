@@ -7,11 +7,11 @@ from typing import Mapping
 from typing import MutableMapping
 from typing import Union
 
-from twitch.content import FollowedContentClip
-from twitch.content import FollowedContentVideo
-from twitch.follows import FollowedChannel
-from twitch.follows import FollowedChannelInfo
-from twitch.follows import FollowedStream
+from twitch.models.channels import FollowedChannel
+from twitch.models.channels import FollowedChannelInfo
+from twitch.models.content import FollowedContentClip
+from twitch.models.content import FollowedContentVideo
+from twitch.models.streams import FollowedStream
 
 QueryParamTypes = MutableMapping[str, Any]
 
