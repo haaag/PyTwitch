@@ -1,7 +1,6 @@
 # format.py
 from __future__ import annotations
 
-import re
 import string
 from datetime import datetime
 from datetime import timezone
@@ -37,30 +36,14 @@ def dhms_from_seconds(seconds: int) -> str:
 
 
 def calculate_live_time(dt: str) -> str:
-    """
-    Calculates the live time of a Twitch channel.
-    """
+    """Calculates the live time of a Twitch channel."""
     started_at = datetime.fromisoformat(dt).replace(tzinfo=timezone.utc)
     live_since = dhms_from_seconds(date_diff_in_seconds(datetime.now(timezone.utc), started_at))
     return f'{live_since} ago'
 
 
-def remove_emojis(string: str) -> str:
-    emoji_pattern = re.compile(
-        '['
-        '\U0001F600-\U0001F64F'  # emoticons
-        '\U0001F300-\U0001F5FF'  # symbols & pictographs
-        '\U0001F680-\U0001F6FF'  # transport & map symbols
-        '\U0001F1E0-\U0001F1FF'  # flags (iOS)
-        '\U00002702-\U000027B0'
-        '\U000024C2-\U0001F251'
-        ']+',
-        flags=re.UNICODE,
-    )
-    return emoji_pattern.sub(r'', string)
-
-
 def sanitize(s: str) -> str:
+    """Sanitize the given string."""
     for char in '<>#%^*()_+':
         s = s.replace(char, '')
     return s.replace('&', '&amp;')

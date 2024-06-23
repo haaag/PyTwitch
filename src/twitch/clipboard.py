@@ -31,7 +31,6 @@ def get_clipboard() -> Clipboard:
             logger.info(f'clipboard command: {clipboard!r}')
             return clipboard
     err_msg = 'No suitable clipboard command found.'
-    logger.error(err_msg)
     raise FileNotFoundError(err_msg)
 
 

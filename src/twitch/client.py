@@ -97,24 +97,16 @@ class TwitchClient:
 
     @logme("getting all user's channels")
     def get_channels(self) -> Iterable[FollowedChannel]:
-        channels = self.api.channels.get_channels()
+        channels = self.api.channels.get_all()
         logger.info(f'{self.get_channels.__name__}: got {len(channels)} channels')
         return (FollowedChannel(**channel, markup=self.markup) for channel in channels)
 
     def get_channel_info(self, channel_id: str) -> FollowedChannelInfo:
-        data = self.api.channels.get_channel_info(user_id=channel_id)
-        if not data:
-            err_msg = f'{channel_id=} not found'
-            logger.error(err_msg)
-            raise ValueError(err_msg)
+        data = self.api.channels.get_info(user_id=channel_id)
         return FollowedChannelInfo(**data[0], markup=self.markup)
 
     def get_channels_info(self, channels_id: list[str]) -> Iterable[FollowedChannelInfo]:
-        data = self.api.channels.get_channels_info(broadcaster_ids=channels_id)
-        if not data:
-            err_msg = f'{channels_id=} not found'
-            logger.error(err_msg)
-            raise ValueError(err_msg)
+        data = self.api.channels.get_info_by_list(broadcaster_ids=channels_id)
         return (FollowedChannelInfo(**broadcaster, markup=self.markup) for broadcaster in data)
 
     def get_channels_with_info(self) -> Iterable[FollowedChannelInfo]:

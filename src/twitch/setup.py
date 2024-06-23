@@ -91,7 +91,7 @@ def keybinds(twitch: TwitchApp) -> TwitchApp:
     twitch.menu.keybind.add(
         key=keys.chat,
         description='launch chat',
-        callback=twitch.chat,
+        callback=twitch.open_chat,
         hidden=True,
     )
     twitch.menu.keybind.add(
@@ -166,10 +166,7 @@ def test(**kwargs) -> None:  # noqa: ARG001
 
 
 def load_credentials(file: str) -> Credentials:
-    if file:
-        read_env_file(file)
-    else:
-        load_dotenv()
+    load_envs(file)
     access_token = os.environ.get('TWITCH_ACCESS_TOKEN')
     cliend_id = os.environ.get('TWITCH_CLIENT_ID')
     user_id = os.environ.get('TWITCH_USER_ID')
@@ -199,19 +196,21 @@ def help() -> int:  # noqa: A001
     return 0
 
 
-def read_env_file(path: str | None = None) -> None:
+def load_envs(filepath: str | None = None) -> None:
     """Load envs if path"""
-    if not path:
+    if not filepath:
+        log.info('env: no env filepath specified')
+        log.info('env: loading from .env or exported env vars')
+        load_dotenv()
         return
-    fullpath = Path().absolute() / Path(path)
-    if not fullpath.exists():
-        err = f'{fullpath=!s} not found'
-        log.error(err)
+
+    envfilepath = Path().absolute() / Path(filepath)
+    if not envfilepath.exists():
+        err = f'{envfilepath=!s} not found'
         raise EnvValidationError(err)
-    if not fullpath.is_file():
-        err = f'{fullpath=!s} is not a file'
-        log.error(err)
+    if not envfilepath.is_file():
+        err = f'{envfilepath=!s} is not a file'
         raise EnvValidationError(err)
 
-    log.debug(f'loading envs from {fullpath=!s}')
-    load_dotenv(dotenv_path=fullpath.as_posix())
+    log.info(f'env: loading envs from {envfilepath=!s}')
+    load_dotenv(dotenv_path=envfilepath.as_posix())

@@ -9,7 +9,7 @@ from twitch._exceptions import CONNECTION_EXCEPTION
 from twitch._exceptions import EXCEPTIONS
 
 # TODO)):
-# - [ ] Read https://dev.twitch.tv/docs/api/reference/#get-games
+# - [X] ~~Read https://dev.twitch.tv/docs/api/reference/#get-games~~
 
 
 def main() -> int:
@@ -30,7 +30,7 @@ def main() -> int:
         twitch = setup.keybinds(twitch)
 
         if args.test:
-            setup.test(t=twitch)
+            return setup.test(t=twitch)
         if args.channel:
             twitch.show_channels_by_query()
         elif args.games:
@@ -41,6 +41,7 @@ def main() -> int:
     except (*CONNECTION_EXCEPTION, *EXCEPTIONS) as err:
         menu.keybind.unregister_all()
         menu.prompt(items=[f'{err!r}'], markup=False, prompt='PyTwitchErr>')
+        log.error(err)
     except KeyboardInterrupt:
         log.info('terminated by user')
     return 0

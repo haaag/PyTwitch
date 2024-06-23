@@ -46,7 +46,6 @@ def _validate_credentials(credentials: dict[str, str]) -> None:
     for k, v in credentials.items():
         if not v:
             err_msg = f'Missing required environment variable: {k}'
-            log.error(err_msg)
             raise EnvValidationError(err_msg)
 
 
@@ -131,7 +130,7 @@ class Content:
         self.api = api
 
     def get_clips(self, user_id: str) -> list[dict[str, Any]]:
-        # FIXME:
+        # FIX: getting clips
         """Gets one or more video clips that were captured from streams."""
         # https://dev.twitch.tv/docs/api/reference#get-clips
         log.debug("getting user_id='%s' clips", user_id)
@@ -145,7 +144,7 @@ class Content:
         }
         response = self.api.request_get(endpoint, params)
         data = response['data']
-        log.info("clips_len='%s'", len(data))
+        log.debug("clips_len='%s'", len(data))
         return data
 
     def get_videos(self, user_id: str) -> list[dict[str, Any]]:
@@ -167,36 +166,53 @@ class Content:
             'period': 'week',
             'type': 'archive',
         }
-        response = self.api.request_get(endpoint, params, requested_items=200)
+        response = self.api.request_get(endpoint, params, requested_items=75)
         data = response['data']
         log.info("videos_len='%s'", len(data))
         return data
 
     def search_categories(self, query: str) -> dict[str, Any]:
+        """
+        Gets the games or categories that match the specified query.
+        """
         # https://dev.twitch.tv/docs/api/reference/#search-categories
+        log.debug(f"searching for categories with query='{query}'")
         endpoint = URL('search/categories')
         params = {'query': query}
         response = self.api.request_get(endpoint, params)
         return response['data']
 
     def search_channels(self, query: str, live_only: bool = True) -> dict[str, Any]:
+        """
+        Gets the channels that match the specified query and have
+        streamed content within the past 6 months.
+        """
         # https://dev.twitch.tv/docs/api/reference/#search-channels
+        log.debug(f"searching for channels with query='{query}'")
         endpoint = URL('search/channels')
         params = {'query': query, 'live_only': live_only}
         response = self.api.request_get(endpoint, params)
         return response['data']
 
-    def get_streams_by_game_id(self, game_id: int) -> dict[str, Any]:
+    def get_streams_by_game_id(self, game_id: int, max_items: int = DEFAULT_REQUESTED_ITEMS) -> dict[str, Any]:
+        """
+        Gets a list of all streams.
+        """
         # https://dev.twitch.tv/docs/api/reference/#get-streams
+        log.debug(f"getting streams from game_id='{game_id}'")
         endpoint = URL('streams')
         params = {'game_id': game_id}
-        response = self.api.request_get(endpoint, params)
+        response = self.api.request_get(endpoint, params, requested_items=max_items)
         return response['data']
 
     def get_top_streams(self) -> dict[str, Any]:
+        """
+        Gets a list of all streams.
+        """
         # https://dev.twitch.tv/docs/api/reference/#get-streams
         endpoint = URL('streams')
         response = self.api.request_get(endpoint, query_params={}, requested_items=100)
+        log.debug("top_streams_len='%s'", len(response['data']))
         return response['data']
 
 
@@ -226,7 +242,10 @@ class Channels:
         response = self.api.request_get(endpoint, params, requested_items=max_followed_streams)
         return response['data']
 
-    def get_channels(self) -> list[dict[str, Any]]:
+    def get_all(self) -> list[dict[str, Any]]:
+        """
+        Gets a list of broadcasters that the specified user follows.
+        """
         # https://dev.twitch.tv/docs/api/reference/#get-followed-channels
         max_followed_channels = 500
         log.debug(f'getting list that user follows, max={max_followed_channels}')
@@ -235,8 +254,10 @@ class Channels:
         response = self.api.request_get(endpoint, params, requested_items=max_followed_channels)
         return response['data']
 
-    def get_channel_info(self, user_id: str) -> list[dict[str, Any]]:
-        """Fetches information about one channel."""
+    def get_info(self, user_id: str) -> list[dict[str, Any]]:
+        """
+        Fetches information about one channel.
+        """
         # https://dev.twitch.tv/docs/api/reference#get-channel-information
         log.debug('getting information about channel')
         endpoint = URL('channels')
@@ -244,12 +265,9 @@ class Channels:
         response = self.api.request_get(endpoint, params)
         return response['data']
 
-    def get_channels_info(self, broadcaster_ids: list[str]) -> list[dict[str, Any]]:
+    def get_info_by_list(self, broadcaster_ids: list[str]) -> list[dict[str, Any]]:
         """
-        Fetches information about list channels.
-
-        Args:
-            broadcaster_ids (str): The ID of the broadcaster.
+        Gets information about more channels.
         """
         # https://dev.twitch.tv/docs/api/reference#get-channel-information
         data: list[dict[str, Any]] = []

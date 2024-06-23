@@ -49,13 +49,7 @@ class Keys(NamedTuple):
 
 
 class TwitchApp:
-    def __init__(
-        self,
-        client: TwitchClient,
-        menu: MenuInterface,
-        player: mpv.Mpv,
-        keys: Keys,
-    ):
+    def __init__(self, client: TwitchClient, menu: MenuInterface, player: mpv.Mpv, keys: Keys):
         self.client = client
         self.menu = menu
         self.player = player
@@ -85,6 +79,7 @@ class TwitchApp:
         self.show_and_play(items=videos, mesg=mesg)
 
     def show_channel_clips(self, **kwargs) -> None:
+        # FIX: getting clips
         item: TwitchChannel = kwargs.pop('item')
         self.menu.keybind.toggle_all()
         clips, mesg = self.get_channel_clips(item=item)
@@ -170,7 +165,7 @@ class TwitchApp:
         self.show_and_play({s.id: s for s in streams}, mesg=mesg)
 
     def show_top_streams(self, **kwargs) -> None:
-        key_info = self.menu.keybind.get_keybind_by_bind(self.keys.information)
+        key_info = self.get_key_by_bind(self.keys.information)
         key_info.hidden = False
         self.menu.keybind.unregister_all()
         self.menu.keybind.register(key_info)
@@ -238,6 +233,8 @@ class TwitchApp:
         return item, keycode
 
     def multi_selection(self, **kwargs) -> None:
+        # FIX: fix multi-select for rofi or fzf menu
+        # since `python-mpv` new dep.
         self.menu.keybind.toggle_all()
         items = kwargs.get('items', self.client.streams)
         mesg = f"> Showing ({len(items)}) items.\n>> Use 'Shift'+'Enter' for multi-select"
@@ -275,13 +272,14 @@ class TwitchApp:
         return user_input
 
     def play(self, url: str) -> int:
+        # https://github.com/jaseg/python-mpv/issues/126
         logger.info(f'playing content {url}')
         self.player.play(url)
         self.player.wait_for_playback()
         del self.player
         return 0
 
-    def chat(self, **kwargs) -> None:
+    def open_chat(self, **kwargs) -> None:
         item = kwargs.pop('item')
         webbrowser.open_new_tab(item.chat)
         self.quit(keycode=0)

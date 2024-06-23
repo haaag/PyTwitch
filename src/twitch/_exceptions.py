@@ -16,6 +16,5 @@ EXCEPTIONS = (
     ExecutableNotFoundError,
     EnvValidationError,
     FileNotFoundError,
-    ValueError,
     NotImplementedError,
 )
