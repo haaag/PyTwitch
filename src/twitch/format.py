@@ -68,13 +68,16 @@ def sanitize(s: str) -> str:
 
 def number(number: int) -> str:
     """
-    Formats the given integer number as a string with 'K' suffix if >= 1000.
-
-    Returns:
-        str: Formatted number as a string.
+    Formats the given integer number as a string with 'K' or 'M'
+    suffix if >= 1000 or >= 1,000,000 respectively.
     """
-    max_viewers = 1000
-    return f'{number / max_viewers:.1f}K' if number >= max_viewers else str(number)
+    million = 1_000_000
+    thousand = 1000
+    if number >= million:
+        return f'{number / 1_000_000:.1f}M'
+    if number >= thousand:
+        return f'{number / 1000:.1f}K'
+    return str(number)
 
 
 def remove_punctuation_escape_ampersand(s: str) -> str:
