@@ -1,5 +1,5 @@
 httpx==0.23.3
 mpv==1.0.7
-pyselector==0.0.26
+pyselector==0.0.27
 python-dotenv==1.0.0
 xlib==0.21
