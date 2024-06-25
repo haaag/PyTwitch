@@ -29,6 +29,7 @@ class FollowedContentClip:
     video_id: str
     view_count: int
     vod_offset: int | None
+    is_featured: bool = False
     markup: bool = True
     playable: bool = True
 

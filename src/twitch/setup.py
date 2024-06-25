@@ -30,6 +30,7 @@ keys = Keys(
     categories='alt-t',
     channels='alt-a',
     chat='alt-o',
+    clips='alt-C',
     information='alt-i',
     quit='alt-q',
     search_by_game='alt-s',
@@ -86,6 +87,12 @@ def keybinds(twitch: TwitchApp) -> TwitchApp:
         key=keys.videos,
         description='show videos',
         callback=twitch.show_channel_videos,
+        hidden=True,
+    )
+    twitch.menu.keybind.add(
+        key=keys.clips,
+        description='show clips',
+        callback=twitch.show_channel_clips,
         hidden=True,
     )
     twitch.menu.keybind.add(

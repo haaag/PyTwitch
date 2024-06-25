@@ -37,6 +37,7 @@ class Keys(NamedTuple):
     categories: str
     channels: str
     chat: str
+    clips: str
     information: str
     quit: str
     search_by_game: str
