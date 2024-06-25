@@ -5,9 +5,6 @@ from __future__ import annotations
 import logging
 import typing
 from dataclasses import dataclass
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
 from typing import Any
 from typing import Iterator
 
@@ -133,18 +130,15 @@ class Content:
         # FIX: getting clips
         """Gets one or more video clips that were captured from streams."""
         # https://dev.twitch.tv/docs/api/reference#get-clips
-        log.debug("getting user_id='%s' clips", user_id)
-        ended_at = datetime.now(tz=timezone.utc).isoformat() + 'Z'
-        started_at = (datetime.now(tz=timezone.utc) - timedelta(days=7)).isoformat() + 'Z'
         endpoint = URL('clips')
-        params = {
-            'broadcaster_id': user_id,
-            'started_at': started_at,
-            'ended_at': ended_at,
-        }
-        response = self.api.request_get(endpoint, params)
+        params = {'broadcaster_id': user_id}
+        response = self.api.request_get(
+            endpoint,
+            params,
+            requested_items=MAX_ITEMS_PER_REQUEST,
+        )
         data = response['data']
-        log.debug("clips_len='%s'", len(data))
+        log.info("got user_id='%s' clips len='%s'", user_id, len(data))
         return data
 
     def get_videos(self, user_id: str) -> list[dict[str, Any]]:
