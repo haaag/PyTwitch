@@ -215,6 +215,29 @@ class Content:
         log.debug("top_streams_len='%s'", len(response['data']))
         return response['data']
 
+    def get_games_info(self, game_ids: list[str]) -> list[dict[str, Any]]:
+        """
+        Gets information about specified categories or games.
+        """
+        # https://dev.twitch.tv/docs/api/reference/#get-games
+        data: list[dict[str, Any]] = []
+        endpoint = URL('games')
+        for batch in _group_into_batches(game_ids, MAX_ITEMS_PER_REQUEST):
+            response = self.api.request_get(endpoint, {'id': batch})
+            data.extend(response.get('data', []))
+        log.debug("games_info_len='%s'", len(data))
+        return data
+
+    def get_top_games(self) -> dict[str, Any]:
+        """
+        Gets information about all broadcasts on Twitch.
+        """
+        # https://dev.twitch.tv/docs/api/reference/#get-top-games
+        endpoint = URL('games/top')
+        response = self.api.request_get(endpoint, query_params={}, requested_items=35)
+        log.debug("top_games_len='%s'", len(response['data']))
+        return response['data']
+
 
 class Channels:
     def __init__(self, api: API) -> None:
