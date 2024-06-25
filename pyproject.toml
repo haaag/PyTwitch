@@ -15,7 +15,6 @@ dependencies = [
   "pyselector==0.0.27",
   "httpx==0.23.3",
   "python-dotenv",
-  "xlib==0.21",
   "mpv==1.0.7",
 ]
 

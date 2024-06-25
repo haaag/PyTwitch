@@ -34,7 +34,6 @@ https://github.com/haaag/PyTwitch/assets/81921095/e8f07a06-d9dd-47e0-a6d4-f9fba4
 - [httpx](https://www.python-httpx.org/)
 - [python-dotenv](https://pypi.org/project/python-dotenv/)
 - [pyselector](https://pypi.org/project/pyselector/)
-- [xlib](https://pypi.org/project/xlib/)
 - [mpv](https://pypi.org/project/mpv/)
 
 ### 🔒Credentials
