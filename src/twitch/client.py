@@ -38,7 +38,7 @@ def group_channels_by_game(
     return output
 
 
-@logme('merging channels and streams')
+@logme('merging channels offline and streams')
 def merge_data(
     channels: dict[str, FollowedChannelInfo],
     streams: dict[str, FollowedStream],
@@ -137,7 +137,8 @@ class TwitchClient:
 
     def get_channels_by_query(self, query: str, live_only: bool = True) -> Iterable[FollowedChannel]:
         data = self.api.content.search_channels(query, live_only=live_only)
-        return (Channel(**item, markup=self.markup) for item in data if item['game_name'])
+        data_sorted_by_live = sorted(data, key=lambda c: c['is_live'], reverse=True)
+        return (Channel(**item, markup=self.markup) for item in data_sorted_by_live if item['game_name'])
 
     @logme('getting top streams')
     def get_top_streams(self) -> Iterable[FollowedStream]:

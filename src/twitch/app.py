@@ -32,6 +32,9 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# TODO:
+# - [ ] get player inside TwitchApp.play() method
+
 
 class Keys(NamedTuple):
     categories: str
@@ -80,7 +83,6 @@ class TwitchApp:
         self.show_and_play(items=videos, mesg=mesg)
 
     def show_channel_clips(self, **kwargs) -> None:
-        # FIX: getting clips
         item: TwitchChannel = kwargs.pop('item')
         self.menu.keybind.toggle_all()
         clips, mesg = self.get_channel_clips(item=item)
@@ -122,34 +124,31 @@ class TwitchApp:
         self.quit(keycode=self.play(item.url))
 
     def show_channels_by_query(self, **kwargs) -> None:
-        query = kwargs.get('query')
+        self.menu.keybind.toggle_all()
+        query: str | None = kwargs.get('query')
         if not query:
             query = self.get_user_input(mesg='Search <channels> by query', prompt='TwitchChannel>')
 
         if not query:
-            logger.debug('cancelled by user')
+            logger.debug('query search cancelled by user')
             return
 
+        query = query.strip()
         data = self.client.get_channels_by_query(query, live_only=False)
-        item, _ = self.select_from_items({c.id: c for c in data})
-        if not item:
-            return
-
-        if not item.is_live:
-            self.show_channel_videos(item=item)
-            return
-
-        self.play(item)
+        items = {c.id: c for c in data}
+        self.toggle_content_keybinds()
+        mesg = f'> Showing ({len(items)}) <channels> by query: "{query}"'
+        self.show_and_play(items=items, mesg=mesg)
 
     def show_channels_by_game(self, **kwargs) -> None:
         game = kwargs.get('game')
         if not game:
             game = self.get_user_input(mesg='Search <games> or <categories>', prompt='TwitchGame>')
 
-        logger.debug('searching by game: %s', game)
         if not game:
             return
 
+        game = game.strip()
         data = self.client.get_games_by_query(game)
         games = {g.id: g for g in data}
         selected, _ = self.select_from_items(games, mesg=f'> Showing ({len(games)}) <games> or <categories>')
@@ -165,11 +164,20 @@ class TwitchApp:
         mesg = f'> Showing ({len(streams)}) <streams> from <{selected.name}> game'
         self.show_and_play({s.id: s for s in streams}, mesg=mesg)
 
+    def toggle_content_keybinds(self) -> None:
+        key = self.menu.keybind
+        info = self.get_key_by_bind(self.keys.information)
+        videos = self.get_key_by_bind(self.keys.videos)
+        clips = self.get_key_by_bind(self.keys.clips)
+        kquit = self.get_key_by_bind(self.keys.quit)
+        key.unregister_all()
+        key.register(info).toggle_hidden()
+        key.register(videos).toggle_hidden()
+        key.register(clips).toggle_hidden()
+        key.register(kquit)
+
     def show_top_streams(self, **kwargs) -> None:
-        key_info = self.get_key_by_bind(self.keys.information)
-        key_info.hidden = False
-        self.menu.keybind.unregister_all()
-        self.menu.keybind.register(key_info)
+        self.toggle_content_keybinds()
         data = self.client.get_top_streams()
         streams = {s.name: s for s in data}
         mesg = f'> Showing ({len(streams)}) top streams'
@@ -192,7 +200,8 @@ class TwitchApp:
         data = {v.key: v for v in videos}
         return data, f'> Showing ({len(data)}) videos from <{item.name}> channel'
 
-    def get_item_info(self, **kwargs) -> None:
+    def show_item_info(self, **kwargs) -> None:
+        self.menu.keybind.unregister_all()
         item: TwitchContent | TwitchChannel = kwargs['item']
         item_dict = asdict(item)
         formatted_item = format.stringify(item_dict, sep=SEPARATOR)
@@ -253,18 +262,16 @@ class TwitchApp:
             if not item.playable:
                 logger.info(f'{item.name=} is offline.')
                 continue
-            self.play(item)
+            self.play(item.url)
         return self.quit(keycode=keycode)
 
     def get_user_input(self, mesg: str = '', prompt: str = 'Query>') -> str:
+        # TODO: what is 'print_query'
         self.menu.keybind.toggle_all()
         user_input, keycode = self.menu.prompt(
             items=[],
             mesg=mesg,
             prompt=prompt,
-            lines=1,
-            width='30%',
-            height='14%',
             print_query=True,
             markup=self.client.markup,
         )
@@ -282,6 +289,7 @@ class TwitchApp:
 
     def open_chat(self, **kwargs) -> None:
         item = kwargs.pop('item')
+        logger.debug(f'opening chat for {item.name}')
         webbrowser.open_new_tab(item.chat)
         self.quit(keycode=0)
 
@@ -290,6 +298,7 @@ class TwitchApp:
         self.client.api.client.close()
 
     def quit(self, **kwargs) -> None:
-        keycode = kwargs.get('keycode', 1)
+        keycode = kwargs.get('keycode', 0)
+        self.close()
         logger.debug('terminated by user')
         sys.exit(keycode)

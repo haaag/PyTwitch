@@ -125,7 +125,7 @@ class Channel:
 
     @property
     def name(self) -> str:
-        return PangoSpan(self.display_name, weight='bold', size='large', markup=self.markup)
+        return self.display_name
 
     @property
     def sep(self) -> str:
@@ -167,4 +167,5 @@ class Channel:
         return str(TWITCH_STREAM_BASE_URL.join(self.broadcaster_login))
 
     def __str__(self) -> str:
-        return f'{self.name}{self.sep}{self.icon} {self.status}{self.sep}{self.category()}'
+        name = PangoSpan(self.display_name, weight='bold', size='large', markup=self.markup)
+        return f'{name}{self.sep}{self.icon} {self.status}{self.sep}{self.category()}'

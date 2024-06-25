@@ -104,7 +104,7 @@ def keybinds(twitch: TwitchApp) -> TwitchApp:
     twitch.menu.keybind.add(
         key=keys.information,
         description='display item info',
-        callback=twitch.get_item_info,
+        callback=twitch.show_item_info,
         hidden=True,
     )
     # twitch.menu.keybind.add(
@@ -132,12 +132,6 @@ def keybinds(twitch: TwitchApp) -> TwitchApp:
         hidden=True,
     )
     twitch.menu.keybind.add(
-        key=keys.quit,
-        description='quit',
-        callback=twitch.quit,
-        hidden=True,
-    )
-    twitch.menu.keybind.add(
         key=keys.show_keys,
         description='show available keybinds',
         callback=twitch.show_keybinds,
@@ -148,6 +142,12 @@ def keybinds(twitch: TwitchApp) -> TwitchApp:
         description='show top streams',
         callback=twitch.show_top_streams,
         hidden=True,
+    )
+    twitch.menu.keybind.add(
+        key=keys.quit,
+        description='quit',
+        callback=twitch.quit,
+        hidden=False,
     )
     return twitch
 
@@ -193,7 +193,7 @@ def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
     return TwitchApp(
         client=client,
         menu=menu,
-        player=player.get_player(args.no_conf),
+        player=player.get(with_config=args.no_conf),
         keys=keys,
     )
 

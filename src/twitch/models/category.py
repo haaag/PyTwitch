@@ -48,7 +48,7 @@ class Category:
             font_variant='small-caps',
             size='small',
             weight='bold',
-            foreground='grey',
+            foreground='orange',
             markup=self.markup,
         )
 
@@ -58,7 +58,13 @@ class Category:
         if nlive == 0:
             return ''
         live = f'{LIVE_ICON} {nlive}'
-        return PangoSpan(live, foreground=LIVE_ICON_COLOR, size='medium', weight='heavy', markup=self.markup)
+        return PangoSpan(
+            live,
+            foreground=LIVE_ICON_COLOR,
+            size='medium',
+            weight='heavy',
+            markup=self.markup,
+        )
 
     def offline_fmt(self) -> str:
         return PangoSpan(

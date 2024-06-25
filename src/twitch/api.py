@@ -161,7 +161,7 @@ class Content:
         }
         response = self.api.request_get(endpoint, params, requested_items=75)
         data = response['data']
-        log.info("videos_len='%s'", len(data))
+        log.info("got user_id='%s' videos len='%s'", user_id, len(data))
         return data
 
     def search_categories(self, query: str) -> dict[str, Any]:
