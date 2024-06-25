@@ -127,11 +127,10 @@ class Content:
         self.api = api
 
     def get_clips(self, user_id: str) -> list[dict[str, Any]]:
-        # FIX: getting clips
         """Gets one or more video clips that were captured from streams."""
         # https://dev.twitch.tv/docs/api/reference#get-clips
         endpoint = URL('clips')
-        params = {'broadcaster_id': user_id}
+        params = {'broadcaster_id': user_id, 'is_featured': True}
         response = self.api.request_get(
             endpoint,
             params,

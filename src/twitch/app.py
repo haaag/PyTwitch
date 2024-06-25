@@ -119,7 +119,7 @@ class TwitchApp:
             self.quit(keycode=keycode)
         if keycode != UserConfirmsSelection(0):
             self.get_key_by_code(keycode).callback(items=items, item=item)
-        self.play(item.url)
+        self.quit(keycode=self.play(item.url))
 
     def show_channels_by_query(self, **kwargs) -> None:
         query = kwargs.get('query')
@@ -182,7 +182,7 @@ class TwitchApp:
     def get_channel_clips(self, **kwargs) -> tuple[Mapping[str, FollowedContentClip], str]:
         item: TwitchChannel = kwargs.pop('item')
         logger.info("processing user='%s' clips", item.name)
-        clips = self.client.get_channel_clips(user_id=item.user_id)
+        clips = sorted(self.client.get_channel_clips(user_id=item.user_id), key=lambda c: c.created_at, reverse=True)
         data = {c.key: c for c in clips}
         return data, f'> Showing ({len(data)}) clips from <{item.name}> channel'
 
