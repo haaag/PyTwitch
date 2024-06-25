@@ -17,6 +17,7 @@ dependencies = [
   "python-dotenv",
   "xlib==0.21",
   "mpv==1.0.7",
+  "pydantic==2.7.4",
 ]
 
 [tool.hatch.build.targets.wheel]

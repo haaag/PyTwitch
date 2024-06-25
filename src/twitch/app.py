@@ -67,7 +67,7 @@ class TwitchApp:
             self.quit(keycode=keycode)
 
         if not item.playable and keycode == 0:
-            return self.show_channel_videos(item=item)
+            return self.show_videos(item=item)
 
         if keycode == UserConfirmsSelection(0):
             returncode = self.play(item.url)
@@ -76,13 +76,13 @@ class TwitchApp:
         keybind = self.get_key_by_code(keycode)
         return keybind.callback(items=items, item=item, keybind=keybind)
 
-    def show_channel_videos(self, **kwargs) -> None:
+    def show_videos(self, **kwargs) -> None:
         item: TwitchChannel = kwargs.pop('item')
         self.menu.keybind.toggle_all()
         videos, mesg = self.get_channel_videos(item=item)
         self.show_and_play(items=videos, mesg=mesg)
 
-    def show_channel_clips(self, **kwargs) -> None:
+    def show_clips(self, **kwargs) -> None:
         item: TwitchChannel = kwargs.pop('item')
         self.menu.keybind.toggle_all()
         clips, mesg = self.get_channel_clips(item=item)
@@ -123,7 +123,7 @@ class TwitchApp:
             self.get_key_by_code(keycode).callback(items=items, item=item)
         self.quit(keycode=self.play(item.url))
 
-    def show_channels_by_query(self, **kwargs) -> None:
+    def show_by_query(self, **kwargs) -> None:
         self.menu.keybind.toggle_all()
         query: str | None = kwargs.get('query')
         if not query:
@@ -140,7 +140,7 @@ class TwitchApp:
         mesg = f'> Showing ({len(items)}) <channels> by query: "{query}"'
         self.show_and_play(items=items, mesg=mesg)
 
-    def show_channels_by_game(self, **kwargs) -> None:
+    def show_by_game(self, **kwargs) -> None:
         game = kwargs.get('game')
         if not game:
             game = self.get_user_input(mesg='Search <games> or <categories>', prompt='TwitchGame>')
@@ -164,41 +164,12 @@ class TwitchApp:
         mesg = f'> Showing ({len(streams)}) <streams> from <{selected.name}> game'
         self.show_and_play({s.id: s for s in streams}, mesg=mesg)
 
-    def toggle_content_keybinds(self) -> None:
-        key = self.menu.keybind
-        info = self.get_key_by_bind(self.keys.information)
-        videos = self.get_key_by_bind(self.keys.videos)
-        clips = self.get_key_by_bind(self.keys.clips)
-        kquit = self.get_key_by_bind(self.keys.quit)
-        key.unregister_all()
-        key.register(info).toggle_hidden()
-        key.register(videos).toggle_hidden()
-        key.register(clips).toggle_hidden()
-        key.register(kquit)
-
     def show_top_streams(self, **kwargs) -> None:
         self.toggle_content_keybinds()
         data = self.client.get_top_streams()
         streams = {s.name: s for s in data}
         mesg = f'> Showing ({len(streams)}) top streams'
         return self.show_and_play(items=streams, mesg=mesg)
-
-    def get_channels_and_streams(self, **kwargs) -> tuple[Mapping[str, FollowedChannelInfo | FollowedStream], str]:
-        data = self.client.channels_and_streams
-        return data, f'> Showing ({self.client.online}) streams from {len(data)} channels'
-
-    def get_channel_clips(self, **kwargs) -> tuple[Mapping[str, FollowedContentClip], str]:
-        item: TwitchChannel = kwargs.pop('item')
-        logger.info("processing user='%s' clips", item.name)
-        clips = sorted(self.client.get_channel_clips(user_id=item.user_id), key=lambda c: c.created_at, reverse=True)
-        data = {c.key: c for c in clips}
-        return data, f'> Showing ({len(data)}) clips from <{item.name}> channel'
-
-    def get_channel_videos(self, **kwargs) -> tuple[Mapping[str, FollowedContentVideo], str]:
-        item = kwargs.pop('item')
-        videos = self.client.get_channel_videos(user_id=item.user_id)
-        data = {v.key: v for v in videos}
-        return data, f'> Showing ({len(data)}) videos from <{item.name}> channel'
 
     def show_item_info(self, **kwargs) -> None:
         self.menu.keybind.unregister_all()
@@ -217,11 +188,53 @@ class TwitchApp:
         clipboard.copy(selected)
         return self.quit(keycode=keycode)
 
+    def get_channels_and_streams(self, **kwargs) -> tuple[Mapping[str, FollowedChannelInfo | FollowedStream], str]:
+        data = self.client.channels_and_streams
+        return data, f'> Showing ({self.client.online}) streams from {len(data)} channels'
+
+    def get_channel_clips(self, **kwargs) -> tuple[Mapping[str, FollowedContentClip], str]:
+        item: TwitchChannel = kwargs.pop('item')
+        logger.info("processing user='%s' clips", item.name)
+        clips = sorted(self.client.get_channel_clips(user_id=item.user_id), key=lambda c: c.created_at, reverse=True)
+        data = {c.key: c for c in clips}
+        return data, f'> Showing ({len(data)}) clips from <{item.name}> channel'
+
+    def get_channel_videos(self, **kwargs) -> tuple[Mapping[str, FollowedContentVideo], str]:
+        item = kwargs.pop('item')
+        videos = self.client.get_channel_videos(user_id=item.user_id)
+        data = {v.key: v for v in videos}
+        return data, f'> Showing ({len(data)}) videos from <{item.name}> channel'
+
     def get_key_by_code(self, keycode: int) -> Keybind:
         return self.menu.keybind.get_keybind_by_code(keycode)
 
     def get_key_by_bind(self, bind: str) -> Keybind:
         return self.menu.keybind.get_keybind_by_bind(bind)
+
+    def get_user_input(self, mesg: str = '', prompt: str = 'Query>') -> str:
+        # TODO: what is 'print_query'
+        self.menu.keybind.toggle_all()
+        user_input, keycode = self.menu.prompt(
+            items=[],
+            mesg=mesg,
+            prompt=prompt,
+            print_query=True,
+            markup=self.client.markup,
+        )
+        self.menu.keybind.toggle_all()
+        return user_input
+
+    def toggle_content_keybinds(self) -> None:
+        key = self.menu.keybind
+        info = self.get_key_by_bind(self.keys.information)
+        videos = self.get_key_by_bind(self.keys.videos)
+        clips = self.get_key_by_bind(self.keys.clips)
+        kquit = self.get_key_by_bind(self.keys.quit)
+        key.unregister_all()
+        key.register(info).toggle_hidden()
+        key.register(videos).toggle_hidden()
+        key.register(clips).toggle_hidden()
+        key.register(kquit)
 
     def select_from_items(
         self,
@@ -264,20 +277,6 @@ class TwitchApp:
                 continue
             self.play(item.url)
         return self.quit(keycode=keycode)
-
-    def get_user_input(self, mesg: str = '', prompt: str = 'Query>') -> str:
-        # TODO: what is 'print_query'
-        self.menu.keybind.toggle_all()
-        user_input, keycode = self.menu.prompt(
-            items=[],
-            mesg=mesg,
-            prompt=prompt,
-            print_query=True,
-            markup=self.client.markup,
-        )
-
-        self.menu.keybind.toggle_all()
-        return user_input
 
     def play(self, url: str) -> int:
         # https://github.com/jaseg/python-mpv/issues/126

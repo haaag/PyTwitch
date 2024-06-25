@@ -86,13 +86,13 @@ def keybinds(twitch: TwitchApp) -> TwitchApp:
     twitch.menu.keybind.add(
         key=keys.videos,
         description='show videos',
-        callback=twitch.show_channel_videos,
+        callback=twitch.show_videos,
         hidden=True,
     )
     twitch.menu.keybind.add(
         key=keys.clips,
         description='show clips',
-        callback=twitch.show_channel_clips,
+        callback=twitch.show_clips,
         hidden=True,
     )
     twitch.menu.keybind.add(
@@ -116,13 +116,13 @@ def keybinds(twitch: TwitchApp) -> TwitchApp:
     twitch.menu.keybind.add(
         key=keys.search_by_game,
         description='search games or categories',
-        callback=twitch.show_channels_by_game,
+        callback=twitch.show_by_game,
         hidden=True,
     )
     twitch.menu.keybind.add(
         key=keys.search_by_query,
         description='search by channel',
-        callback=twitch.show_channels_by_query,
+        callback=twitch.show_by_query,
         hidden=True,
     )
     twitch.menu.keybind.add(

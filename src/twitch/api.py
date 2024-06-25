@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import logging
 import typing
-from dataclasses import dataclass
 from typing import Any
 from typing import Iterator
 
 import httpx
 from httpx import URL
+from pydantic import BaseModel
 from twitch._exceptions import EnvValidationError
 from twitch.constants import TWITCH_API_BASE_URL
 
@@ -46,11 +46,10 @@ def _validate_credentials(credentials: dict[str, str]) -> None:
             raise EnvValidationError(err_msg)
 
 
-@dataclass
-class Credentials:
-    access_token: str
-    client_id: str
-    user_id: str
+class Credentials(BaseModel):
+    access_token: str | None
+    client_id: str | None
+    user_id: str | None
 
     def to_dict(self) -> dict[str, str]:
         return self.__dict__
