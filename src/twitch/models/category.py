@@ -2,18 +2,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from pydantic.dataclasses import dataclass
 from pyselector.markup import PangoSpan
 from twitch import format
 from twitch.constants import LIVE_ICON
 from twitch.constants import LIVE_ICON_COLOR
 from twitch.constants import SEPARATOR
-
-if TYPE_CHECKING:
-    from twitch.models.channels import FollowedChannelInfo
-    from twitch.models.streams import FollowedStream
+from twitch.models.channels import FollowedChannelInfo  # noqa: TCH002
+from twitch.models.streams import FollowedStream  # noqa: TCH002
 
 
 @dataclass
