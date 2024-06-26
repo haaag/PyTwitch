@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
+from pydantic.dataclasses import dataclass
 from pyselector.markup import PangoSpan
 from twitch import format
 from twitch.constants import LIVE_ICON

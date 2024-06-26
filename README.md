@@ -35,6 +35,7 @@ https://github.com/haaag/PyTwitch/assets/81921095/e8f07a06-d9dd-47e0-a6d4-f9fba4
 - [python-dotenv](https://pypi.org/project/python-dotenv/)
 - [pyselector](https://pypi.org/project/pyselector/)
 - [mpv](https://pypi.org/project/mpv/)
+- [pydantic](https://pypi.org/project/pydantic/)
 
 ### 🔒Credentials
 

@@ -32,9 +32,9 @@ def main() -> int:
         if args.test:
             return setup.test(t=twitch)
         if args.channel:
-            twitch.show_channels_by_query()
+            twitch.show_by_query()
         elif args.games:
-            twitch.show_channels_by_game()
+            twitch.show_by_game()
         else:
             twitch.show_all_streams()
         twitch.quit(keycode=0)
