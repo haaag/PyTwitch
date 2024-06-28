@@ -1,19 +1,20 @@
-# twitch.py
+# fetcher.py
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Iterable
+from typing import Protocol
 
-from twitch import format
 from twitch.helpers import logme
-from twitch.helpers import timeit
 from twitch.models.category import Category
 from twitch.models.category import Game
 from twitch.models.channels import Channel
+from twitch.models.channels import ChannelInfo
 from twitch.models.channels import FollowedChannel
-from twitch.models.channels import FollowedChannelInfo
 from twitch.models.content import FollowedContentClip
 from twitch.models.content import FollowedContentVideo
 from twitch.models.streams import FollowedStream
@@ -24,123 +25,96 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def group_channels_by_game(
-    channels: dict[str, FollowedChannelInfo | FollowedStream],
-) -> dict[str, dict[str, FollowedChannelInfo | FollowedStream]]:
-    output: dict[str, dict[str, FollowedChannelInfo | FollowedStream]] = {}
-    for channel_name, channel in channels.items():
-        if not channel.game_name:
-            continue
-        game_name = format.sanitize(channel.game_name)
-        if game_name not in output:
-            output[game_name] = {}
-        output[game_name][channel_name] = channel
-    return output
+class Item(Protocol):
+    name: str
+    live: bool
+    game_name: str
+
+
+def create_categories(streams_data: list[list[dict[str, Any]]], markup: bool) -> dict[str, Category]:
+    categories: dict[str, Category] = {}
+    for cat_data in streams_data:
+        cat_name = cat_data[0]['game_name']
+        streams = (FollowedStream(**c, markup=markup) for c in cat_data)
+        all_streams = {s.name: s for s in streams}
+        category = Category(name=cat_name, channels=all_streams, markup=markup)
+        viewers = category.total_viewers_fmt()
+        logger.info(f"game '{cat_name}' has {category.channels_live()} streams with {viewers} viewers")
+        categories[cat_name] = category
+    return categories
 
 
 @logme('merging channels offline and streams')
-def merge_data(
-    channels: dict[str, FollowedChannelInfo],
-    streams: dict[str, FollowedStream],
-) -> dict[str, FollowedChannelInfo | FollowedStream]:
+def merge_data(channels: dict[str, Item], streams: dict[str, Item]) -> dict[str, Item]:
     """Merge followed channels with the list of currently live channels."""
-    online = {}
-    for live in streams.values():
-        channels.pop(live.name, None)
-        online[live.name] = live
-    return {**online, **channels}
+    return {**streams, **{k: v for k, v in channels.items() if k not in streams}}
 
 
-class TwitchClient:
+class TwitchFetcher:
     def __init__(self, api: TwitchApi, markup: bool = True) -> None:
         self.api = api
         self.markup = markup
-        self._channels: dict[str, FollowedChannelInfo] | None = None
-        self._streams: dict[str, FollowedStream] | None = None
-        self._games: dict[str, Category] | None = None
-        self._channels_and_streams: dict[str, FollowedChannelInfo | FollowedStream] = {}
         self.online: int = 0
 
-    @property
-    def channels(self) -> dict[str, FollowedChannelInfo]:
-        if not self._channels:
-            self._channels = {c.name: c for c in self.get_channels_with_info()}
-        return self._channels
+    async def close(self) -> None:
+        return await self.api.close()
 
-    @property
-    def streams(self) -> dict[str, FollowedStream]:
-        if not self._streams:
-            self._streams = {s.name: s for s in self.get_streams()}
-            self.online = len(self._streams)
-        return self._streams
+    async def channels_and_streams(self) -> dict[str, Item]:
+        cdata, sdata = await asyncio.gather(
+            self.api.channels.all(),
+            self.api.channels.streams(),
+        )
 
-    @property
-    def games(self) -> dict[str, Category]:
-        if not self._games:
-            self._games = {g.name: g for g in self.channels_categorized()}
-        return self._games
+        m = self.markup
+        c = {c['broadcaster_name']: ChannelInfo(**c, markup=m) for c in cdata if 'type' not in c}
+        s = {s['user_name']: FollowedStream(**s, markup=m) for s in sdata if 'type' in s}
+        self.online = len(s)
+        return merge_data(c, s)
 
-    @property
-    @timeit
-    def channels_and_streams(self) -> dict[str, FollowedChannelInfo | FollowedStream]:
-        if not self._channels_and_streams:
-            logger.info('calling api for channels')
-            channels = self.channels
-            streams = self.streams
-            self._channels_and_streams = merge_data(channels, streams)
-        return self._channels_and_streams
-
-    def get_streams(self) -> Iterable[FollowedStream]:
-        streams = self.api.channels.get_streams()
-        logger.info(f'{self.get_streams.__name__}: got {len(streams)} streams online')
-        return (FollowedStream(**stream, markup=self.markup) for stream in streams)
-
-    @logme("getting all user's channels")
-    def get_channels(self) -> Iterable[FollowedChannel]:
-        channels = self.api.channels.get_all()
-        logger.info(f'{self.get_channels.__name__}: got {len(channels)} channels')
-        return (FollowedChannel(**channel, markup=self.markup) for channel in channels)
-
-    def get_channel_info(self, channel_id: str) -> FollowedChannelInfo:
-        data = self.api.channels.get_info(user_id=channel_id)
-        return FollowedChannelInfo(**data[0], markup=self.markup)
-
-    def get_channels_info(self, channels_id: list[str]) -> Iterable[FollowedChannelInfo]:
-        data = self.api.channels.get_info_by_list(broadcaster_ids=channels_id)
-        return (FollowedChannelInfo(**broadcaster, markup=self.markup) for broadcaster in data)
-
-    def get_channels_with_info(self) -> Iterable[FollowedChannelInfo]:
-        channels_id = [channel.user_id for channel in self.get_channels()]
-        return self.get_channels_info(channels_id)
-
-    @logme('getting channels by category')
-    def channels_categorized(self) -> Iterable[Category]:
-        channels_by_game = group_channels_by_game(self.channels_and_streams)
-        return (Category(name=k, channels=channels_by_game[k], markup=self.markup) for k in channels_by_game)
-
-    def get_channel_videos(self, user_id: str) -> Iterable[FollowedContentVideo]:
-        data = self.api.content.get_videos(user_id=user_id)
+    async def videos(self, user_id: str) -> Iterable[FollowedContentVideo]:
+        data = await self.api.content.get_videos(user_id=user_id)
         return (FollowedContentVideo(**video, markup=self.markup) for video in data)
 
-    def get_channel_clips(self, user_id: str) -> Iterable[FollowedContentClip]:
-        data = self.api.content.get_clips(user_id=user_id)
+    async def clips(self, user_id: str) -> Iterable[FollowedContentClip]:
+        data = await self.api.content.get_clips(user_id=user_id)
         return (FollowedContentClip(**clip, markup=self.markup) for clip in data)
 
-    def get_streams_by_game_id(self, game_id: str) -> Iterable[FollowedStream]:
+    async def streams_by_game_id(self, game_id: str) -> Iterable[FollowedStream]:
         logger.debug('getting streams by game_id: %s', game_id)
-        data = self.api.content.get_streams_by_game_id(game_id)
+        data = await self.api.content.get_streams_by_game_id(game_id)
         return (FollowedStream(**item, markup=self.markup) for item in data)
 
-    def get_games_by_query(self, query: str) -> Iterable[Game]:
-        data = self.api.content.search_categories(query)
+    async def games_by_query(self, query: str) -> Iterable[Game]:
+        data = await self.api.content.search_categories(query)
         return (Game(**item, markup=self.markup) for item in data)
 
-    def get_channels_by_query(self, query: str, live_only: bool = True) -> Iterable[FollowedChannel]:
-        data = self.api.content.search_channels(query, live_only=live_only)
+    async def channels_by_query(self, query: str, live_only: bool = True) -> Iterable[FollowedChannel]:
+        data = await self.api.content.search_channels(query, live_only=live_only)
         data_sorted_by_live = sorted(data, key=lambda c: c['is_live'], reverse=True)
         return (Channel(**item, markup=self.markup) for item in data_sorted_by_live if item['game_name'])
 
-    @logme('getting top streams')
-    def get_top_streams(self) -> Iterable[FollowedStream]:
-        data = self.api.content.get_top_streams()
+    async def top_streams(self) -> Iterable[FollowedStream]:
+        data = await self.api.content.get_top_streams()
         return (FollowedStream(**s, markup=self.markup) for s in data)
+
+    async def top_games(self) -> Iterable[Category]:
+        data = await self.api.content.get_top_games()
+        return (Game(**g, markup=self.markup) for g in data)
+
+    async def top_games_with_streams(self) -> dict[str, Category]:
+        max_games = 25
+        max_streams = 25
+        top_games = await self.top_games()
+        games_streams_data = await self._top_games_streams_data(top_games, max_games, max_streams)
+        return create_categories(games_streams_data, self.markup)
+
+    async def _top_games_streams_data(
+        self, top_games: Iterable[Category], max_games: int, max_streams: int
+    ) -> list[list[dict[str, Any]]]:
+        task: list[asyncio.Task] = []
+        create = asyncio.create_task
+        for game in top_games:
+            if len(task) == max_games:
+                break
+            task.append(create(self.api.content.get_streams_by_game_id(game.id, max_items=max_streams)))
+        return await asyncio.gather(*task)

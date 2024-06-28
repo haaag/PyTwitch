@@ -4,21 +4,17 @@ from __future__ import annotations
 import argparse
 import functools
 import logging
-import os
 import sys
-from pathlib import Path
 from typing import TYPE_CHECKING
 
-from dotenv import load_dotenv
 from pyselector import Menu
 from twitch import constants
 from twitch import player
-from twitch._exceptions import EnvValidationError
 from twitch.api import Credentials
 from twitch.api import TwitchApi
 from twitch.app import Keys
 from twitch.app import TwitchApp
-from twitch.client import TwitchClient
+from twitch.client import TwitchFetcher
 
 if TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
@@ -32,14 +28,13 @@ keys = Keys(
     chat='alt-o',
     clips='alt-C',
     information='alt-i',
-    quit='alt-q',
     search_by_game='alt-s',
     search_by_query='alt-c',
     show_all='alt-u',
     show_keys='alt-k',
     top_streams='alt-m',
     videos='alt-v',
-    # multi_selection='alt-m',
+    top_games='alt-g',
 )
 
 
@@ -70,86 +65,20 @@ def args() -> argparse.Namespace:
     return args
 
 
-def keybinds(twitch: TwitchApp) -> TwitchApp:
-    twitch.menu.keybind.add(
-        key=keys.channels,
-        description='show channels',
-        callback=twitch.show_all_streams,
-        hidden=True,
-    )
-    twitch.menu.keybind.add(
-        key=keys.categories,
-        description='show by games',
-        callback=twitch.show_categories,
-        hidden=True,
-    )
-    twitch.menu.keybind.add(
-        key=keys.videos,
-        description='show videos',
-        callback=twitch.show_videos,
-        hidden=True,
-    )
-    twitch.menu.keybind.add(
-        key=keys.clips,
-        description='show clips',
-        callback=twitch.show_clips,
-        hidden=True,
-    )
-    twitch.menu.keybind.add(
-        key=keys.chat,
-        description='launch chat',
-        callback=twitch.open_chat,
-        hidden=True,
-    )
-    twitch.menu.keybind.add(
-        key=keys.information,
-        description='display item info',
-        callback=twitch.show_item_info,
-        hidden=True,
-    )
-    # twitch.menu.keybind.add(
-    #     key=keys.multi_selection,
-    #     description='multiple selection',
-    #     callback=twitch.multi_selection,
-    #     hidden=True,
-    # )
-    twitch.menu.keybind.add(
-        key=keys.search_by_game,
-        description='search games or categories',
-        callback=twitch.show_by_game,
-        hidden=True,
-    )
-    twitch.menu.keybind.add(
-        key=keys.search_by_query,
-        description='search by channel',
-        callback=twitch.show_by_query,
-        hidden=True,
-    )
-    twitch.menu.keybind.add(
-        key=keys.show_all,
-        description='show all keybinds',
-        callback=twitch.show_keybinds,
-        hidden=True,
-    )
-    twitch.menu.keybind.add(
-        key=keys.show_keys,
-        description='show available keybinds',
-        callback=twitch.show_keybinds,
-        hidden=False,
-    )
-    twitch.menu.keybind.add(
-        key=keys.top_streams,
-        description='show top streams',
-        callback=twitch.show_top_streams,
-        hidden=True,
-    )
-    twitch.menu.keybind.add(
-        key=keys.quit,
-        description='quit',
-        callback=twitch.quit,
-        hidden=False,
-    )
-    return twitch
+def keybinds(t: TwitchApp) -> TwitchApp:
+    key = t.menu.keybind
+    key.add(key=keys.channels, callback=t.show_all_streams, hidden=True, description='show channels')
+    key.add(key=keys.categories, callback=t.show_by_categories, hidden=True, description='show by games')
+    key.add(key=keys.videos, callback=t.show_videos, hidden=True, description='show videos')
+    key.add(key=keys.clips, callback=t.show_clips, hidden=True, description='show clips')
+    key.add(key=keys.chat, callback=t.open_chat, hidden=True, description='launch chat')
+    key.add(key=keys.information, callback=t.show_item_info, hidden=True, description='display item info')
+    key.add(key=keys.search_by_game, callback=t.show_by_game, hidden=True, description='search games')
+    key.add(key=keys.search_by_query, callback=t.show_by_query, hidden=True, description='search by channel')
+    key.add(key=keys.show_keys, callback=t.show_keybinds, hidden=False, description='show available keybinds')
+    key.add(key=keys.top_streams, callback=t.show_top_streams, hidden=True, description='show top streams')
+    key.add(key=keys.top_games, callback=t.show_top_games, hidden=True, description='show top games')
+    return t
 
 
 def menu(args: argparse.Namespace) -> MenuInterface:
@@ -161,37 +90,24 @@ def menu(args: argparse.Namespace) -> MenuInterface:
         width='75%',
         height='60%',
         markup=args.no_markup,
-        preview=False,
         location='center',
     )
     return menu
 
 
-def test(**kwargs) -> None:  # noqa: ARG001
+async def test(**kwargs) -> None:  # noqa: ARG001
     print('Testing mode, not launching menu')
     sys.exit()
 
 
-def load_credentials(file: str) -> Credentials:
-    load_envs(file)
-    access_token = os.environ.get('TWITCH_ACCESS_TOKEN')
-    cliend_id = os.environ.get('TWITCH_CLIENT_ID')
-    user_id = os.environ.get('TWITCH_USER_ID')
-    return Credentials(
-        access_token=access_token,
-        client_id=cliend_id,
-        user_id=user_id,
-    )
-
-
-def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
-    credentials = load_credentials(args.config)
+async def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
+    credentials = Credentials.load(args.config)
     credentials.validate()
     api = TwitchApi(credentials)
-    api.load_client()
-    client = TwitchClient(api, args.no_markup)
+    await api.load_client()
+    fetcher = TwitchFetcher(api, args.no_markup)
     return TwitchApp(
-        client=client,
+        fetcher=fetcher,
         menu=menu,
         player=player.get(with_config=args.no_conf),
         keys=keys,
@@ -201,23 +117,3 @@ def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
 def help() -> int:  # noqa: A001
     print(constants.HELP)
     return 0
-
-
-def load_envs(filepath: str | None = None) -> None:
-    """Load envs if path"""
-    if not filepath:
-        log.info('env: no env filepath specified')
-        log.info('env: loading from .env or exported env vars')
-        load_dotenv()
-        return
-
-    envfilepath = Path().absolute() / Path(filepath)
-    if not envfilepath.exists():
-        err = f'{envfilepath=!s} not found'
-        raise EnvValidationError(err)
-    if not envfilepath.is_file():
-        err = f'{envfilepath=!s} is not a file'
-        raise EnvValidationError(err)
-
-    log.info(f'env: loading envs from {envfilepath=!s}')
-    load_dotenv(dotenv_path=envfilepath.as_posix())

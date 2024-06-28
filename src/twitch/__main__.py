@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import sys
 
@@ -26,18 +27,18 @@ def main() -> int:
     menu = setup.menu(args)
 
     try:
-        twitch = setup.app(menu, args)
+        run = asyncio.run
+        twitch = run(setup.app(menu, args))
         twitch = setup.keybinds(twitch)
 
         if args.test:
-            return setup.test(t=twitch)
+            run(setup.test(t=twitch))
         if args.channel:
-            twitch.show_by_query()
+            run(twitch.show_by_query())
         elif args.games:
-            twitch.show_by_game()
+            run(twitch.show_by_game())
         else:
-            twitch.show_all_streams()
-        twitch.quit(keycode=0)
+            run(twitch.show_all_streams())
     except (*CONNECTION_EXCEPTION, *EXCEPTIONS) as err:
         menu.keybind.unregister_all()
         menu.prompt(items=[f'{err!r}'], markup=False, prompt='PyTwitchErr>')

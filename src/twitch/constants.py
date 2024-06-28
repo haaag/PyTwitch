@@ -28,8 +28,8 @@ options:
 )
 
 # others
-UserCancelSelection = NewType('UserCancelSelection', int)
-UserConfirmsSelection = NewType('UserConfirmsSelection', int)
+UserCancel = NewType('UserCancel', int)
+UserConfirms = NewType('UserConfirms', int)
 TITLE_MAX_LENGTH = 80
 
 # api urls

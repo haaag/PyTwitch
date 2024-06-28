@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import logging
+import os
 import typing
+from pathlib import Path
 from typing import Any
 from typing import Iterator
 
 import httpx
+from dotenv import load_dotenv
 from httpx import URL
 from pydantic import BaseModel
 from twitch._exceptions import EnvValidationError
@@ -46,6 +49,26 @@ def _validate_credentials(credentials: dict[str, str]) -> None:
             raise EnvValidationError(err_msg)
 
 
+def load_envs(filepath: str | None = None) -> None:
+    """Load envs if path"""
+    if not filepath:
+        log.info('env: no env filepath specified')
+        log.info('env: loading from .env or exported env vars')
+        load_dotenv()
+        return
+
+    envfilepath = Path().absolute() / Path(filepath)
+    if not envfilepath.exists():
+        err = f'{envfilepath=!s} not found'
+        raise EnvValidationError(err)
+    if not envfilepath.is_file():
+        err = f'{envfilepath=!s} is not a file'
+        raise EnvValidationError(err)
+
+    log.info(f'env: loading envs from {envfilepath=!s}')
+    load_dotenv(dotenv_path=envfilepath.as_posix())
+
+
 class Credentials(BaseModel):
     access_token: str | None
     client_id: str | None
@@ -56,6 +79,14 @@ class Credentials(BaseModel):
 
     def validate(self) -> None:
         return _validate_credentials(self.to_dict())
+
+    @classmethod
+    def load(cls, file: str) -> Credentials:
+        load_envs(file)
+        access_token = os.environ.get('TWITCH_ACCESS_TOKEN')
+        client_id = os.environ.get('TWITCH_CLIENT_ID')
+        user_id = os.environ.get('TWITCH_USER_ID')
+        return cls(access_token=access_token, client_id=client_id, user_id=user_id)
 
 
 class API:
