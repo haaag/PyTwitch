@@ -21,8 +21,8 @@ class FollowedStream:
     is_mature: bool
     language: str
     started_at: str
-    tag_ids: list[str]
-    tags: list[str]
+    tag_ids: list[str] | None
+    tags: list[str] | None
     thumbnail_url: str
     title: str
     type: str
@@ -47,9 +47,7 @@ class FollowedStream:
 
     @property
     def title_str(self) -> str:
-        title = self.title[: TITLE_MAX_LENGTH - 3] + '...' if len(self.title) > TITLE_MAX_LENGTH else self.title
-        if self.markup:
-            title = format.sanitize(title)
+        title = format.sanitize(format.short(self.title, TITLE_MAX_LENGTH))
         return PangoSpan(title, size='medium', foreground='grey', markup=self.markup)
 
     @property
@@ -73,7 +71,14 @@ class FollowedStream:
     @property
     def category(self) -> str:
         game = format.sanitize(self.game_name) if self.markup else self.game_name
-        return PangoSpan(game, foreground='orange', size='x-large', sub=True, markup=self.markup)
+        return PangoSpan(
+            game,
+            foreground='orange',
+            weight='bold',
+            size='medium',
+            font_variant='all-small-caps',
+            markup=self.markup,
+        )
 
     @property
     def chat(self) -> str:

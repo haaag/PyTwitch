@@ -7,6 +7,7 @@ from typing import Mapping
 from typing import MutableMapping
 from typing import Union
 
+from twitch.models.channels import ChannelInfo
 from twitch.models.channels import FollowedChannel
 from twitch.models.channels import FollowedChannelInfo
 from twitch.models.content import FollowedContentClip
@@ -19,6 +20,11 @@ HeaderTypes = Mapping[str, Any]
 
 TwitchApiResponse = Mapping[str, Any]
 
-TwitchChannel = Union[FollowedChannel, FollowedStream, FollowedChannelInfo]
+TwitchChannel = Union[
+    FollowedChannel,
+    FollowedStream,
+    FollowedChannelInfo,
+    ChannelInfo,
+]
 
 TwitchContent = Union[FollowedContentClip, FollowedContentVideo, TwitchChannel]

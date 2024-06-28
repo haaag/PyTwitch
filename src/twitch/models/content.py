@@ -47,36 +47,38 @@ class FollowedContentClip:
 
     @property
     def sep(self) -> str:
-        return PangoSpan(SEPARATOR, alpha='100%') if self.markup else SEPARATOR
+        return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
 
     @property
-    def title_str(self) -> str:
-        title = self.title[: TITLE_MAX_LENGTH - 3] + '...' if len(self.title) > TITLE_MAX_LENGTH else f'{self.title} '
-        if self.markup:
-            title = format.sanitize(title)
-        return PangoSpan(title, size='large', foreground='silver') if self.markup else title
+    def title_fmt(self) -> str:
+        title = format.sanitize(format.short(self.title, TITLE_MAX_LENGTH))
+        return PangoSpan(title, size='medium', foreground='grey', markup=self.markup)
 
     @property
     def viewers_fmt(self) -> str:
         viewers = f'views: {format.number(self.view_count)}'
-        return PangoSpan(viewers, size='medium', weight='light') if self.markup else viewers
+        return PangoSpan(viewers, size='medium', weight='light', markup=self.markup)
 
     @property
     def duration_fmt(self) -> str:
         duration = f'duration: {self.duration}s'
-        return PangoSpan(duration, size='medium', weight='light') if self.markup else duration
+        return PangoSpan(duration, size='medium', weight='light', markup=self.markup)
 
     @property
     def item_id(self) -> str:
-        return PangoSpan(self.key, foreground='grey') if self.markup else self.key
+        return PangoSpan(self.key, foreground='grey', markup=self.markup)
 
     @property
     def created_date(self) -> str:
         created = format.date(self.created_at)
-        return PangoSpan(created, size='large', foreground='orange', sub=True) if self.markup else created
+        if self.markup:
+            return PangoSpan(created, size='medium', foreground='orange', weight='bold', font_variant='all-small-caps')
+        return created
 
     def __str__(self) -> str:
-        return f'{self.item_id}{self.sep}{self.created_date} {self.title_str} ({self.duration_fmt}{self.sep}{self.viewers_fmt})'  # noqa: E501
+        id_and_date = f'{self.item_id}{self.sep}{self.created_date}'
+        dur_and_viewers = f'{self.duration_fmt}{self.sep}{self.viewers_fmt}'
+        return f'{id_and_date} {self.title_fmt} ({dur_and_viewers})'
 
 
 @dataclass
@@ -103,7 +105,7 @@ class FollowedContentVideo:
 
     @property
     def key(self) -> str:
-        return self.stream_id
+        return self.stream_id[:4]
 
     @property
     def name(self) -> str:
@@ -111,38 +113,42 @@ class FollowedContentVideo:
 
     @property
     def sep(self) -> str:
-        return PangoSpan(SEPARATOR, alpha='100%') if self.markup else SEPARATOR
+        return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
 
     @property
-    def title_str(self) -> str:
-        title = self.title[: TITLE_MAX_LENGTH - 3] + '...' if len(self.title) > TITLE_MAX_LENGTH else f'{self.title} '
-        if self.markup:
-            title = format.sanitize(title)
-        return PangoSpan(title, size='large', foreground='silver') if self.markup else title
+    def title_fmt(self) -> str:
+        title = format.sanitize(format.short(self.title, TITLE_MAX_LENGTH))
+        return PangoSpan(title, size='medium', foreground='grey', markup=self.markup)
 
     @property
     def viewers_fmt(self) -> str:
         viewers = format.number(self.view_count)
-        return PangoSpan(viewers, size='medium', weight='light') if self.markup else viewers
+        return PangoSpan(viewers, size='medium', weight='light', markup=self.markup)
 
     @property
     def duration_fmt(self) -> str:
-        return PangoSpan(self.duration, size='medium', weight='light') if self.markup else self.duration
+        return PangoSpan(self.duration, size='medium', weight='light', markup=self.markup)
 
     @property
-    def video_str(self) -> str:
-        return PangoSpan(self.key, size='small', foreground='grey') if self.markup else self.key
+    def item_id(self) -> str:
+        return PangoSpan(self.key, size='small', foreground='grey', markup=self.markup)
 
     @property
-    def created_date(self) -> str:
+    def created_at_fmt(self) -> str:
         created = format.date(self.created_at)
-        return PangoSpan(created, size='x-large', foreground='orange', sub=True) if self.markup else created
+        return PangoSpan(
+            created,
+            size='medium',
+            weight='bold',
+            foreground='orange',
+            font_variant='all-small-caps',
+            markup=self.markup,
+        )
 
     @property
     def published_fmt(self) -> str:
         return format.date(self.published_at)
 
     def __str__(self) -> str:
-        return (
-            f'{self.video_str}{self.sep}{self.title_str} {self.created_date} ({self.duration_fmt} | {self.viewers_fmt})'
-        )
+        id_and_date = f'{self.item_id}{self.sep}{self.created_at_fmt}'
+        return f'{id_and_date}{self.sep}{self.title_fmt} ({self.duration_fmt} | {self.viewers_fmt})'

@@ -17,7 +17,7 @@ class FollowedChannelInfo:
     broadcaster_login: str
     broadcaster_name: str
     broadcaster_language: str
-    tags: list[str]
+    tags: list[str] | None
     game_id: str
     game_name: str
     title: str
@@ -168,3 +168,49 @@ class Channel:
     def __str__(self) -> str:
         name = PangoSpan(self.display_name, weight='bold', size='large', markup=self.markup)
         return f'{name}{self.sep}{self.icon} {self.status}{self.sep}{self.category()}'
+
+
+@dataclass
+class ChannelInfo:
+    broadcaster_id: str
+    broadcaster_name: str
+    broadcaster_login: str
+    followed_at: str
+    live: bool = False
+    markup: bool = True
+    playable: bool = False
+
+    def __hash__(self):
+        return hash((self.user_id, self.name))
+
+    @property
+    def name(self) -> str:
+        return self.broadcaster_name
+
+    @property
+    def icon_off(self) -> PangoSpan:
+        return PangoSpan(LIVE_ICON, foreground='grey', size='small', alpha='50%', markup=self.markup)
+
+    @property
+    def user_id(self) -> str:
+        return self.broadcaster_id
+
+    @property
+    def sep(self) -> str:
+        return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
+
+    @property
+    def offline(self) -> str:
+        return PangoSpan(
+            'offline',
+            font_variant='small-caps',
+            weight='bold',
+            foreground='grey',
+            size='medium',
+            alpha='85%',
+            markup=self.markup,
+        )
+
+    def __str__(self) -> str:
+        user = PangoSpan(self.name, weight='bold', size='large', markup=self.markup)
+        return f'{user}{self.sep}{self.icon_off} {self.offline}'

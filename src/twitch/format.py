@@ -70,3 +70,10 @@ def remove_punctuation_escape_ampersand(s: str) -> str:
     special_chars = string.punctuation.replace('&', '')
     s = ''.join(c for c in s if c not in special_chars)
     return s.replace('&', '&amp;')
+
+
+def short(s: str, max_len: int = 80) -> str:
+    """Shorten the given string if it exceeds the max length."""
+    if len(s) > max_len:
+        return s[: max_len - 3] + '...'
+    return s
