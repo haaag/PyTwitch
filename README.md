@@ -104,6 +104,7 @@ After installation you can use the command `pytwitch`
 | **alt-c**     | search by channel           |
 | **alt-o**     | open stream chat in browser |
 | **alt-i**     | show item information       |
+| **alt-m**     | show top streams            |
 | **alt-q**     | quit                        |
 | ~~**alt-m**~~ | ~~multi-select streams~~    |
 
@@ -114,14 +115,13 @@ After installation you can use the command `pytwitch`
 
 ### 🧰 TODO
 
+- [ ] Finish tests
 - [x] Create/Update requirements/dependencies
 - [x] Complete Usage
 - [x] Update screenshots
 - [x] Better logging
-- [ ] Finish tests
-- ~~[ ] Update GIFs~~
-- [ ] Update `argparse` help
-
-  - [ ] Display `keybinds`
+- [x] Update GIFs
+- [x] Update `argparse` help
+- [x] Display `keybinds`
 
 - [ignore](https://raw.githubusercontent.com/haaag/{repo_name}/{branch}/.github/images/{asset_name}.{asset_extension})

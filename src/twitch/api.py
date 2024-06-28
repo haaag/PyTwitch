@@ -60,14 +60,14 @@ class Credentials(BaseModel):
 
 class API:
     base_url: URL
-    client: httpx.Client
+    client: httpx.AsyncClient
 
     def __init__(self, credentials: Credentials) -> None:
         self.credentials = credentials
         self.base_url = TWITCH_API_BASE_URL
 
-    def load_client(self) -> None:
-        self.client = httpx.Client(headers=self._get_request_headers())
+    async def load_client(self) -> None:
+        self.client = httpx.AsyncClient(headers=self._get_request_headers())
 
     def _get_request_headers(self) -> HeaderTypes:
         return {
@@ -81,43 +81,49 @@ class API:
         log.debug('params: %s', query_params)
         return query_params
 
-    def send_request(self, url: URL, query_params: QueryParamTypes, timeout: int) -> httpx.Response:
-        response = self.client.get(url, params=query_params, timeout=timeout)
-        response.raise_for_status()
-        return response
+    async def close(self) -> None:
+        log.debug('closing async client connection')
+        if self.client:
+            await self.client.aclose()
+            self.client = None
+
+    async def send_request(self, url: URL, query_params: QueryParamTypes, timeout: int) -> httpx.Response:
+        r = await self.client.get(url, params=query_params, timeout=timeout)
+        r.raise_for_status()
+        return r
 
     def _has_pagination(self, data: TwitchApiResponse) -> bool:
         return data.get('pagination', {}).get('cursor') is not None
 
-    def request_get(
+    async def request_get(
         self,
         endpoint_url: URL,
         query_params: QueryParamTypes,
-        requested_items: int = DEFAULT_REQUESTED_ITEMS,
+        max_items: int = DEFAULT_REQUESTED_ITEMS,
         accumulated_items: int = 0,
     ) -> TwitchApiResponse:
         url = self.base_url.join(endpoint_url)
-        query_params = self._set_query_params(query_params, requested_items)
-        response = self.send_request(url, query_params, timeout=5)
+        query_params_dict = self._set_query_params(query_params, max_items)
+        response = await self.send_request(url, query_params_dict, timeout=10)
         data = response.json()
         accumulated_items += len(data['data'])
 
         if not self._has_pagination(data):
             return data
 
-        if requested_items >= accumulated_items:
+        if max_items >= accumulated_items:
             next_cursor = data['pagination']['cursor']
-            remaining_items = requested_items - accumulated_items
+            remaining_items = max_items - accumulated_items
 
             query_params['after'] = next_cursor
             query_params['first'] = min(MAX_ITEMS_PER_REQUEST, remaining_items)
-            more_data = self.request_get(
+            more_data = await self.request_get(
                 endpoint_url=endpoint_url,
                 query_params=query_params,
-                requested_items=requested_items,
+                max_items=max_items,
                 accumulated_items=accumulated_items,
             )
-            data['data'] += more_data['data'][:remaining_items]
+            data['data'].extend(more_data['data'][:remaining_items])
         return data
 
 
@@ -125,21 +131,21 @@ class Content:
     def __init__(self, api: API) -> None:
         self.api = api
 
-    def get_clips(self, user_id: str) -> list[dict[str, Any]]:
+    async def get_clips(self, user_id: str) -> list[dict[str, Any]]:
         """Gets one or more video clips that were captured from streams."""
         # https://dev.twitch.tv/docs/api/reference#get-clips
         endpoint = URL('clips')
         params = {'broadcaster_id': user_id, 'is_featured': True}
-        response = self.api.request_get(
+        response = await self.api.request_get(
             endpoint,
             params,
-            requested_items=MAX_ITEMS_PER_REQUEST,
+            max_items=MAX_ITEMS_PER_REQUEST,
         )
         data = response['data']
         log.info("got user_id='%s' clips len='%s'", user_id, len(data))
         return data
 
-    def get_videos(self, user_id: str) -> list[dict[str, Any]]:
+    async def get_videos(self, user_id: str) -> list[dict[str, Any]]:
         """
         Gets information about one or more published videos.
 
@@ -158,12 +164,12 @@ class Content:
             'period': 'week',
             'type': 'archive',
         }
-        response = self.api.request_get(endpoint, params, requested_items=75)
+        response = await self.api.request_get(endpoint, params, max_items=50)
         data = response['data']
         log.info("got user_id='%s' videos len='%s'", user_id, len(data))
         return data
 
-    def search_categories(self, query: str) -> dict[str, Any]:
+    async def search_categories(self, query: str) -> dict[str, Any]:
         """
         Gets the games or categories that match the specified query.
         """
@@ -171,10 +177,10 @@ class Content:
         log.debug(f"searching for categories with query='{query}'")
         endpoint = URL('search/categories')
         params = {'query': query}
-        response = self.api.request_get(endpoint, params)
+        response = await self.api.request_get(endpoint, params)
         return response['data']
 
-    def search_channels(self, query: str, live_only: bool = True) -> dict[str, Any]:
+    async def search_channels(self, query: str, live_only: bool = True) -> dict[str, Any]:
         """
         Gets the channels that match the specified query and have
         streamed content within the past 6 months.
@@ -183,10 +189,10 @@ class Content:
         log.debug(f"searching for channels with query='{query}'")
         endpoint = URL('search/channels')
         params = {'query': query, 'live_only': live_only}
-        response = self.api.request_get(endpoint, params)
+        response = await self.api.request_get(endpoint, params)
         return response['data']
 
-    def get_streams_by_game_id(self, game_id: int, max_items: int = DEFAULT_REQUESTED_ITEMS) -> dict[str, Any]:
+    async def get_streams_by_game_id(self, game_id: int, max_items: int = DEFAULT_REQUESTED_ITEMS) -> dict[str, Any]:
         """
         Gets a list of all streams.
         """
@@ -194,20 +200,20 @@ class Content:
         log.debug(f"getting streams from game_id='{game_id}'")
         endpoint = URL('streams')
         params = {'game_id': game_id}
-        response = self.api.request_get(endpoint, params, requested_items=max_items)
+        response = await self.api.request_get(endpoint, params, max_items=max_items)
         return response['data']
 
-    def get_top_streams(self) -> dict[str, Any]:
+    async def get_top_streams(self) -> dict[str, Any]:
         """
         Gets a list of all streams.
         """
         # https://dev.twitch.tv/docs/api/reference/#get-streams
         endpoint = URL('streams')
-        response = self.api.request_get(endpoint, query_params={}, requested_items=100)
+        response = await self.api.request_get(endpoint, query_params={}, max_items=100)
         log.debug("top_streams_len='%s'", len(response['data']))
         return response['data']
 
-    def get_games_info(self, game_ids: list[str]) -> list[dict[str, Any]]:
+    async def get_games_info(self, game_ids: list[str]) -> list[dict[str, Any]]:
         """
         Gets information about specified categories or games.
         """
@@ -215,18 +221,18 @@ class Content:
         data: list[dict[str, Any]] = []
         endpoint = URL('games')
         for batch in _group_into_batches(game_ids, MAX_ITEMS_PER_REQUEST):
-            response = self.api.request_get(endpoint, {'id': batch})
+            response = await self.api.request_get(endpoint, {'id': batch})
             data.extend(response.get('data', []))
         log.debug("games_info_len='%s'", len(data))
         return data
 
-    def get_top_games(self) -> dict[str, Any]:
+    async def get_top_games(self) -> dict[str, Any]:
         """
         Gets information about all broadcasts on Twitch.
         """
         # https://dev.twitch.tv/docs/api/reference/#get-top-games
         endpoint = URL('games/top')
-        response = self.api.request_get(endpoint, query_params={}, requested_items=35)
+        response = await self.api.request_get(endpoint, query_params={}, max_items=35)
         log.debug("top_games_len='%s'", len(response['data']))
         return response['data']
 
@@ -242,7 +248,7 @@ class Channels:
     search for channels, and get a list of channels that the user follows.
     """
 
-    def get_streams(self) -> list[dict[str, Any]]:
+    async def streams(self) -> list[dict[str, Any]]:
         """
         Gets a list of live streams of broadcasters that the specified user follows.
 
@@ -254,10 +260,10 @@ class Channels:
         log.debug(f'getting a list of live streams, max={max_followed_streams}')
         endpoint = URL('streams/followed')
         params = {'user_id': self.api.credentials.user_id}
-        response = self.api.request_get(endpoint, params, requested_items=max_followed_streams)
+        response = await self.api.request_get(endpoint, params, max_items=max_followed_streams)
         return response['data']
 
-    def get_all(self) -> list[dict[str, Any]]:
+    async def all(self) -> list[dict[str, Any]]:
         """
         Gets a list of broadcasters that the specified user follows.
         """
@@ -266,10 +272,22 @@ class Channels:
         log.debug(f'getting list that user follows, max={max_followed_channels}')
         endpoint = URL('channels/followed')
         params = {'user_id': self.api.credentials.user_id}
-        response = self.api.request_get(endpoint, params, requested_items=max_followed_channels)
+        response = await self.api.request_get(endpoint, params, max_items=max_followed_channels)
         return response['data']
 
-    def get_info(self, user_id: str) -> list[dict[str, Any]]:
+    async def ids(self) -> list[int]:
+        """
+        Gets a list of broadcasters's ids that the specified user follows.
+        """
+        # https://dev.twitch.tv/docs/api/reference/#get-followed-channels
+        max_followed_channels = 500
+        log.debug(f'getting list that user follows, max={max_followed_channels}')
+        endpoint = URL('channels/followed')
+        params = {'user_id': self.api.credentials.user_id}
+        response = await self.api.request_get(endpoint, params, max_items=max_followed_channels)
+        return [c['broadcaster_id'] for c in response['data']]
+
+    async def get_info(self, user_id: str) -> list[dict[str, Any]]:
         """
         Fetches information about one channel.
         """
@@ -277,10 +295,10 @@ class Channels:
         log.debug('getting information about channel')
         endpoint = URL('channels')
         params = {'broadcaster_id': user_id}
-        response = self.api.request_get(endpoint, params)
+        response = await self.api.request_get(endpoint, params)
         return response['data']
 
-    def get_info_by_list(self, broadcaster_ids: list[str]) -> list[dict[str, Any]]:
+    async def info_ids(self, broadcaster_ids: list[str]) -> list[dict[str, Any]]:
         """
         Gets information about more channels.
         """
@@ -289,7 +307,7 @@ class Channels:
         endpoint = URL('channels')
 
         for batch in _group_into_batches(broadcaster_ids, MAX_ITEMS_PER_REQUEST):
-            response = self.api.request_get(endpoint, {'broadcaster_id': batch})
+            response = await self.api.request_get(endpoint, {'broadcaster_id': batch})
             data.extend(response.get('data', []))
         return data
 

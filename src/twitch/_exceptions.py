@@ -11,7 +11,11 @@ class ExecutableNotFoundError(Exception):
     pass
 
 
-CONNECTION_EXCEPTION = (httpx.ConnectError, httpx.HTTPStatusError)
+CONNECTION_EXCEPTION = (
+    httpx.ConnectError,
+    httpx.HTTPStatusError,
+    httpx.ConnectTimeout,
+)
 EXCEPTIONS = (
     ExecutableNotFoundError,
     EnvValidationError,
