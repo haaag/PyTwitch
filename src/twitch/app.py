@@ -14,6 +14,7 @@ from typing import Protocol
 
 from twitch import clipboard
 from twitch import format
+from twitch import player
 from twitch.constants import SEPARATOR
 from twitch.constants import UserCancel
 from twitch.constants import UserConfirms
@@ -21,7 +22,6 @@ from twitch.helpers import astimeit
 from twitch.models.category import Category
 
 if typing.TYPE_CHECKING:
-    import mpv
     from pyselector.interfaces import MenuInterface
     from pyselector.key_manager import Keybind
     from twitch.client import TwitchFetcher
@@ -63,10 +63,10 @@ class Item(Protocol):
 
 
 class TwitchApp:
-    def __init__(self, fetcher: TwitchFetcher, menu: MenuInterface, player: mpv.Mpv, keys: Keys):
+    def __init__(self, fetcher: TwitchFetcher, menu: MenuInterface, player_conf: bool, keys: Keys):
         self.fetch = fetcher
         self.menu = menu
-        self.player = player
+        self.player_conf = player_conf
         self.keys = keys
 
     async def show_all_streams(self, **kwargs) -> None:
@@ -90,7 +90,7 @@ class TwitchApp:
                 k = self.menu.keybind.get_keybind_by_code(keycode)
                 await k.callback(item=item, keybind=k, items=items)
 
-        self.play(item.url)
+        self.play(name=item.name, url=item.url)
         return None
 
     async def show_videos(self, **kwargs) -> None:
@@ -154,7 +154,11 @@ class TwitchApp:
                 await self.quit(keycode=keycode)
             if keycode not in (UserConfirms(0), UserCancel(1)):
                 await self.get_key_by_code(keycode).callback(items=items, item=item)
-        await self.quit(keycode=self.play(item.url))
+
+        if not item.playable:
+            logger.error("item='%s' is not playable", item.name)
+            return await self.quit(keycode=1)
+        return await self.quit(keycode=self.play(name=item.name, url=item.url))
 
     async def show_by_query(self, **kwargs) -> None:
         query: str | None = kwargs.get('query')
@@ -332,17 +336,18 @@ class TwitchApp:
             if keycode not in (UserConfirms(0), UserCancel(1)):
                 keybind = self.menu.keybind.get_keybind_by_code(keycode)
                 await keybind.callback(item=item)
-        self.play(item.url)
+        self.play(name=item.name, url=item.url)
 
     async def multi_selection(self, **kwargs) -> None:
         raise NotImplementedError
 
-    def play(self, url: str) -> int:
+    def play(self, name: str, url: str) -> int:
         # https://github.com/jaseg/python-mpv/issues/126
-        logger.info(f'playing {url!r}')
-        self.player.play(url)
-        self.player.wait_for_playback()
-        del self.player
+        logger.info(f'playing {name!r} {url!r}')
+        p = player.get(with_config=self.player_conf, name=name)
+        p.play(url)
+        p.wait_for_playback()
+        del p
         return 0
 
     async def open_chat(self, **kwargs) -> None:

@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 
 from pyselector import Menu
 from twitch import constants
-from twitch import player
 from twitch.api import Credentials
 from twitch.api import TwitchApi
 from twitch.app import Keys
@@ -109,7 +108,7 @@ async def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
     return TwitchApp(
         fetcher=fetcher,
         menu=menu,
-        player=player.get(with_config=args.no_conf),
+        player_conf=args.no_conf,
         keys=keys,
     )
 
