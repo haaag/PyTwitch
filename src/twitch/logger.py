@@ -37,6 +37,6 @@ handler.setFormatter(CustomFormatter())
 
 
 def verbose(verbose: int) -> None:
-    levels = [logging.WARNING, logging.INFO, logging.DEBUG]
+    levels = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
     level = levels[min(verbose, len(levels) - 1)]
     logging.basicConfig(level=level, handlers=[handler])
