@@ -66,7 +66,7 @@ class FollowedStream:
 
     @property
     def url(self) -> str:
-        return str(TWITCH_STREAM_BASE_URL.join(self.user_name))
+        return str(TWITCH_STREAM_BASE_URL.join(self.user_login))
 
     @property
     def category(self) -> str:

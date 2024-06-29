@@ -15,25 +15,20 @@ from typing import Protocol
 from twitch import clipboard
 from twitch import format
 from twitch import player
+from twitch._exceptions import ItemNotPlaylableError
 from twitch.constants import SEPARATOR
 from twitch.constants import UserCancel
 from twitch.constants import UserConfirms
-from twitch.helpers import astimeit
+from twitch.datatypes import TwitchChannel
+from twitch.datatypes import TwitchContent
 from twitch.models.category import Category
 
 if typing.TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
     from pyselector.key_manager import Keybind
     from twitch.client import TwitchFetcher
-    from twitch.datatypes import TwitchChannel
-    from twitch.datatypes import TwitchContent
-    from twitch.models.channels import FollowedChannelInfo
-    from twitch.models.content import FollowedContentClip
-    from twitch.models.content import FollowedContentVideo
-    from twitch.models.streams import FollowedStream
-    from twitch.player import TwitchPlayableContent
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 # TODO:
 # - [ ] get player inside TwitchApp.play() method
@@ -56,10 +51,12 @@ class Keys(NamedTuple):
     top_games: str
 
 
-class Item(Protocol):
-    name: str
-    live: bool
-    game_name: str
+TwitchData = tuple[Mapping[str, TwitchChannel | TwitchContent], str]
+
+
+class TwitchPlayableContent(Protocol):
+    url: str
+    playable: bool
 
 
 class TwitchApp:
@@ -69,7 +66,7 @@ class TwitchApp:
         self.player_conf = player_conf
         self.keys = keys
 
-    async def show_all_streams(self, **kwargs) -> None:
+    async def show_all_streams(self, **kwargs: dict[str, Any]) -> None:
         items, mesg = await self.get_channels_and_streams()
         while True:
             item, keycode = self.select(items=items, mesg=mesg)
@@ -89,25 +86,24 @@ class TwitchApp:
             if keycode not in (UserConfirms(0), UserCancel(1)):
                 k = self.menu.keybind.get_keybind_by_code(keycode)
                 await k.callback(item=item, keybind=k, items=items)
+        retcode = self.play(name=item.name, url=item.url)
+        return await self.quit(keycode=retcode)
 
-        self.play(name=item.name, url=item.url)
-        return None
-
-    async def show_videos(self, **kwargs) -> None:
+    async def show_videos(self, **kwargs: dict[str, TwitchChannel]) -> None:
         item: TwitchChannel = kwargs.pop('item')
         self.menu.keybind.unregister_all()
         videos, mesg = await self.get_channel_videos(item=item)
         await self.show_and_play(items=videos, mesg=mesg)
 
-    async def show_clips(self, **kwargs) -> None:
+    async def show_clips(self, **kwargs: dict[str, TwitchChannel]) -> None:
         item: TwitchChannel = kwargs.pop('item')
         self.menu.keybind.unregister_all()
         clips, mesg = await self.get_channel_clips(item=item)
         await self.show_and_play(items=clips, mesg=mesg)
 
-    async def show_by_categories(self, **kwargs) -> None:
+    async def show_by_categories(self, **kwargs: dict[str, TwitchChannel]) -> None:
         categories: dict[str, Category] = {}
-        items: dict[str, Item] = kwargs.get('items', {})
+        items: dict[str, TwitchChannel] = kwargs.get('items', {})
 
         for chan in items.values():
             if not chan.live:
@@ -118,21 +114,21 @@ class TwitchApp:
             )
             category.channels[chan.name] = chan
 
+        categories_sorted = sorted(categories.items(), key=lambda x: x[1].total_viewers(), reverse=True)
         mesg = f'> Showing ({len(categories)}) <games>'
-        category, keycode = self.select(items=categories, mesg=mesg)
+        category, keycode = self.select(items=dict(categories_sorted), mesg=mesg)
         if not category:
             return
-
         mesg = f'> Showing ({len(category.channels)}) <channels> from <{category.name}> category'
         await self.show_and_play(category.channels, mesg=mesg)
 
-    async def show_keybinds(self, **kwargs) -> None:
+    async def show_keybinds(self, **kwargs: dict[str, TwitchChannel]) -> None:
         item: TwitchChannel = kwargs.pop('item')
         key: Keybind = kwargs.pop('keybind')
         key.toggle_hidden()
         items: dict[str, str] = {}
         keybinds: dict[int, Keybind] = self.menu.keybind.keys
-        for _, key in keybinds.items():
+        for key in keybinds.values():
             items[key.bind] = key
         mesg = f'> Showing ({len(keybinds)}) <keybinds>\n> item selected: <{item.name}>'
 
@@ -156,9 +152,11 @@ class TwitchApp:
                 await self.get_key_by_code(keycode).callback(items=items, item=item)
 
         if not item.playable:
-            logger.error("item='%s' is not playable", item.name)
-            return await self.quit(keycode=1)
-        return await self.quit(keycode=self.play(name=item.name, url=item.url))
+            err = f"item='{item.name}' is not playable"
+            raise ItemNotPlaylableError(err)
+
+        retcode = self.play(name=item.name, url=item.url)
+        return await self.quit(keycode=retcode)
 
     async def show_by_query(self, **kwargs) -> None:
         query: str | None = kwargs.get('query')
@@ -166,10 +164,9 @@ class TwitchApp:
             query = self.get_user_input(mesg='Search <channels> by query', prompt='TwitchChannel>')
 
         if not query:
-            logger.debug('query search cancelled by user')
+            log.warn('query search cancelled by user')
             return
 
-        query = query.strip()
         data = await self.fetch.channels_by_query(query, live_only=False)
         items = {c.id: c for c in data}
         self.toggle_content_keybinds()
@@ -182,9 +179,9 @@ class TwitchApp:
             game = self.get_user_input(mesg='Search <games> or <categories>', prompt='TwitchGame>')
 
         if not game:
+            log.warn('query search cancelled by user')
             return
 
-        game = game.strip()
         data = await self.fetch.games_by_query(game)
         games = {g.id: g for g in data}
         selected, _ = self.select(games, mesg=f'> Showing ({len(games)}) <games> or <categories>')
@@ -201,7 +198,6 @@ class TwitchApp:
         mesg = f'> Showing ({len(streams)}) <streams> from <{selected.name}> game'
         await self.show_and_play({s.id: s for s in streams}, mesg=mesg)
 
-    @astimeit
     async def show_top_streams(self, **kwargs) -> None:
         kgames = self.get_key_by_bind(self.keys.categories)
         self.toggle_content_keybinds()
@@ -214,6 +210,7 @@ class TwitchApp:
     async def show_item_info(self, **kwargs) -> None:
         self.menu.keybind.unregister_all()
         item: TwitchContent | TwitchChannel = kwargs['item']
+        item.title = format.sanitize(item.title)
         item_dict = asdict(item)
         formatted_item = format.stringify(item_dict, sep=SEPARATOR)
         formatted_item.insert(0, f"{'url':<18}{SEPARATOR}\t{item.url:<30}")
@@ -228,17 +225,13 @@ class TwitchApp:
         clipboard.copy(selected)
         return await self.quit(keycode=keycode)
 
-    @astimeit
-    async def get_channels_and_streams(
-        self, **kwargs
-    ) -> tuple[Mapping[str, FollowedChannelInfo | FollowedStream], str]:
+    async def get_channels_and_streams(self, **kwargs) -> TwitchData:
         data = await self.fetch.channels_and_streams()
         return data, f'> Showing ({self.fetch.online}) streams from {len(data)} channels'
 
-    @astimeit
-    async def get_channel_clips(self, **kwargs) -> tuple[Mapping[str, FollowedContentClip], str]:
+    async def get_channel_clips(self, **kwargs) -> TwitchData:
         item: TwitchChannel = kwargs.pop('item')
-        logger.info("processing user='%s' clips", item.name)
+        log.info("processing user='%s' clips", item.name)
         clips = sorted(
             await self.fetch.clips(user_id=item.user_id),
             key=lambda c: c.created_at,
@@ -247,11 +240,9 @@ class TwitchApp:
         data = {c.key: c for c in clips}
         return data, f'> Showing ({len(data)}) clips from <{item.name}> channel'
 
-    @astimeit
-    async def get_channel_videos(self, **kwargs) -> tuple[Mapping[str, FollowedContentVideo], str]:
+    async def get_channel_videos(self, **kwargs) -> TwitchData:
         item = kwargs.pop('item')
-        videos = await self.fetch.videos(user_id=item.user_id)
-        data = {v.key: v for v in videos}
+        data = {v.key: v for v in await self.fetch.videos(user_id=item.user_id)}
         return data, f'> Showing ({len(data)}) videos from <{item.name}> channel'
 
     def get_key_by_code(self, keycode: int) -> Keybind:
@@ -262,7 +253,7 @@ class TwitchApp:
 
     def get_user_input(self, mesg: str = '', prompt: str = 'Query>') -> str:
         self.menu.keybind.toggle_hidden()
-        user_input, keycode = self.menu.prompt(
+        user_input, _ = self.menu.prompt(
             items=[],
             mesg=mesg,
             prompt=prompt,
@@ -270,7 +261,9 @@ class TwitchApp:
             markup=self.markup,
         )
         self.menu.keybind.toggle_hidden(restore=True)
-        return user_input
+        if not user_input:
+            return ''
+        return user_input.strip()
 
     def toggle_content_keybinds(self) -> None:
         key = self.menu.keybind
@@ -301,8 +294,8 @@ class TwitchApp:
 
         return item, keycode
 
-    @astimeit
     async def show_top_games(self, **kwargs) -> None:
+        log.info('processing top games')
         categories = await self.fetch.top_games_with_streams()
         nviewers: int = sum([c.total_viewers() for c in categories.values()])
         nchannels: int = sum([c.channels_live() for c in categories.values()])
@@ -336,14 +329,16 @@ class TwitchApp:
             if keycode not in (UserConfirms(0), UserCancel(1)):
                 keybind = self.menu.keybind.get_keybind_by_code(keycode)
                 await keybind.callback(item=item)
-        self.play(name=item.name, url=item.url)
+
+        retcode = self.play(name=item.name, url=item.url)
+        return await self.quit(keycode=retcode)
 
     async def multi_selection(self, **kwargs) -> None:
         raise NotImplementedError
 
     def play(self, name: str, url: str) -> int:
         # https://github.com/jaseg/python-mpv/issues/126
-        logger.info(f'playing {name!r} {url!r}')
+        log.info(f'playing {name!r} {url!r}')
         p = player.get(with_config=self.player_conf, name=name)
         p.play(url)
         p.wait_for_playback()
@@ -352,14 +347,14 @@ class TwitchApp:
 
     async def open_chat(self, **kwargs) -> None:
         item = kwargs.pop('item')
-        logger.debug(f'opening chat for {item.name}')
+        log.debug(f'opening chat for {item.name}')
         webbrowser.open_new_tab(item.chat)
         await self.quit(keycode=0)
 
     async def quit(self, **kwargs) -> None:
         keycode = kwargs.get('keycode', 0)
         await self.fetch.close()
-        logger.debug('terminated by user')
+        log.debug('terminated by user')
         sys.exit(keycode)
 
     @property

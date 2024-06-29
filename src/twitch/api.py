@@ -107,10 +107,10 @@ class API:
             'Authorization': f'Bearer {self.credentials.access_token}',
         }
 
-    def _set_query_params(self, query_params: QueryParamTypes, requested_items: int) -> QueryParamTypes:
-        query_params['first'] = min(MAX_ITEMS_PER_REQUEST, requested_items)
-        log.debug('params: %s', query_params)
-        return query_params
+    def _set_params(self, params: QueryParamTypes, requested_items: int) -> QueryParamTypes:
+        params['first'] = min(MAX_ITEMS_PER_REQUEST, requested_items)
+        log.debug('params: %s', params)
+        return params
 
     async def close(self) -> None:
         log.debug('closing async client connection')
@@ -118,7 +118,7 @@ class API:
             await self.client.aclose()
             self.client = None
 
-    async def send_request(self, url: URL, query_params: QueryParamTypes, timeout: int) -> httpx.Response:
+    async def send_request(self, url: URL, query_params: QueryParamTypes, timeout: int = 5) -> httpx.Response:
         r = await self.client.get(url, params=query_params, timeout=timeout)
         r.raise_for_status()
         return r
@@ -129,30 +129,30 @@ class API:
     async def request_get(
         self,
         endpoint_url: URL,
-        query_params: QueryParamTypes,
+        params: QueryParamTypes,
         max_items: int = DEFAULT_REQUESTED_ITEMS,
-        accumulated_items: int = 0,
+        items_collected: int = 0,
     ) -> TwitchApiResponse:
         url = self.base_url.join(endpoint_url)
-        query_params_dict = self._set_query_params(query_params, max_items)
+        query_params_dict = self._set_params(params, max_items)
         response = await self.send_request(url, query_params_dict, timeout=10)
         data = response.json()
-        accumulated_items += len(data['data'])
+        items_collected += len(data['data'])
 
         if not self._has_pagination(data):
             return data
 
-        if max_items >= accumulated_items:
+        if max_items >= items_collected:
             next_cursor = data['pagination']['cursor']
-            remaining_items = max_items - accumulated_items
+            remaining_items = max_items - items_collected
 
-            query_params['after'] = next_cursor
-            query_params['first'] = min(MAX_ITEMS_PER_REQUEST, remaining_items)
+            params['after'] = next_cursor
+            params['first'] = min(MAX_ITEMS_PER_REQUEST, remaining_items)
             more_data = await self.request_get(
                 endpoint_url=endpoint_url,
-                query_params=query_params,
+                params=params,
                 max_items=max_items,
-                accumulated_items=accumulated_items,
+                items_collected=items_collected,
             )
             data['data'].extend(more_data['data'][:remaining_items])
         return data
@@ -240,7 +240,7 @@ class Content:
         """
         # https://dev.twitch.tv/docs/api/reference/#get-streams
         endpoint = URL('streams')
-        response = await self.api.request_get(endpoint, query_params={}, max_items=100)
+        response = await self.api.request_get(endpoint, params={}, max_items=100)
         log.debug("top_streams_len='%s'", len(response['data']))
         return response['data']
 
@@ -257,13 +257,13 @@ class Content:
         log.debug("games_info_len='%s'", len(data))
         return data
 
-    async def get_top_games(self) -> dict[str, Any]:
+    async def get_top_games(self, items_max: int = MAX_ITEMS_PER_REQUEST) -> dict[str, Any]:
         """
         Gets information about all broadcasts on Twitch.
         """
         # https://dev.twitch.tv/docs/api/reference/#get-top-games
         endpoint = URL('games/top')
-        response = await self.api.request_get(endpoint, query_params={}, max_items=35)
+        response = await self.api.request_get(endpoint, params={}, max_items=items_max)
         log.debug("top_games_len='%s'", len(response['data']))
         return response['data']
 

@@ -12,8 +12,6 @@ from twitch._exceptions import EXCEPTIONS
 # TODO)):
 # - [X] ~~Read https://dev.twitch.tv/docs/api/reference/#get-games~~
 
-VERBOSE_ON = 3
-
 
 def main() -> int:
     args = setup.args()
@@ -24,23 +22,24 @@ def main() -> int:
         log.debug('arguments: %s', vars(args))
 
     if args.help:
-        return setup.help()
+        setup.help()
+        return 0
 
     menu = setup.menu(args)
     try:
-        asverbose = args.verbose == VERBOSE_ON
         run = asyncio.run
         twitch = run(setup.app(menu, args))
         twitch = setup.keybinds(twitch)
 
         if args.test:
-            run(setup.test(t=twitch), debug=asverbose)
+            run(setup.test(t=twitch))
         if args.channel:
-            run(twitch.show_by_query(), debug=asverbose)
+            run(twitch.show_by_query())
         elif args.games:
-            run(twitch.show_by_game(), debug=asverbose)
+            run(twitch.show_by_game())
         else:
-            run(twitch.show_all_streams(), debug=asverbose)
+            run(twitch.show_all_streams())
+        return 0
     except (*CONNECTION_EXCEPTION, *EXCEPTIONS) as err:
         menu.keybind.unregister_all()
         menu.prompt(items=[f'{err!r}'], markup=False, prompt='PyTwitchErr>')

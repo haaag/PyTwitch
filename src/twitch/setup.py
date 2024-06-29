@@ -6,6 +6,7 @@ import functools
 import logging
 import sys
 from typing import TYPE_CHECKING
+from typing import Any
 
 from pyselector import Menu
 from twitch import constants
@@ -51,7 +52,7 @@ def args() -> argparse.Namespace:
 
     # options
     parser.add_argument('-m', '--menu', choices=['rofi', 'dmenu'], default='rofi')
-    parser.add_argument('-c', '--config', type=str)
+    parser.add_argument('-e', '--env', type=str)
     parser.add_argument('-C', '--channel', action='store_true')
     parser.add_argument('-G', '--games', action='store_true')
     parser.add_argument('-v', '--verbose', action='count', default=0)
@@ -94,13 +95,13 @@ def menu(args: argparse.Namespace) -> MenuInterface:
     return menu
 
 
-async def test(**kwargs) -> None:  # noqa: ARG001
+async def test(**kwargs: Any) -> None:  # noqa: ARG001
     print('Testing mode, not launching menu')
     sys.exit()
 
 
 async def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
-    credentials = Credentials.load(args.config)
+    credentials = Credentials.load(args.env)
     credentials.validate()
     api = TwitchApi(credentials)
     await api.load_client()
@@ -113,6 +114,5 @@ async def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
     )
 
 
-def help() -> int:  # noqa: A001
+def help() -> None:  # noqa: A001
     print(constants.HELP)
-    return 0

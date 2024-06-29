@@ -52,7 +52,7 @@ class FollowedChannelInfo:
 
     @property
     def category(self) -> str:
-        game = format.sanitize(self.game_name) if self.markup else self.game_name
+        game = format.sanitize(self.game_name)
         return PangoSpan(game, size='large', markup=self.markup)
 
     @property
@@ -127,6 +127,10 @@ class Channel:
         return self.display_name
 
     @property
+    def playable(self) -> bool:
+        return self.is_live
+
+    @property
     def sep(self) -> str:
         return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
 
@@ -145,7 +149,12 @@ class Channel:
     @property
     def online_str(self) -> str:
         return PangoSpan(
-            'Online', foreground=LIVE_ICON_COLOR, size='x-large', sub=True, alpha='100%', markup=self.markup
+            'Online',
+            foreground=LIVE_ICON_COLOR,
+            size='x-large',
+            sub=True,
+            alpha='100%',
+            markup=self.markup,
         )
 
     @property
@@ -157,9 +166,9 @@ class Channel:
         return self.online_str if self.is_live else self.offline_str
 
     def category(self) -> str:
-        color = 'orange' if self.is_live else 'grey'
+        foreground = 'orange' if self.is_live else 'grey'
         game = format.sanitize(self.game_name)
-        return PangoSpan(game, foreground=color, size='x-large', sub=True, markup=self.markup)
+        return PangoSpan(game, foreground=foreground, size='x-large', sub=True, markup=self.markup)
 
     @property
     def url(self) -> str:

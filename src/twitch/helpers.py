@@ -23,6 +23,7 @@ def timeit(func: Callable[..., Any]) -> Callable[..., Any]:
 
     return timeit_wrapper
 
+
 def astimeit(func: Callable[..., Any]) -> Callable[..., Any]:
     @wraps(func)
     async def timeit_wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -36,10 +37,10 @@ def astimeit(func: Callable[..., Any]) -> Callable[..., Any]:
     return timeit_wrapper
 
 
-def logme(message):
-    def decorator(func):
+def logme(message: str) -> Callable[..., Any]:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             logging.info(f'{func.__name__}: {message}')
             return func(*args, **kwargs)
 

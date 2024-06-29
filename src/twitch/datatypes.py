@@ -27,4 +27,8 @@ TwitchChannel = Union[
     ChannelInfo,
 ]
 
-TwitchContent = Union[FollowedContentClip, FollowedContentVideo, TwitchChannel]
+TwitchContent = Union[
+    FollowedContentClip,
+    FollowedContentVideo,
+    TwitchChannel,
+]

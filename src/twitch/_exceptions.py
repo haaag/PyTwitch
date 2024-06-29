@@ -11,6 +11,10 @@ class ExecutableNotFoundError(Exception):
     pass
 
 
+class ItemNotPlaylableError(Exception):
+    pass
+
+
 CONNECTION_EXCEPTION = (
     httpx.ConnectError,
     httpx.HTTPStatusError,
@@ -21,4 +25,5 @@ EXCEPTIONS = (
     EnvValidationError,
     FileNotFoundError,
     NotImplementedError,
+    ItemNotPlaylableError,
 )

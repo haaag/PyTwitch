@@ -15,7 +15,7 @@ HELP += textwrap.dedent(
 
 arguments:
     -m, --menu          select menu [rofi|dmenu] (default: rofi)
-    -c, --config        path to env file
+    -e, --env           path to env file
     -C, --channel       search by channel query
     -G, --games         search by game or category
     -v, --verbose       increase verbosity (use -v, -vv, or -vvv)

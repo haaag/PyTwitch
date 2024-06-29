@@ -41,9 +41,8 @@ show_error_context = true
 show_column_numbers = true
 ignore_missing_imports = true
 pretty = true
-warn_no_return = false
+warn_no_return = true
 warn_unused_ignores = true
-exclude = "removed"
 
 [tool.ruff]
 fix = false

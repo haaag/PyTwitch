@@ -36,6 +36,8 @@ class Item(Protocol):
 def create_categories(streams_data: list[list[dict[str, Any]]], markup: bool) -> dict[str, Category]:
     categories: dict[str, Category] = {}
     for cat_data in streams_data:
+        if len(cat_data) == 0:
+            continue
         cat_name = cat_data[0]['game_name']
         streams = (FollowedStream(**c, markup=markup) for c in cat_data)
         all_streams = {s.name: s for s in streams}
@@ -43,11 +45,12 @@ def create_categories(streams_data: list[list[dict[str, Any]]], markup: bool) ->
         viewers = category.total_viewers_fmt()
         logger.info(f"game '{cat_name}' has {category.channels_live()} streams with {viewers} viewers")
         categories[cat_name] = category
-    return categories
+    categories_sorted = sorted(categories.items(), key=lambda x: x[1].total_viewers(), reverse=True)
+    return dict(categories_sorted)
 
 
 @logme('merging channels offline and streams')
-def merge_data(channels: dict[str, Item], streams: dict[str, Item]) -> dict[str, Item]:
+def merge_data(channels: Mapping[str, Item], streams: Mapping[str, Item]) -> Mapping[str, Item]:
     """Merge followed channels with the list of currently live channels."""
     return {**streams, **{k: v for k, v in channels.items() if k not in streams}}
 
@@ -107,15 +110,15 @@ class TwitchFetcher:
         return (FollowedStream(**s, markup=self.markup) for s in data)
 
     @astimeit
-    async def top_games(self) -> Iterable[Category]:
-        data = await self.api.content.get_top_games()
+    async def top_games(self, items_max: int) -> Iterable[Category]:
+        data = await self.api.content.get_top_games(items_max)
         return (Game(**g, markup=self.markup) for g in data)
 
     @astimeit
     async def top_games_with_streams(self) -> Mapping[str, Category]:
-        max_games = 25
-        max_streams = 25
-        top_games = await self.top_games()
+        max_games = 30
+        max_streams = 30
+        top_games = await self.top_games(items_max=max_games)
         games_streams_data = await self._top_games_streams_data(top_games, max_games, max_streams)
         return create_categories(games_streams_data, self.markup)
 

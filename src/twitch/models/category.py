@@ -28,6 +28,9 @@ class Category:
     def total_viewers(self) -> int:
         return sum(c.viewer_count for c in self.channels.values())
 
+    def live(self) -> bool:
+        return self.channels_live() > 0
+
     def total_viewers_fmt(self) -> str:
         if self.channels_live() == 0:
             return ''
@@ -74,7 +77,8 @@ class Category:
 
     @property
     def name_fmt(self) -> str:
-        return PangoSpan(self.name, weight='bold', size='large', markup=self.markup)
+        name = format.sanitize(self.name)
+        return PangoSpan(name, weight='bold', size='large', markup=self.markup)
 
     @property
     def sep(self) -> str:
@@ -87,7 +91,7 @@ class Category:
         return f'{self.name_fmt}{self.sep} {self.offline_fmt()}'
 
     def __str__(self) -> str:
-        return self.online_str() if self.channels_live() else self.offline_str()
+        return self.online_str() if self.live() else self.offline_str()
 
 
 @dataclass
@@ -100,7 +104,8 @@ class Game:
 
     @property
     def name_str(self) -> str:
-        return PangoSpan(self.name, weight='bold', size='medium', markup=self.markup)
+        name = format.sanitize(self.name)
+        return PangoSpan(name, weight='bold', size='medium', markup=self.markup)
 
     def __str__(self) -> str:
         return f'{self.name_str}'
