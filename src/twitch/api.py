@@ -13,6 +13,10 @@ import httpx
 from dotenv import load_dotenv
 from httpx import URL
 from pydantic import BaseModel
+from tenacity import before_sleep_log
+from tenacity import retry
+from tenacity import stop_after_attempt
+from tenacity import wait_fixed
 from twitch._exceptions import EnvValidationError
 from twitch.constants import TWITCH_API_BASE_URL
 
@@ -24,6 +28,8 @@ if typing.TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+RETRY_ATTEMPTS = 3
+RETRY_DELAY = 1
 MAX_ITEMS_PER_REQUEST = 100
 DEFAULT_REQUESTED_ITEMS = 200
 
@@ -126,6 +132,11 @@ class API:
     def _has_pagination(self, data: TwitchApiResponse) -> bool:
         return data.get('pagination', {}).get('cursor') is not None
 
+    @retry(
+        stop=stop_after_attempt(RETRY_ATTEMPTS),
+        wait=wait_fixed(RETRY_DELAY),
+        before_sleep=before_sleep_log(log, logging.WARN),
+    )
     async def request_get(
         self,
         endpoint_url: URL,

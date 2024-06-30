@@ -3,3 +3,4 @@ mpv==1.0.7
 pydantic==2.7.4
 pyselector==0.0.28
 python-dotenv==1.0.0
+tenacity==8.4.2
