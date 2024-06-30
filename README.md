@@ -12,9 +12,8 @@
 
 ### ⭐ About
 
-A user-friendly tool for accessing and watching live streams, videos, and
-clips from Twitch, it presents a menu interface for seamless browsing and
-streaming.
+A user-friendly tool for accessing and watching live streams, videos, and clips
+from Twitch.
 
 ### 📼 Video
 
@@ -23,19 +22,11 @@ https://github.com/haaag/PyTwitch/assets/81921095/e8f07a06-d9dd-47e0-a6d4-f9fba4
 ### ⚡️ Requirements
 
 - Player:
-  - 🔹[mpv](https://mpv.io/) _(default)_
+  - [mpv](https://mpv.io/)
 - Launcher:
+  - 🔹[Rofi](https://github.com/davatorium/rofi) <sub>_(default)_</sub>
   - [dmenu](https://tools.suckless.org/dmenu/)
-  - 🔹[Rofi](https://github.com/davatorium/rofi) _(default)_
-  - [fzf](https://github.com/junegunn/fzf) _(WIP)_
-
-### ➕ Dependencies
-
-- [httpx](https://www.python-httpx.org/)
-- [python-dotenv](https://pypi.org/project/python-dotenv/)
-- [pyselector](https://pypi.org/project/pyselector/)
-- [mpv](https://pypi.org/project/mpv/)
-- [pydantic](https://pypi.org/project/pydantic/)
+  - [fzf](https://github.com/junegunn/fzf) <sub>_(WIP)_</sub>
 
 ### 🔒Credentials
 
@@ -79,39 +70,53 @@ $ source .venv/bin/activate
 
 After installation you can use the command `pytwitch`
 
+Or use a **alias** like `alias pt='pytwitch -e ~/path/to/envfile/.env'`
+
 ```bash
-# Use rofi menu by default
-(.venv) $ pytwitch
+$ pytwtich -h
+Simple tool menu for watching streams, videos from twitch.
 
-# You can use it with dmenu or rofi
-(.venv) $ pytwitch -m dmenu
+arguments:
+    -m, --menu          select menu [rofi|dmenu] (default: rofi)
+    -e, --env           path to env file
+    -C, --channel       search by channel query
+    -G, --games         search by game or category
+    -v, --verbose       increase verbosity (use -v, -vv, or -vvv)
+    -h, --help          show this help
 
-# Using path to env file
-(.venv) $ pytwitch -c ./.env
-
-# Help
-(.venv) $ pytwitch --help
+options:
+    --no-markup         disable pango markup (rofi)
+    --no-conf           disable `mpv` configuration
 ```
 
-### ⌨️ Keybinds
+### ⌨️ Keybinds <sub>_Rofi only_</sub>
 
 | Keybind       | Usage                       |
 | ------------- | --------------------------- |
 | **alt-k**     | list keybinds               |
 | **alt-s**     | search by category or game  |
-| **alt-v**     | list channel's videos       |
-| **alt-t**     | filter by category or game  |
 | **alt-c**     | search by channel           |
+| **alt-v**     | list channel's videos       |
+| **alt-t**     | group by category or game   |
 | **alt-o**     | open stream chat in browser |
 | **alt-i**     | show item information       |
 | **alt-m**     | show top streams            |
-| **alt-q**     | quit                        |
+| **alt-g**     | show top games with streams |
 | ~~**alt-m**~~ | ~~multi-select streams~~    |
 
 ### 🔗 References
 
 - [Twitch API](https://dev.twitch.tv/docs/api/)
 - [Twitch API Reference](https://dev.twitch.tv/docs/api/reference)
+
+### ➕ Dependencies
+
+- [httpx](https://www.python-httpx.org/)
+- [python-dotenv](https://pypi.org/project/python-dotenv/)
+- [pyselector](https://pypi.org/project/pyselector/)
+- [mpv](https://pypi.org/project/mpv/)
+- [pydantic](https://pypi.org/project/pydantic/)
+- [tenacity](https://pypi.org/project/tenacity/)
 
 ### 🧰 TODO
 
@@ -123,5 +128,3 @@ After installation you can use the command `pytwitch`
 - [x] Update GIFs
 - [x] Update `argparse` help
 - [x] Display `keybinds`
-
-- [ignore](https://raw.githubusercontent.com/haaag/{repo_name}/{branch}/.github/images/{asset_name}.{asset_extension})
