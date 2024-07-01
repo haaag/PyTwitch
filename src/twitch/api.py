@@ -15,6 +15,7 @@ from httpx import URL
 from pydantic import BaseModel
 from tenacity import before_sleep_log
 from tenacity import retry
+from tenacity import retry_if_not_exception_type
 from tenacity import stop_after_attempt
 from tenacity import wait_fixed
 from twitch._exceptions import EnvValidationError
@@ -136,6 +137,7 @@ class API:
         stop=stop_after_attempt(RETRY_ATTEMPTS),
         wait=wait_fixed(RETRY_DELAY),
         before_sleep=before_sleep_log(log, logging.WARN),
+        retry=retry_if_not_exception_type(httpx.ConnectError)
     )
     async def request_get(
         self,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import httpx
+import tenacity
 
 
 class EnvValidationError(Exception):
@@ -26,4 +27,5 @@ EXCEPTIONS = (
     FileNotFoundError,
     NotImplementedError,
     ItemNotPlaylableError,
+    tenacity.RetryError,
 )
