@@ -70,8 +70,14 @@ class TwitchApp:
         items, mesg = await self.get_channels_and_streams()
         while True:
             item, keycode = self.select(items=items, mesg=mesg)
+
             # If user hit escape
             if not item:
+                return None
+
+            # workaround for user input not in the list
+            if not hasattr(item, 'playable'):
+                log.warn(f'{item!r} is not playable')
                 return None
 
             # Show offline channel's videos if selected item is offline
@@ -86,6 +92,7 @@ class TwitchApp:
             if keycode not in (UserConfirms(0), UserCancel(1)):
                 k = self.menu.keybind.get_keybind_by_code(keycode)
                 await k.callback(item=item, keybind=k, items=items)
+
         retcode = self.play(name=item.name, url=item.url)
         return await self.quit(keycode=retcode)
 
@@ -305,8 +312,7 @@ class TwitchApp:
         # Top games and top streams loop
         while True:
             mesg = f'> Showing {len(categories)} top categories '
-            mesg += f'with {nchannels} channels '
-            mesg += f'and {format.number(nviewers)} viewers'
+            mesg += f'({nchannels} streams and {format.number(nviewers)} viewers)'
             self.menu.keybind.unregister_all()
             cat, keycode = self.select(items=categories, mesg=mesg)
             if not cat:
