@@ -160,7 +160,7 @@ class TwitchApp:
             if not item or keycode == UserCancel(1):
                 return UserCancel(1)
             if keycode not in (UserConfirms(0), UserCancel(1)):
-                await self.get_key_by_code(keycode).action(items=items, item=item)
+                return await self.get_key_by_code(keycode).action(items=items, item=item)
 
         if not hasattr(item, 'playable') or not item.playable:
             err = f"item='{item.name}' is not playable"
