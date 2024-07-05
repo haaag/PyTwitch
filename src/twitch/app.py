@@ -270,7 +270,7 @@ class TwitchApp:
             # If user used a keybind
             if keycode not in (UserConfirms(0), UserCancel(1)):
                 keybind = self.get_key_by_code(keycode)
-                await keybind.action(item=item)
+                return await keybind.action(item=item)
 
         return self.play(name=item.name, url=item.url)
 
