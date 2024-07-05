@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import httpx
 import tenacity
+from pyselector.key_manager import KeybindError
 
 
 class EnvValidationError(Exception):
@@ -28,4 +29,5 @@ EXCEPTIONS = (
     NotImplementedError,
     ItemNotPlaylableError,
     tenacity.RetryError,
+    KeybindError,
 )

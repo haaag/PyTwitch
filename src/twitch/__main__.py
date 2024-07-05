@@ -32,21 +32,19 @@ def main() -> int:
         twitch = setup.keybinds(twitch)
 
         if args.test:
-            run(setup.test(t=twitch))
+            return run(setup.test(t=twitch))
         if args.channel:
-            run(twitch.show_by_query())
-        elif args.games:
-            run(twitch.show_by_game())
-        else:
-            run(twitch.show_all_streams())
-        return 0
+            return run(twitch.show_by_query())
+        if args.games:
+            return run(twitch.show_by_game())
+        return run(twitch.show_all_streams())
     except (*CONNECTION_EXCEPTION, *EXCEPTIONS) as err:
         menu.keybind.unregister_all()
         menu.prompt(items=[f'{err!r}'], markup=False, prompt='PyTwitchErr>')
         log.error(err)
     except KeyboardInterrupt:
         log.info('terminated by user')
-    return 0
+    return 1
 
 
 if __name__ == '__main__':

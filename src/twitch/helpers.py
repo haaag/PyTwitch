@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import time
+from dataclasses import asdict
 from functools import wraps
+from pathlib import Path
 from typing import Any
 from typing import Callable
 
@@ -47,3 +50,14 @@ def logme(message: str) -> Callable[..., Any]:
         return wrapper
 
     return decorator
+
+
+def savetojson(filename: str, data: dict[str, Any]) -> None:
+    file = Path('~/dev/git/python/pytwitch/assets').expanduser() / filename
+
+    if not file.exists():
+        file.touch()
+
+    result = [asdict(d) for d in data.values()]
+    with file.open(mode='w') as f:
+        json.dump(result, f, indent=4)

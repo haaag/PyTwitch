@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import functools
 import logging
-import sys
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -23,18 +22,17 @@ log = logging.getLogger(__name__)
 
 
 keys = Keys(
-    categories='alt-t',
-    channels='alt-a',
-    chat='alt-o',
-    clips='alt-C',
-    information='alt-i',
+    group_by_categories='alt-t',
+    show_information='alt-i',
+    open_chat='alt-o',
+    show_keys='alt-k',
     search_by_game='alt-s',
     search_by_query='alt-c',
-    show_all='alt-u',
-    show_keys='alt-k',
+    # Content
     top_streams='alt-m',
-    videos='alt-v',
     top_games='alt-g',
+    videos='alt-v',
+    clips='alt-C',
 )
 
 
@@ -48,7 +46,7 @@ def args() -> argparse.Namespace:
 
     opts_group = parser.add_argument_group(title='options')
     opts_group.add_argument('--no-markup', action='store_false')
-    opts_group.add_argument('-p', '--no-conf', action='store_false')
+    opts_group.add_argument('--no-conf', action='store_false')
 
     # options
     parser.add_argument('-m', '--menu', choices=['rofi', 'dmenu'], default='rofi')
@@ -67,17 +65,17 @@ def args() -> argparse.Namespace:
 
 def keybinds(t: TwitchApp) -> TwitchApp:
     key = t.menu.keybind
-    key.add(key=keys.channels, callback=t.show_all_streams, hidden=True, description='show channels')
-    key.add(key=keys.categories, callback=t.show_by_categories, hidden=True, description='show by games')
-    key.add(key=keys.videos, callback=t.show_videos, hidden=True, description='show videos')
-    key.add(key=keys.clips, callback=t.show_clips, hidden=True, description='show clips')
-    key.add(key=keys.chat, callback=t.open_chat, hidden=True, description='launch chat')
-    key.add(key=keys.information, callback=t.show_item_info, hidden=True, description='display item info')
-    key.add(key=keys.search_by_game, callback=t.show_by_game, hidden=True, description='search games')
-    key.add(key=keys.search_by_query, callback=t.show_by_query, hidden=True, description='search by channel')
-    key.add(key=keys.show_keys, callback=t.show_keybinds, hidden=False, description='show available keybinds')
-    key.add(key=keys.top_streams, callback=t.show_top_streams, hidden=True, description='show top streams')
-    key.add(key=keys.top_games, callback=t.show_top_games, hidden=True, description='show top games')
+    key.add(bind=keys.group_by_categories, action=t.show_group_by_categories, hidden=True, description='show by games')
+    key.add(bind=keys.show_information, action=t.show_item_info, hidden=True, description='display item info')
+    key.add(bind=keys.open_chat, action=t.open_chat, hidden=True, description='launch chat')
+    key.add(bind=keys.show_keys, action=t.show_keybinds, hidden=False, description='show available keybinds')
+    key.add(bind=keys.search_by_game, action=t.show_by_game, hidden=True, description='search games')
+    key.add(bind=keys.search_by_query, action=t.show_by_query, hidden=True, description='search by channel')
+    # Content
+    key.add(bind=keys.top_streams, action=t.show_top_streams, hidden=True, description='show top streams')
+    key.add(bind=keys.top_games, action=t.show_top_games, hidden=True, description='show top games')
+    key.add(bind=keys.videos, action=t.show_videos, hidden=True, description='show videos')
+    key.add(bind=keys.clips, action=t.show_clips, hidden=True, description='show clips')
     return t
 
 
@@ -95,9 +93,9 @@ def menu(args: argparse.Namespace) -> MenuInterface:
     return menu
 
 
-async def test(**kwargs: Any) -> None:  # noqa: ARG001
+async def test(**kwargs: Any) -> int:  # noqa: ARG001
     print('Testing mode, not launching menu')
-    sys.exit()
+    return 0
 
 
 async def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:

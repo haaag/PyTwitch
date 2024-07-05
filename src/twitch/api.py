@@ -121,9 +121,10 @@ class API:
 
     async def close(self) -> None:
         log.debug('closing async client connection')
-        if self.client:
-            await self.client.aclose()
-            self.client = None
+        if not self.client:
+            return
+        await self.client.aclose()
+        self.client = None
 
     async def send_request(self, url: URL, query_params: QueryParamTypes, timeout: int = 5) -> httpx.Response:
         r = await self.client.get(url, params=query_params, timeout=timeout)
@@ -137,7 +138,7 @@ class API:
         stop=stop_after_attempt(RETRY_ATTEMPTS),
         wait=wait_fixed(RETRY_DELAY),
         before_sleep=before_sleep_log(log, logging.WARN),
-        retry=retry_if_not_exception_type(httpx.ConnectError)
+        retry=retry_if_not_exception_type(httpx.ConnectError),
     )
     async def request_get(
         self,
