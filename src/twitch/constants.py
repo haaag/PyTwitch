@@ -60,3 +60,18 @@ SQUARE: str = '■'
 # icons
 LIVE_ICON = CIRCLE
 SEPARATOR = f' {MIDDLE_DOT} '
+
+# keybinds
+DEFAULT_KEYBINDS = """
+keybinds:
+  group_by_categories: alt-t
+  show_information: alt-i
+  open_chat: alt-o
+  show_keys: alt-k
+  search_by_game: alt-s
+  search_by_query: alt-c
+  top_streams: alt-m
+  top_games: alt-g
+  videos: alt-v
+  clips: alt-C
+"""

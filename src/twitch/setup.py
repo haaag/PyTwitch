@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from pyselector import Menu
+from twitch import config
 from twitch import constants
 from twitch.api import Credentials
 from twitch.api import TwitchApi
-from twitch.app import Keys
 from twitch.app import TwitchApp
 from twitch.client import TwitchFetcher
 
@@ -19,21 +19,6 @@ if TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
 
 log = logging.getLogger(__name__)
-
-
-keys = Keys(
-    group_by_categories='alt-t',
-    show_information='alt-i',
-    open_chat='alt-o',
-    show_keys='alt-k',
-    search_by_game='alt-s',
-    search_by_query='alt-c',
-    # Content
-    top_streams='alt-m',
-    top_games='alt-g',
-    videos='alt-v',
-    clips='alt-C',
-)
 
 
 def args() -> argparse.Namespace:
@@ -67,18 +52,21 @@ def args() -> argparse.Namespace:
 
 
 def keybinds(t: TwitchApp) -> TwitchApp:
-    key = t.menu.keybind
-    key.add(bind=keys.group_by_categories, action=t.show_group_by_categories, hidden=True, description='show by games')
-    key.add(bind=keys.show_information, action=t.show_item_info, hidden=True, description='display item info')
-    key.add(bind=keys.open_chat, action=t.open_chat, hidden=True, description='launch chat')
-    key.add(bind=keys.show_keys, action=t.show_keybinds, hidden=False, description='show available keybinds')
-    key.add(bind=keys.search_by_game, action=t.show_by_game, hidden=True, description='search games')
-    key.add(bind=keys.search_by_query, action=t.show_by_query, hidden=True, description='search by channel')
+    keys = config.get_keybinds()
+    keymap = t.menu.keybind
+    keymap.add(
+        bind=keys.group_by_categories, action=t.show_group_by_categories, hidden=True, description='show by games'
+    )
+    keymap.add(bind=keys.show_information, action=t.show_item_info, hidden=True, description='display item info')
+    keymap.add(bind=keys.open_chat, action=t.open_chat, hidden=True, description='launch chat')
+    keymap.add(bind=keys.show_keys, action=t.show_keybinds, hidden=False, description='show available keybinds')
+    keymap.add(bind=keys.search_by_game, action=t.show_by_game, hidden=True, description='search games')
+    keymap.add(bind=keys.search_by_query, action=t.show_by_query, hidden=True, description='search by channel')
     # Content
-    key.add(bind=keys.top_streams, action=t.show_top_streams, hidden=True, description='show top streams')
-    key.add(bind=keys.top_games, action=t.show_top_games, hidden=True, description='show top games')
-    key.add(bind=keys.videos, action=t.show_videos, hidden=True, description='show videos')
-    key.add(bind=keys.clips, action=t.show_clips, hidden=True, description='show clips')
+    keymap.add(bind=keys.top_streams, action=t.show_top_streams, hidden=True, description='show top streams')
+    keymap.add(bind=keys.top_games, action=t.show_top_games, hidden=True, description='show top games')
+    keymap.add(bind=keys.videos, action=t.show_videos, hidden=True, description='show videos')
+    keymap.add(bind=keys.clips, action=t.show_clips, hidden=True, description='show clips')
     return t
 
 
@@ -112,7 +100,7 @@ async def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
         fetcher=fetcher,
         menu=menu,
         player_conf=args.no_conf,
-        keys=keys,
+        keys=config.get_keybinds(),
         markup=args.no_markup,
         ansi=args.no_ansi,
     )

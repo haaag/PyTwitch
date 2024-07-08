@@ -8,10 +8,10 @@ from dataclasses import asdict
 from typing import Any
 from typing import Callable
 from typing import Mapping
-from typing import NamedTuple
 from typing import Protocol
 
 from twitch import clipboard
+from twitch import config
 from twitch import format
 from twitch import player
 from twitch._exceptions import ItemNotPlaylableError
@@ -35,20 +35,6 @@ log = logging.getLogger(__name__)
 #       - example: show_top_streams and hit group_by_games
 
 
-class Keys(NamedTuple):
-    group_by_categories: str
-    show_information: str
-    open_chat: str
-    show_keys: str
-    search_by_game: str
-    search_by_query: str
-    # Content
-    top_streams: str
-    top_games: str
-    videos: str
-    clips: str
-
-
 TwitchData = tuple[Mapping[str, TwitchChannel | TwitchContent], str]
 
 
@@ -63,7 +49,7 @@ class TwitchApp:
         fetcher: TwitchFetcher,
         menu: MenuInterface,
         player_conf: bool,
-        keys: Keys,
+        keys: config.Keys,
         markup: bool,
         ansi: bool,
     ):

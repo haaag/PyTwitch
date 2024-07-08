@@ -17,6 +17,10 @@ class ItemNotPlaylableError(Exception):
     pass
 
 
+class InvalidConfigFileError(Exception):
+    pass
+
+
 CONNECTION_EXCEPTION = (
     httpx.ConnectError,
     httpx.HTTPStatusError,
@@ -30,4 +34,5 @@ EXCEPTIONS = (
     ItemNotPlaylableError,
     tenacity.RetryError,
     KeybindError,
+    InvalidConfigFileError,
 )
