@@ -46,10 +46,11 @@ def args() -> argparse.Namespace:
 
     opts_group = parser.add_argument_group(title='options')
     opts_group.add_argument('--no-markup', action='store_false')
+    opts_group.add_argument('--no-ansi', action='store_false')
     opts_group.add_argument('--no-conf', action='store_false')
 
     # options
-    parser.add_argument('-m', '--menu', choices=['rofi', 'dmenu'], default='rofi')
+    parser.add_argument('-m', '--menu', choices=['rofi', 'dmenu', 'fzf'], default='rofi')
     parser.add_argument('-e', '--env', type=str)
     parser.add_argument('-C', '--channel', action='store_true')
     parser.add_argument('-G', '--games', action='store_true')
@@ -60,6 +61,8 @@ def args() -> argparse.Namespace:
     args = parser.parse_args()
     if args.menu in ['fzf', 'dmenu']:
         args.no_markup = False
+    if args.menu in ['dmenu', 'rofi']:
+        args.no_ansi = False
     return args
 
 
@@ -83,11 +86,12 @@ def menu(args: argparse.Namespace) -> MenuInterface:
     menu = Menu.get(args.menu)
     menu.prompt = functools.partial(
         menu.prompt,
-        prompt='Twitch>',
+        prompt='Twitch> ',
         lines=15,
         width='75%',
         height='60%',
         markup=args.no_markup,
+        ansi=args.no_ansi,
         location='center',
     )
     return menu
@@ -103,12 +107,14 @@ async def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
     credentials.validate()
     api = TwitchApi(credentials)
     await api.load_client()
-    fetcher = TwitchFetcher(api, args.no_markup)
+    fetcher = TwitchFetcher(api)
     return TwitchApp(
         fetcher=fetcher,
         menu=menu,
         player_conf=args.no_conf,
         keys=keys,
+        markup=args.no_markup,
+        ansi=args.no_ansi,
     )
 
 

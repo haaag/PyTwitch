@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from pydantic.dataclasses import dataclass
+from pyselector.colors import Color
 from pyselector.markup import PangoSpan
 from twitch import format
 from twitch.constants import LIVE_ICON
-from twitch.constants import LIVE_ICON_COLOR
 from twitch.constants import SEPARATOR
 from twitch.models.channels import FollowedChannelInfo  # noqa: TCH002
 from twitch.models.streams import FollowedStream  # noqa: TCH002
@@ -59,7 +59,7 @@ class Category:
         live = f'{LIVE_ICON} {nlive}'
         return PangoSpan(
             live,
-            foreground=LIVE_ICON_COLOR,
+            foreground=Color.red(),
             size='medium',
             weight='heavy',
             markup=self.markup,

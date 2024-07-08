@@ -12,7 +12,7 @@ authors = [{ name = "haaag", email = "git.haaag@gmail.com" }]
 requires-python = ">=3.8"
 dynamic = ["version"]
 dependencies = [
-  "pyselector==0.0.33",
+  "pyselector==0.0.35",
   "httpx==0.23.3",
   "python-dotenv",
   "mpv==1.0.7",
@@ -57,6 +57,9 @@ quote-style = "single"
 line-ending = "auto"
 skip-magic-trailing-comma = false
 docstring-code-format = true
+
+[tool.ruff.lint.pylint]
+max-args = 7
 
 [tool.ruff.lint]
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"

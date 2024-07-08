@@ -58,11 +58,21 @@ class TwitchPlayableContent(Protocol):
 
 
 class TwitchApp:
-    def __init__(self, fetcher: TwitchFetcher, menu: MenuInterface, player_conf: bool, keys: Keys):
+    def __init__(
+        self,
+        fetcher: TwitchFetcher,
+        menu: MenuInterface,
+        player_conf: bool,
+        keys: Keys,
+        markup: bool,
+        ansi: bool,
+    ):
         self.fetch = fetcher
         self.menu = menu
         self.player_conf = player_conf
         self.keys = keys
+        self.markup = markup
+        self.ansi = ansi
 
     async def show_all_streams(self, **kwargs: dict[str, Any]) -> int:
         # FIX: Is this loop necessary?
@@ -171,35 +181,44 @@ class TwitchApp:
     async def show_by_query(self, **kwargs) -> int:
         query: str | None = kwargs.get('query')
         if not query:
-            query = self.get_user_input(mesg='Search <channels> by query', prompt='TwitchChannel>')
+            query = self.get_user_input(mesg='Search <channels> by query', prompt='TwitchChannel> ')
 
         if not query:
             log.warn('query search cancelled by user')
             return 1
 
-        data = await self.fetch.channels_by_query(query, live_only=False)
+        data = await self.fetch.channels_by_query(query, live_only=False, markup=self.markup, ansi=self.ansi)
         items = {c.id: c for c in data}
         self.toggle_content_keybinds()
         mesg = f'> Showing ({len(items)}) <channels> by query: "{query}"'
-        return await self.show_and_play(items=items, mesg=mesg)
+
+        while True:
+            item, keycode = self.select(items=items, mesg=mesg)
+            if not item or keycode == UserCancel(1):
+                return UserCancel(1)
+            if not item.playable and keycode == UserConfirms(0):
+                return await self.show_videos(item=item)
+            if keycode not in (UserConfirms(0), UserCancel(1)):
+                return await self.get_key_by_code(keycode).action(items=items, item=item)
+        return 0
 
     async def show_by_game(self, **kwargs) -> int:
         game = kwargs.get('game')
         if not game:
-            game = self.get_user_input(mesg='Search <games> or <categories>', prompt='TwitchGame>')
+            game = self.get_user_input(mesg='Search <games> or <categories>', prompt='TwitchGame> ')
 
         if not game:
             log.warn('query search cancelled by user')
             return 1
 
-        data = await self.fetch.games_by_query(game)
+        data = await self.fetch.games_by_query(game, self.markup, self.ansi)
         games = {g.id: g for g in data}
         selected, _ = self.select(games, mesg=f'> Showing ({len(games)}) <games> or <categories>')
         if not selected:
             return 1
 
         self.toggle_content_keybinds()
-        data = await self.fetch.streams_by_game_id(selected.id)
+        data = await self.fetch.streams_by_game_id(selected.id, self.markup, self.ansi)
         streams = list(data)
         if not streams:
             self.select(items={}, mesg='> No <streams> found')
@@ -212,7 +231,7 @@ class TwitchApp:
         kgames = self.get_key_by_bind(self.keys.group_by_categories)
         self.toggle_content_keybinds()
         self.menu.keybind.register(kgames)
-        data = await self.fetch.top_streams()
+        data = await self.fetch.top_streams(self.markup, self.ansi)
         streams = {s.name: s for s in data}
         mesg = f'> Showing ({len(streams)}) top streams'
         return await self.show_and_play(items=streams, mesg=mesg)
@@ -237,7 +256,7 @@ class TwitchApp:
 
     async def show_top_games(self, **kwargs) -> int:
         log.info('processing top games')
-        categories = await self.fetch.top_games_with_streams()
+        categories = await self.fetch.top_games_with_streams(self.markup, self.ansi)
         nviewers: int = sum([c.total_viewers() for c in categories.values()])
         nchannels: int = sum([c.channels_live() for c in categories.values()])
         km = self.menu.keybind
@@ -275,7 +294,7 @@ class TwitchApp:
         return self.play(name=item.name, url=item.url)
 
     async def get_channels_and_streams(self) -> TwitchData:
-        data = await self.fetch.channels_and_streams()
+        data = await self.fetch.channels_and_streams(self.markup, self.ansi)
         if self.fetch.online == 0:
             return data, f'> No streams online found from {len(data)} channels'
         return data, f'> Showing ({self.fetch.online}) streams from {len(data)} channels'
@@ -284,7 +303,7 @@ class TwitchApp:
         item: TwitchChannel = kwargs.pop('item')
         log.info("processing user='%s' clips", item.name)
         clips = sorted(
-            await self.fetch.clips(user_id=item.user_id),
+            await self.fetch.clips(item.user_id, self.markup, self.ansi),
             key=lambda c: c.created_at,
             reverse=True,
         )
@@ -295,7 +314,7 @@ class TwitchApp:
 
     async def get_channel_videos(self, **kwargs) -> TwitchData:
         item = kwargs.pop('item')
-        data = {v.key: v for v in await self.fetch.videos(user_id=item.user_id)}
+        data = {v.key: v for v in await self.fetch.videos(item.user_id, self.markup, self.ansi)}
         if len(data) == 0:
             return data, f'> No videos found from <{item.name}> channel'
         return data, f'> Showing ({len(data)}) videos from <{item.name}> channel'
@@ -314,6 +333,7 @@ class TwitchApp:
             prompt=prompt,
             print_query=True,
             markup=self.markup,
+            input=True,
         )
         self.menu.keybind.toggle_hidden(restore=True)
         if not user_input:
@@ -338,7 +358,7 @@ class TwitchApp:
         self,
         items: Mapping[str, Any],
         mesg: str = '',
-        preprocessor: Callable[..., Any] | None = None,
+        preprocessor: Callable[..., Any] = lambda x: str(x),
     ) -> tuple[Any, int]:
         if not items:
             self.menu.prompt(items=['err: no items'], mesg=mesg, markup=False)
@@ -348,6 +368,7 @@ class TwitchApp:
             items=list(items.values()),
             mesg=mesg,
             markup=self.markup,
+            ansi=self.ansi,
             preprocessor=preprocessor,
         )
 
@@ -376,7 +397,3 @@ class TwitchApp:
         await self.fetch.close()
         log.debug('terminated by user')
         return keycode
-
-    @property
-    def markup(self) -> bool:
-        return self.fetch.markup

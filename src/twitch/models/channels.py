@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from pydantic.dataclasses import dataclass
+from pyselector.colors import Color
 from pyselector.markup import PangoSpan
 from twitch import format
 from twitch.constants import LIVE_ICON
-from twitch.constants import LIVE_ICON_COLOR
 from twitch.constants import SEPARATOR
 from twitch.constants import TWITCH_API_BASE_URL
 from twitch.constants import TWITCH_CHAT_BASE_URL
@@ -28,6 +28,7 @@ class FollowedChannelInfo:
     live: bool = False
     markup: bool = True
     playable: bool = False
+    ansi: bool = False
 
     @property
     def name(self) -> str:
@@ -43,7 +44,16 @@ class FollowedChannelInfo:
 
     def __str__(self) -> str:
         user = PangoSpan(self.name, weight='bold', size='large', markup=self.markup)
-        offline = PangoSpan('Offline', foreground='grey', size='x-large', sub=True, alpha='45%', markup=self.markup)
+        offline = PangoSpan(
+            'Offline',
+            foreground=Color.grey(),
+            fg_ansi='grey',
+            size='x-large',
+            sub=True,
+            alpha='45%',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
         return f'{user}{self.sep}{self.offline_icon} {offline}'
 
     @property
@@ -57,7 +67,15 @@ class FollowedChannelInfo:
 
     @property
     def offline_icon(self) -> str:
-        return PangoSpan(LIVE_ICON, foreground='grey', size='large', alpha='50%', markup=self.markup)
+        return PangoSpan(
+            LIVE_ICON,
+            foreground=Color.grey(),
+            fg_ansi='grey',
+            size='large',
+            alpha='50%',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     @property
     def chat(self) -> str:
@@ -74,6 +92,7 @@ class FollowedChannel:
     live: bool = False
     markup: bool = True
     playable: bool = False
+    ansi: bool = False
 
     def __hash__(self):
         return hash((self.user_id, self.name))
@@ -88,7 +107,15 @@ class FollowedChannel:
 
     @property
     def offline_icon(self) -> str:
-        return PangoSpan(LIVE_ICON, foreground='grey', size='large', alpha='50%') if self.markup else LIVE_ICON
+        return PangoSpan(
+            LIVE_ICON,
+            foreground=Color.grey(),
+            fg_ansi='grey',
+            size='large',
+            alpha='50%',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     def __str__(self) -> str:
         return self.broadcaster_name
@@ -117,6 +144,7 @@ class Channel:
     thumbnail_url: str
     title: str
     markup: bool = True
+    ansi: bool = False
 
     @property
     def user_id(self) -> str:
@@ -136,25 +164,52 @@ class Channel:
 
     @property
     def offline_icon(self) -> str:
-        return PangoSpan(LIVE_ICON, foreground='grey', size='large', alpha='50%', markup=self.markup)
+        return PangoSpan(
+            LIVE_ICON,
+            foreground=Color.grey(),
+            fg_ansi='grey',
+            size='large',
+            alpha='50%',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     @property
     def offline_str(self) -> str:
-        return PangoSpan('Offline', foreground='grey', size='x-large', sub=True, alpha='45%', markup=self.markup)
+        return PangoSpan(
+            'offline',
+            foreground=Color.grey(),
+            fg_ansi='grey',
+            size='x-large',
+            sub=True,
+            alpha='45%',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     @property
     def online_icon(self) -> str:
-        return PangoSpan(LIVE_ICON, foreground=LIVE_ICON_COLOR, size='large', alpha='100%', markup=self.markup)
+        return PangoSpan(
+            LIVE_ICON,
+            foreground=Color.red(),
+            fg_ansi='red',
+            size='large',
+            alpha='100%',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     @property
     def online_str(self) -> str:
         return PangoSpan(
-            'Online',
-            foreground=LIVE_ICON_COLOR,
+            'online',
+            foreground=Color.red(),
+            fg_ansi='red',
             size='x-large',
             sub=True,
             alpha='100%',
             markup=self.markup,
+            ansi=self.ansi,
         )
 
     @property
@@ -166,16 +221,32 @@ class Channel:
         return self.online_str if self.is_live else self.offline_str
 
     def category(self) -> str:
-        foreground = 'orange' if self.is_live else 'grey'
+        foreground = Color.yellow() if self.is_live else Color.grey()
+        fg_ansi = 'yellow' if self.is_live else 'white'
         game = format.sanitize(self.game_name)
-        return PangoSpan(game, foreground=foreground, size='x-large', sub=True, markup=self.markup)
+        return PangoSpan(
+            game,
+            foreground=foreground,
+            fg_ansi=fg_ansi,
+            size='x-large',
+            sub=True,
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     @property
     def url(self) -> str:
         return str(TWITCH_STREAM_BASE_URL.join(self.broadcaster_login))
 
     def __str__(self) -> str:
-        name = PangoSpan(self.display_name, weight='bold', size='large', markup=self.markup)
+        name = PangoSpan(
+            self.display_name,
+            fg_ansi='green' if self.is_live else 'white',
+            weight='bold',
+            size='large',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
         return f'{name}{self.sep}{self.icon} {self.status}{self.sep}{self.category()}'
 
 
@@ -188,6 +259,7 @@ class ChannelInfo:
     live: bool = False
     markup: bool = True
     playable: bool = False
+    ansi: bool = False
 
     def __hash__(self):
         return hash((self.user_id, self.name))
@@ -198,7 +270,15 @@ class ChannelInfo:
 
     @property
     def icon_off(self) -> PangoSpan:
-        return PangoSpan(LIVE_ICON, foreground='grey', size='small', alpha='50%', markup=self.markup)
+        return PangoSpan(
+            LIVE_ICON,
+            foreground='grey',
+            fg_ansi='grey',
+            size='small',
+            alpha='50%',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     @property
     def user_id(self) -> str:
@@ -215,11 +295,20 @@ class ChannelInfo:
             font_variant='small-caps',
             weight='bold',
             foreground='grey',
+            fg_ansi='grey',
             size='medium',
             alpha='85%',
             markup=self.markup,
+            ansi=self.ansi,
         )
 
     def __str__(self) -> str:
-        user = PangoSpan(self.name, weight='bold', size='large', markup=self.markup)
+        user = PangoSpan(
+            self.name,
+            weight='bold',
+            fg_ansi='white',
+            size='large',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
         return f'{user}{self.sep}{self.icon_off} {self.offline}'

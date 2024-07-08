@@ -33,7 +33,7 @@ class Item(Protocol):
     game_name: str
 
 
-def create_categories(streams_data: list[list[dict[str, Any]]], markup: bool) -> dict[str, Category]:
+def create_categories(streams_data: list[list[dict[str, Any]]], markup: bool, ansi: bool) -> dict[str, Category]:
     categories: dict[str, Category] = {}
     for cat_data in streams_data:
         if len(cat_data) == 0:
@@ -41,7 +41,7 @@ def create_categories(streams_data: list[list[dict[str, Any]]], markup: bool) ->
         cat_name = cat_data[0]['game_name']
         streams = (FollowedStream(**c, markup=markup) for c in cat_data)
         all_streams = {s.name: s for s in streams}
-        category = Category(name=cat_name, channels=all_streams, markup=markup)
+        category = Category(name=cat_name, channels=all_streams, markup=markup, ansi=ansi)
         viewers = category.total_viewers_fmt()
         logger.info(f"game '{cat_name}' has {category.channels_live()} streams with {viewers} viewers")
         categories[cat_name] = category
@@ -56,71 +56,71 @@ def merge_data(channels: Mapping[str, Item], streams: Mapping[str, Item]) -> Map
 
 
 class TwitchFetcher:
-    def __init__(self, api: TwitchApi, markup: bool = True) -> None:
+    def __init__(self, api: TwitchApi, markup: bool = True, ansi: bool = False) -> None:
         self.api = api
-        self.markup = markup
         self.online: int = 0
 
     async def close(self) -> None:
         return await self.api.close()
 
     @astimeit
-    async def channels_and_streams(self) -> Mapping[str, Item]:
+    async def channels_and_streams(self, markup: bool, ansi: bool) -> Mapping[str, Item]:
         cdata, sdata = await asyncio.gather(
             self.api.channels.all(),
             self.api.channels.streams(),
         )
 
-        m = self.markup
-        c = {c['broadcaster_name']: ChannelInfo(**c, markup=m) for c in cdata if 'type' not in c}
-        s = {s['user_name']: FollowedStream(**s, markup=m) for s in sdata if 'type' in s}
+        c = {c['broadcaster_name']: ChannelInfo(**c, markup=markup, ansi=ansi) for c in cdata if 'type' not in c}
+        s = {s['user_name']: FollowedStream(**s, markup=markup, ansi=ansi) for s in sdata if 'type' in s}
         self.online = len(s)
         return merge_data(c, s)
 
     @astimeit
-    async def videos(self, user_id: str) -> Iterable[FollowedContentVideo]:
+    async def videos(self, user_id: str, markup: bool, ansi: bool) -> Iterable[FollowedContentVideo]:
         data = await self.api.content.get_videos(user_id=user_id)
-        return (FollowedContentVideo(**video, markup=self.markup) for video in data)
+        return (FollowedContentVideo(**video, markup=markup, ansi=ansi) for video in data)
 
     @astimeit
-    async def clips(self, user_id: str) -> Iterable[FollowedContentClip]:
+    async def clips(self, user_id: str, markup: bool, ansi: bool) -> Iterable[FollowedContentClip]:
         data = await self.api.content.get_clips(user_id=user_id)
-        return (FollowedContentClip(**clip, markup=self.markup) for clip in data)
+        return (FollowedContentClip(**clip, markup=markup, ansi=ansi) for clip in data)
 
     @astimeit
-    async def streams_by_game_id(self, game_id: str) -> Iterable[FollowedStream]:
+    async def streams_by_game_id(self, game_id: str, markup: bool, ansi: bool) -> Iterable[FollowedStream]:
         logger.debug('getting streams by game_id: %s', game_id)
         data = await self.api.content.get_streams_by_game_id(game_id)
-        return (FollowedStream(**item, markup=self.markup) for item in data)
+        return (FollowedStream(**item, markup=markup, ansi=ansi) for item in data)
 
     @astimeit
-    async def games_by_query(self, query: str) -> Iterable[Game]:
+    async def games_by_query(self, query: str, markup: bool, ansi: bool) -> Iterable[Game]:
         data = await self.api.content.search_categories(query)
-        return (Game(**item, markup=self.markup) for item in data)
+        return (Game(**item, markup=markup) for item in data)
 
     @astimeit
-    async def channels_by_query(self, query: str, live_only: bool = True) -> Iterable[FollowedChannel]:
+    async def channels_by_query(
+        self, query: str, markup: bool, ansi: bool, live_only: bool = True
+    ) -> Iterable[FollowedChannel]:
         data = await self.api.content.search_channels(query, live_only=live_only)
         data_sorted_by_live = sorted(data, key=lambda c: c['is_live'], reverse=True)
-        return (Channel(**item, markup=self.markup) for item in data_sorted_by_live if item['game_name'])
+        return (Channel(**item, markup=markup, ansi=ansi) for item in data_sorted_by_live if item['game_name'])
 
     @astimeit
-    async def top_streams(self) -> Iterable[FollowedStream]:
+    async def top_streams(self, markup: bool, ansi: bool) -> Iterable[FollowedStream]:
         data = await self.api.content.get_top_streams()
-        return (FollowedStream(**s, markup=self.markup) for s in data)
+        return (FollowedStream(**s, markup=markup, ansi=ansi) for s in data)
 
     @astimeit
-    async def top_games(self, items_max: int) -> Iterable[Category]:
+    async def top_games(self, items_max: int, markup: bool, ansi: bool) -> Iterable[Category]:
         data = await self.api.content.get_top_games(items_max)
-        return (Game(**g, markup=self.markup) for g in data)
+        return (Game(**g, markup=markup, asni=ansi) for g in data)
 
     @astimeit
-    async def top_games_with_streams(self) -> Mapping[str, Category]:
+    async def top_games_with_streams(self, markup: bool, ansi: bool) -> Mapping[str, Category]:
         max_games = 30
         max_streams = 30
         top_games = await self.top_games(items_max=max_games)
         games_streams_data = await self._top_games_streams_data(top_games, max_games, max_streams)
-        return create_categories(games_streams_data, self.markup)
+        return create_categories(games_streams_data, markup, ansi)
 
     @astimeit
     async def _top_games_streams_data(

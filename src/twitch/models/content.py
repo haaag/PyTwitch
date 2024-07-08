@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from pydantic.dataclasses import dataclass
+from pyselector.colors import Color
 from pyselector.markup import PangoSpan
 from twitch import format
 from twitch.constants import SEPARATOR
@@ -32,6 +33,7 @@ class FollowedContentClip:
     is_featured: bool = False
     markup: bool = True
     playable: bool = True
+    ansi: bool = False
 
     @property
     def key(self) -> str:
@@ -52,7 +54,14 @@ class FollowedContentClip:
     @property
     def title_fmt(self) -> str:
         title = format.sanitize(format.short(self.title, TITLE_MAX_LENGTH))
-        return PangoSpan(title, size='medium', foreground='grey', markup=self.markup)
+        return PangoSpan(
+            title,
+            size='medium',
+            foreground=Color.white(),
+            fg_ansi='white',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     @property
     def viewers_fmt(self) -> str:
@@ -66,19 +75,25 @@ class FollowedContentClip:
 
     @property
     def item_id(self) -> str:
-        return PangoSpan(self.key, foreground='grey', markup=self.markup)
+        return PangoSpan(self.key, foreground=Color.grey(), fg_ansi='grey', markup=self.markup, ansi=self.ansi)
 
     @property
     def created_date(self) -> str:
-        created = format.date(self.created_at)
-        if self.markup:
-            return PangoSpan(created, size='medium', foreground='orange', weight='bold', font_variant='all-small-caps')
-        return created
+        return PangoSpan(
+            format.date(self.created_at),
+            size='medium',
+            foreground='orange',
+            fg_ansi='yellow',
+            weight='bold',
+            font_variant='all-small-caps',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     def __str__(self) -> str:
         id_and_date = f'{self.item_id}{self.sep}{self.created_date}'
         dur_and_viewers = f'{self.duration_fmt}{self.sep}{self.viewers_fmt}'
-        return f'{id_and_date} {self.title_fmt} ({dur_and_viewers})'
+        return f'{id_and_date} {self.title_fmt} {dur_and_viewers}'
 
 
 @dataclass
@@ -102,6 +117,7 @@ class FollowedContentVideo:
     created_at: str
     markup: bool = True
     playable: bool = True
+    ansi: bool = False
 
     @property
     def key(self) -> str:
@@ -118,31 +134,62 @@ class FollowedContentVideo:
     @property
     def title_fmt(self) -> str:
         title = format.sanitize(format.short(self.title, TITLE_MAX_LENGTH))
-        return PangoSpan(title, size='medium', foreground='grey', markup=self.markup)
+        return PangoSpan(
+            title,
+            size='medium',
+            foreground=Color.white(),
+            fg_ansi='white',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     @property
     def viewers_fmt(self) -> str:
         viewers = format.number(self.view_count)
-        return PangoSpan(viewers, size='medium', weight='light', markup=self.markup)
+        return PangoSpan(
+            viewers,
+            size='medium',
+            weight='light',
+            foreground=Color.red(),
+            fg_ansi='red',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     @property
     def duration_fmt(self) -> str:
-        return PangoSpan(self.duration, size='medium', weight='light', markup=self.markup)
+        return PangoSpan(
+            self.duration,
+            size='medium',
+            weight='light',
+            fg_ansi='yellow',
+            foreground='orange',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     @property
     def item_id(self) -> str:
-        return PangoSpan(self.key, size='small', foreground='grey', markup=self.markup)
+        return PangoSpan(
+            self.key,
+            size='small',
+            foreground='grey',
+            fg_ansi='grey',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     @property
     def created_at_fmt(self) -> str:
-        created = format.date(self.created_at)
         return PangoSpan(
-            created,
+            format.date(self.created_at),
             size='medium',
             weight='bold',
             foreground='orange',
+            fg_ansi='yellow',
             font_variant='all-small-caps',
             markup=self.markup,
+            ansi=self.ansi,
         )
 
     @property
@@ -151,4 +198,4 @@ class FollowedContentVideo:
 
     def __str__(self) -> str:
         id_and_date = f'{self.item_id}{self.sep}{self.created_at_fmt}'
-        return f'{id_and_date}{self.sep}{self.title_fmt} ({self.duration_fmt} | {self.viewers_fmt})'
+        return f'{id_and_date}{self.sep}{self.title_fmt} {self.duration_fmt} | {self.viewers_fmt}'

@@ -23,6 +23,7 @@ arguments:
 
 options:
     --no-markup         disable pango markup (rofi)
+    --no-ansi           disable ANSI color codes (fzf)
     --no-conf           disable `mpv` configuration
     """
 )
@@ -59,9 +60,3 @@ SQUARE: str = '■'
 # icons
 LIVE_ICON = CIRCLE
 SEPARATOR = f' {MIDDLE_DOT} '
-
-# colors
-RED: str = '#CC241D'
-MAGENTA: str = '#BB9AF7'
-CYAN: str = '#7DCFFF'
-LIVE_ICON_COLOR = RED
