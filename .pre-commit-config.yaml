@@ -49,7 +49,7 @@ repos:
 
   # Spell
   - repo: https://github.com/crate-ci/typos
-    rev: v1.23.1
+    rev: typos-v0.10.26
     hooks:
       - id: typos
   - repo: https://github.com/codespell-project/codespell
