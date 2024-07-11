@@ -2,19 +2,27 @@
 
 from __future__ import annotations
 
+import os
+import pathlib
 import textwrap
 from typing import NewType
 
 import httpx
+from twitch.__about__ import __appname__
+
+# paths
+xdg = os.getenv('XDG_DATA_HOME', '~/.local/share')
+ROOT = pathlib.Path(xdg).expanduser() / __appname__.lower()
+CONFIGFILE = ROOT / 'config.yml'
 
 # app
 DESC = 'Simple tool menu for watching streams, videos from twitch.'
 HELP = DESC
 HELP += textwrap.dedent(
-    """
+    f"""
 
 arguments:
-    -m, --menu          select menu [rofi|dmenu] (default: rofi)
+    -m, --menu          select menu [rofi|dmenu|fzf] (default: rofi)
     -e, --env           path to env file
     -C, --channel       search by channel query
     -G, --games         search by game or category
@@ -25,7 +33,9 @@ options:
     --no-markup         disable pango markup (rofi)
     --no-ansi           disable ANSI color codes (fzf)
     --no-conf           disable `mpv` configuration
-    """
+
+files:
+    config: {CONFIGFILE.as_posix()}"""
 )
 
 # others
@@ -64,14 +74,14 @@ SEPARATOR = f' {MIDDLE_DOT} '
 # keybinds
 DEFAULT_KEYBINDS = """
 keybinds:
-  group_by_categories: alt-t
-  show_information: alt-i
-  open_chat: alt-o
-  show_keys: alt-k
-  search_by_game: alt-s
-  search_by_query: alt-c
-  top_streams: alt-m
-  top_games: alt-g
-  videos: alt-v
-  clips: alt-C
+  group_by_categories: ctrl-t
+  open_chat: ctrl-o
+  search_by_game: ctrl-s
+  search_by_query: ctrl-c
+  show_information: ctrl-i
+  show_keys: ctrl-K
+  top_games: ctrl-G
+  top_streams: ctrl-S
+  videos: ctrl-E
+  clips: ctrl-J
 """

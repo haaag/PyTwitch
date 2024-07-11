@@ -18,6 +18,7 @@ class Category:
     channels: dict[str, FollowedStream | FollowedChannelInfo]
     markup: bool = True
     playable: bool = False
+    ansi: bool = False
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -47,8 +48,10 @@ class Category:
             font_variant='small-caps',
             size='small',
             weight='bold',
-            foreground='orange',
+            foreground=Color.yellow(),
+            fg_ansi='yellow',
             markup=self.markup,
+            ansi=self.ansi,
         )
 
     @property
@@ -60,25 +63,29 @@ class Category:
         return PangoSpan(
             live,
             foreground=Color.red(),
+            fg_ansi='red',
             size='medium',
             weight='heavy',
             markup=self.markup,
+            ansi=self.ansi,
         )
 
     def offline_fmt(self) -> str:
         return PangoSpan(
             f'{LIVE_ICON} Offline',
-            foreground='grey',
+            foreground=Color.grey(),
+            fg_ansi='grey',
             size='x-large',
             sub=True,
             alpha='45%',
             markup=self.markup,
+            ansi=self.ansi,
         )
 
     @property
     def name_fmt(self) -> str:
         name = format.sanitize(self.name)
-        return PangoSpan(name, weight='bold', size='large', markup=self.markup)
+        return PangoSpan(name, weight='bold', size='large', fg_ansi='cyan', markup=self.markup, ansi=self.ansi)
 
     @property
     def sep(self) -> str:
@@ -99,13 +106,14 @@ class Game:
     id: str
     name: str
     box_art_url: str
-    markup: bool = True
     igdb_id: str | None = None
+    markup: bool = False
+    ansi: bool = False
 
     @property
     def name_str(self) -> str:
         name = format.sanitize(self.name)
-        return PangoSpan(name, weight='bold', size='medium', markup=self.markup)
+        return PangoSpan(name, weight='bold', size='medium', markup=self.markup, ansi=self.ansi)
 
     def __str__(self) -> str:
         return f'{self.name_str}'

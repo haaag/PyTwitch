@@ -64,7 +64,7 @@ class TwitchApp:
         # FIX: Is this loop necessary?
         km = self.menu.keybind
         items, mesg = await self.get_channels_and_streams()
-        currentkeys = km.list_keys.copy()
+        currentkeys = km.current.copy()
         while True:
             km.unregister_all()
             km.register_all(currentkeys)
@@ -92,7 +92,8 @@ class TwitchApp:
                 k = self.get_key_by_code(keycode)
                 return await k.action(item=item, keybind=k, items=items)
 
-        return self.play(name=item.name, url=item.url)
+        self.play(name=item.name, url=item.url)
+        return 0
 
     async def show_videos(self, **kwargs: dict[str, TwitchChannel]) -> int:
         item: TwitchChannel = kwargs.pop('item')
@@ -110,12 +111,15 @@ class TwitchApp:
         categories: dict[str, Category] = {}
         items: dict[str, TwitchChannel] = kwargs.get('items', {})
 
+        if not items:
+            return 1
+
         for chan in items.values():
             if not chan.live:
                 continue
             category = categories.setdefault(
                 chan.game_name,
-                Category(name=chan.game_name, channels={}, markup=self.markup),
+                Category(name=chan.game_name, channels={}, markup=self.markup, ansi=self.ansi),
             )
             category.channels[chan.name] = chan
 
@@ -142,9 +146,9 @@ class TwitchApp:
             keybind, keycode = self.select(items=items, mesg=mesg)
             if keycode == UserCancel(1):
                 return UserCancel(1)
-            if keycode != 0:
+            if keycode != UserConfirms(0):
                 keybind = self.get_key_by_code(keycode)
-            await keybind.action(**kwargs, keybind=keybind, item=item)
+            return await keybind.action(**kwargs, keybind=keybind, item=item)
         return 1
 
     async def show_and_play(self, items: Mapping[str, TwitchPlayableContent], mesg: str = '') -> int:
@@ -162,12 +166,13 @@ class TwitchApp:
             err = f"item='{item.name}' is not playable"
             raise ItemNotPlaylableError(err)
 
-        return self.play(name=item.name, url=item.url)
+        self.play(name=item.name, url=item.url)
+        return 0
 
     async def show_by_query(self, **kwargs) -> int:
         query: str | None = kwargs.get('query')
         if not query:
-            query = self.get_user_input(mesg='Search <channels> by query', prompt='TwitchChannel> ')
+            query = self.get_user_input(mesg='Search <channels> by query', prompt='TwitchChannelSearch> ')
 
         if not query:
             log.warn('query search cancelled by user')
@@ -184,14 +189,17 @@ class TwitchApp:
                 return UserCancel(1)
             if not item.playable and keycode == UserConfirms(0):
                 return await self.show_videos(item=item)
+            if keycode == UserConfirms(0):
+                break
             if keycode not in (UserConfirms(0), UserCancel(1)):
                 return await self.get_key_by_code(keycode).action(items=items, item=item)
+        self.play(name=item.name, url=item.url)
         return 0
 
     async def show_by_game(self, **kwargs) -> int:
         game = kwargs.get('game')
         if not game:
-            game = self.get_user_input(mesg='Search <games> or <categories>', prompt='TwitchGame> ')
+            game = self.get_user_input(mesg='Search <games> or <categories>', prompt='TwitchGameSearch> ')
 
         if not game:
             log.warn('query search cancelled by user')
@@ -277,7 +285,8 @@ class TwitchApp:
                 keybind = self.get_key_by_code(keycode)
                 return await keybind.action(item=item)
 
-        return self.play(name=item.name, url=item.url)
+        self.play(name=item.name, url=item.url)
+        return 0
 
     async def get_channels_and_streams(self) -> TwitchData:
         data = await self.fetch.channels_and_streams(self.markup, self.ansi)

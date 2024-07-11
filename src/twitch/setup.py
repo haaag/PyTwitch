@@ -52,7 +52,7 @@ def args() -> argparse.Namespace:
 
 
 def keybinds(t: TwitchApp) -> TwitchApp:
-    keys = config.get_keybinds()
+    keys = config.get_keybinds(constants.CONFIGFILE, constants.DEFAULT_KEYBINDS)
     keymap = t.menu.keybind
     keymap.add(
         bind=keys.group_by_categories, action=t.show_group_by_categories, hidden=True, description='show by games'
@@ -60,8 +60,8 @@ def keybinds(t: TwitchApp) -> TwitchApp:
     keymap.add(bind=keys.show_information, action=t.show_item_info, hidden=True, description='display item info')
     keymap.add(bind=keys.open_chat, action=t.open_chat, hidden=True, description='launch chat')
     keymap.add(bind=keys.show_keys, action=t.show_keybinds, hidden=False, description='show available keybinds')
-    keymap.add(bind=keys.search_by_game, action=t.show_by_game, hidden=True, description='search games')
-    keymap.add(bind=keys.search_by_query, action=t.show_by_query, hidden=True, description='search by channel')
+    keymap.add(bind=keys.search_by_game, action=t.show_by_game, hidden=True, description='search game by query')
+    keymap.add(bind=keys.search_by_query, action=t.show_by_query, hidden=True, description='search channel by query')
     # Content
     keymap.add(bind=keys.top_streams, action=t.show_top_streams, hidden=True, description='show top streams')
     keymap.add(bind=keys.top_games, action=t.show_top_games, hidden=True, description='show top games')
@@ -94,13 +94,13 @@ async def app(menu: MenuInterface, args: argparse.Namespace) -> TwitchApp:
     credentials = Credentials.load(args.env)
     credentials.validate()
     api = TwitchApi(credentials)
-    await api.load_client()
     fetcher = TwitchFetcher(api)
+    await fetcher.api.load_client()
     return TwitchApp(
         fetcher=fetcher,
         menu=menu,
         player_conf=args.no_conf,
-        keys=config.get_keybinds(),
+        keys=config.get_keybinds(constants.CONFIGFILE, constants.DEFAULT_KEYBINDS),
         markup=args.no_markup,
         ansi=args.no_ansi,
     )

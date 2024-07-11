@@ -26,7 +26,7 @@ https://github.com/haaag/PyTwitch/assets/81921095/e8f07a06-d9dd-47e0-a6d4-f9fba4
 - Launcher:
   - 🔹[Rofi](https://github.com/davatorium/rofi) <sub>_(default)_</sub>
   - [dmenu](https://tools.suckless.org/dmenu/)
-  - [fzf](https://github.com/junegunn/fzf) <sub>_(WIP)_</sub>
+  - [fzf](https://github.com/junegunn/fzf)
 
 ### 🔒Credentials
 

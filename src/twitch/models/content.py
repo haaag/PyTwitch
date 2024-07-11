@@ -66,12 +66,28 @@ class FollowedContentClip:
     @property
     def viewers_fmt(self) -> str:
         viewers = f'views: {format.number(self.view_count)}'
-        return PangoSpan(viewers, size='medium', weight='light', markup=self.markup)
+        return PangoSpan(
+            viewers,
+            size='medium',
+            weight='light',
+            foreground=Color.red(),
+            fg_ansi='red',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     @property
     def duration_fmt(self) -> str:
         duration = f'duration: {self.duration}s'
-        return PangoSpan(duration, size='medium', weight='light', markup=self.markup)
+        return PangoSpan(
+            duration,
+            size='medium',
+            weight='light',
+            foreground='orange',
+            fg_ansi='yellow',
+            markup=self.markup,
+            ansi=self.ansi,
+        )
 
     @property
     def item_id(self) -> str:
@@ -198,4 +214,4 @@ class FollowedContentVideo:
 
     def __str__(self) -> str:
         id_and_date = f'{self.item_id}{self.sep}{self.created_at_fmt}'
-        return f'{id_and_date}{self.sep}{self.title_fmt} {self.duration_fmt} | {self.viewers_fmt}'
+        return f'{id_and_date}{self.sep}{self.title_fmt} {self.duration_fmt}{self.sep}{self.viewers_fmt}'

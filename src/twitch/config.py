@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import functools
-import os
-from pathlib import Path
+import logging
+from typing import TYPE_CHECKING
 from typing import NamedTuple
 
 import yaml
-from twitch import constants
-from twitch.__about__ import __appname__
+
+log = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class Keys(NamedTuple):
@@ -24,30 +27,25 @@ class Keys(NamedTuple):
     clips: str
 
 
-def create_default_keybinds(config_file: Path) -> None:
-    data = yaml.safe_load(constants.DEFAULT_KEYBINDS)
+def create_default_keybinds(config_file: Path, keybinds: str) -> None:
+    data = yaml.safe_load(keybinds)
     with config_file.open(mode='w') as f:
-        yaml.dump(data, f)
+        log.debug(f'writing default keybinds to {config_file.as_posix()!r}')
+        yaml.dump(data, f, default_flow_style=False)
 
 
-def get_config_file() -> Path:
-    xdg_env = os.getenv('XDG_DATA_HOME', '~/.local/share')
-    root = Path(xdg_env).expanduser() / __appname__.lower()
-
-    if not root.exists():
-        root.mkdir()
-
-    configfile = root / 'config.yml'
-
-    if not configfile.exists():
-        create_default_keybinds(configfile)
-
-    return configfile
+def ensure_configfile(filename: Path, keybinds: str) -> None:
+    if not filename.parent.exists():
+        log.debug(f'{filename.parent!r} does not exist. creating...')
+        filename.parent.mkdir()
+    if not filename.exists():
+        create_default_keybinds(filename, keybinds)
 
 
 @functools.lru_cache
-def get_keybinds() -> Keys:
-    configfile = get_config_file()
+def get_keybinds(configfile: Path, keybinds: str) -> Keys:
+    ensure_configfile(configfile, keybinds)
     with configfile.open(mode='r') as f:
+        log.debug(f'reading keybinds from {configfile.as_posix()!r}')
         data = yaml.safe_load(f)
     return Keys(**data['keybinds'])

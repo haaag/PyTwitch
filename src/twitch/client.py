@@ -39,7 +39,7 @@ def create_categories(streams_data: list[list[dict[str, Any]]], markup: bool, an
         if len(cat_data) == 0:
             continue
         cat_name = cat_data[0]['game_name']
-        streams = (FollowedStream(**c, markup=markup) for c in cat_data)
+        streams = (FollowedStream(**c, markup=markup, ansi=ansi) for c in cat_data)
         all_streams = {s.name: s for s in streams}
         category = Category(name=cat_name, channels=all_streams, markup=markup, ansi=ansi)
         viewers = category.total_viewers_fmt()
@@ -56,7 +56,7 @@ def merge_data(channels: Mapping[str, Item], streams: Mapping[str, Item]) -> Map
 
 
 class TwitchFetcher:
-    def __init__(self, api: TwitchApi, markup: bool = True, ansi: bool = False) -> None:
+    def __init__(self, api: TwitchApi) -> None:
         self.api = api
         self.online: int = 0
 
@@ -94,7 +94,7 @@ class TwitchFetcher:
     @astimeit
     async def games_by_query(self, query: str, markup: bool, ansi: bool) -> Iterable[Game]:
         data = await self.api.content.search_categories(query)
-        return (Game(**item, markup=markup) for item in data)
+        return (Game(**item, markup=markup, ansi=ansi) for item in data)
 
     @astimeit
     async def channels_by_query(
@@ -116,9 +116,8 @@ class TwitchFetcher:
 
     @astimeit
     async def top_games_with_streams(self, markup: bool, ansi: bool) -> Mapping[str, Category]:
-        max_games = 30
-        max_streams = 30
-        top_games = await self.top_games(items_max=max_games)
+        max_games, max_streams = (30, 35)
+        top_games = await self.top_games(max_games, markup, ansi)
         games_streams_data = await self._top_games_streams_data(top_games, max_games, max_streams)
         return create_categories(games_streams_data, markup, ansi)
 
