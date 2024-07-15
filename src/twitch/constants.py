@@ -77,7 +77,7 @@ keybinds:
   group_by_categories: ctrl-t
   open_chat: ctrl-o
   search_by_game: ctrl-s
-  search_by_query: ctrl-c
+  search_by_query: ctrl-C
   show_information: ctrl-i
   show_keys: ctrl-K
   top_games: ctrl-G

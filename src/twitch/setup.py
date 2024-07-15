@@ -72,8 +72,8 @@ def keybinds(t: TwitchApp) -> TwitchApp:
 
 def menu(args: argparse.Namespace) -> MenuInterface:
     menu = Menu.get(args.menu)
-    menu.prompt = functools.partial(
-        menu.prompt,
+    menu.select = functools.partial(
+        menu.select,
         prompt='Twitch> ',
         lines=15,
         width='75%',

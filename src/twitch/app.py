@@ -172,7 +172,7 @@ class TwitchApp:
     async def show_by_query(self, **kwargs) -> int:
         query: str | None = kwargs.get('query')
         if not query:
-            query = self.get_user_input(mesg='Search <channels> by query', prompt='TwitchChannelSearch> ')
+            query = self.take_input(mesg='Search <channels> by query', prompt='TwitchChannelSearch> ')
 
         if not query:
             log.warn('query search cancelled by user')
@@ -199,7 +199,7 @@ class TwitchApp:
     async def show_by_game(self, **kwargs) -> int:
         game = kwargs.get('game')
         if not game:
-            game = self.get_user_input(mesg='Search <games> or <categories>', prompt='TwitchGameSearch> ')
+            game = self.take_input(mesg='Search <games> or <categories>', prompt='TwitchGameSearch> ')
 
         if not game:
             log.warn('query search cancelled by user')
@@ -237,7 +237,7 @@ class TwitchApp:
         item_dict = asdict(item)
         formatted_item = format.stringify(item_dict, sep=SEPARATOR)
         formatted_item.insert(0, f"{'url':<18}{SEPARATOR}\t{item.url:<30}")
-        selected, keycode = self.menu.prompt(
+        selected, keycode = self.menu.select(
             items=formatted_item,
             mesg=f'> item <{item.name}> information\n> Hit enter to copy',
         )
@@ -320,16 +320,9 @@ class TwitchApp:
     def get_key_by_bind(self, bind: str) -> Keybind:
         return self.menu.keybind.get_by_bind(bind)
 
-    def get_user_input(self, mesg: str = '', prompt: str = 'Query>') -> str:
+    def take_input(self, mesg: str = '', prompt: str = 'Query>') -> str:
         self.menu.keybind.toggle_hidden()
-        user_input, _ = self.menu.prompt(
-            items=[],
-            mesg=mesg,
-            prompt=prompt,
-            print_query=True,
-            markup=self.markup,
-            input=True,
-        )
+        user_input = self.menu.input(prompt=prompt, mesg=mesg)
         self.menu.keybind.toggle_hidden(restore=True)
         if not user_input:
             return ''
@@ -356,10 +349,10 @@ class TwitchApp:
         preprocessor: Callable[..., Any] = lambda x: str(x),
     ) -> tuple[Any, int]:
         if not items:
-            self.menu.prompt(items=['err: no items'], mesg=mesg, markup=False)
+            self.menu.select(items=['err: no items'], mesg=mesg, markup=False)
             return None, UserCancel(1)
 
-        item, keycode = self.menu.prompt(
+        item, keycode = self.menu.select(
             items=list(items.values()),
             mesg=mesg,
             markup=self.markup,

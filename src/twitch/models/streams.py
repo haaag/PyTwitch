@@ -115,9 +115,12 @@ class FollowedStream:
         user = PangoSpan(
             self.name,
             weight='bold',
+            foreground=Color.cyan(),
             fg_ansi='cyan',
             size='large',
             markup=self.markup,
             ansi=self.ansi,
         )
-        return f'{user}{self.sep}{self.live_icon} {self.viewers_fmt} {self.title_str} {self.live_since} {self.category}'
+        output = f'{user}{self.sep}{self.live_icon} {self.viewers_fmt} '
+        output += f'{self.title_str} {self.live_since} {self.category}'
+        return output

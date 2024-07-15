@@ -40,7 +40,7 @@ def main() -> int:
         return run(twitch.show_all_streams())
     except (*CONNECTION_EXCEPTION, *EXCEPTIONS) as err:
         menu.keybind.unregister_all()
-        menu.prompt(items=[f'{err!r}'], markup=False, prompt='PyTwitchErr>')
+        menu.select(items=[f'{err!r}'], markup=False, prompt='PyTwitchErr>')
         log.error(err)
     except KeyboardInterrupt:
         log.info('terminated by user')

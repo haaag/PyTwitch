@@ -12,7 +12,7 @@ authors = [{ name = "haaag", email = "git.haaag@gmail.com" }]
 requires-python = ">=3.8"
 dynamic = ["version"]
 dependencies = [
-  "pyselector==0.0.36",
+  "pyselector==0.0.38",
   "httpx==0.23.3",
   "python-dotenv",
   "mpv==1.0.7",
@@ -38,7 +38,9 @@ testpaths = ["tests"]
 exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
 
 [tool.mypy]
-show_error_codes = true
+hide_error_codes = false
+show_error_code_links = true
+enable_error_code = ["ignore-without-code"]
 show_error_context = true
 show_column_numbers = true
 ignore_missing_imports = true
