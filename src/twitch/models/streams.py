@@ -7,7 +7,6 @@ from pyselector.colors import Color
 from pyselector.markup import PangoSpan
 from twitch import format
 from twitch.constants import LIVE_ICON
-from twitch.constants import SEPARATOR
 from twitch.constants import TITLE_MAX_LENGTH
 from twitch.constants import TWITCH_CHAT_BASE_URL
 from twitch.constants import TWITCH_STREAM_BASE_URL
@@ -41,10 +40,6 @@ class FollowedStream:
     @property
     def name(self) -> str:
         return self.user_name
-
-    @property
-    def sep(self) -> str:
-        return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
 
     @property
     def title_str(self) -> str:
@@ -121,6 +116,6 @@ class FollowedStream:
             markup=self.markup,
             ansi=self.ansi,
         )
-        output = f'{user}{self.sep}{self.live_icon} {self.viewers_fmt} '
+        output = f'{user} {self.live_icon} {self.viewers_fmt} '
         output += f'{self.title_str} {self.live_since} {self.category}'
         return output

@@ -7,7 +7,6 @@ from pyselector.colors import Color
 from pyselector.markup import PangoSpan
 from twitch import format
 from twitch.constants import LIVE_ICON
-from twitch.constants import SEPARATOR
 from twitch.models.channels import FollowedChannelInfo  # noqa: TCH002
 from twitch.models.streams import FollowedStream  # noqa: TCH002
 
@@ -87,15 +86,11 @@ class Category:
         name = format.sanitize(self.name)
         return PangoSpan(name, weight='bold', size='large', fg_ansi='cyan', markup=self.markup, ansi=self.ansi)
 
-    @property
-    def sep(self) -> str:
-        return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
-
     def online_str(self) -> str:
-        return f'{self.name_fmt}{self.sep}{self.online_fmt} {self.viewers_fmt()}'
+        return f'{self.name_fmt} {self.online_fmt} {self.viewers_fmt()}'
 
     def offline_str(self) -> str:
-        return f'{self.name_fmt}{self.sep} {self.offline_fmt()}'
+        return f'{self.name_fmt} {self.offline_fmt()}'
 
     def __str__(self) -> str:
         return self.online_str() if self.live() else self.offline_str()

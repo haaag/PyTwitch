@@ -5,7 +5,6 @@ from pyselector.colors import Color
 from pyselector.markup import PangoSpan
 from twitch import format
 from twitch.constants import LIVE_ICON
-from twitch.constants import SEPARATOR
 from twitch.constants import TWITCH_API_BASE_URL
 from twitch.constants import TWITCH_CHAT_BASE_URL
 from twitch.constants import TWITCH_STREAM_BASE_URL
@@ -38,10 +37,6 @@ class FollowedChannelInfo:
     def user_id(self) -> str:
         return self.broadcaster_id
 
-    @property
-    def sep(self) -> str:
-        return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
-
     def __str__(self) -> str:
         user = PangoSpan(self.name, weight='bold', size='large', markup=self.markup)
         offline = PangoSpan(
@@ -54,7 +49,7 @@ class FollowedChannelInfo:
             markup=self.markup,
             ansi=self.ansi,
         )
-        return f'{user}{self.sep}{self.offline_icon} {offline}'
+        return f'{user} {self.offline_icon} {offline}'
 
     @property
     def url(self) -> str:
@@ -159,10 +154,6 @@ class Channel:
         return self.is_live
 
     @property
-    def sep(self) -> str:
-        return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
-
-    @property
     def offline_icon(self) -> str:
         return PangoSpan(
             LIVE_ICON,
@@ -247,7 +238,7 @@ class Channel:
             markup=self.markup,
             ansi=self.ansi,
         )
-        return f'{name}{self.sep}{self.icon} {self.status}{self.sep}{self.category()}'
+        return f'{name} {self.icon} {self.status} {self.category()}'
 
 
 @dataclass
@@ -285,10 +276,6 @@ class ChannelInfo:
         return self.broadcaster_id
 
     @property
-    def sep(self) -> str:
-        return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
-
-    @property
     def offline(self) -> str:
         return PangoSpan(
             'offline',
@@ -311,4 +298,4 @@ class ChannelInfo:
             markup=self.markup,
             ansi=self.ansi,
         )
-        return f'{user}{self.sep}{self.icon_off} {self.offline}'
+        return f'{user} {self.icon_off} {self.offline}'

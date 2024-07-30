@@ -8,7 +8,6 @@ from pydantic.dataclasses import dataclass
 from pyselector.colors import Color
 from pyselector.markup import PangoSpan
 from twitch import format
-from twitch.constants import SEPARATOR
 from twitch.constants import TITLE_MAX_LENGTH
 
 
@@ -46,10 +45,6 @@ class FollowedContentClip:
     @property
     def name(self) -> str:
         return self.creator_name
-
-    @property
-    def sep(self) -> str:
-        return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
 
     @property
     def title_fmt(self) -> str:
@@ -107,8 +102,8 @@ class FollowedContentClip:
         )
 
     def __str__(self) -> str:
-        id_and_date = f'{self.item_id}{self.sep}{self.created_date}'
-        dur_and_viewers = f'{self.duration_fmt}{self.sep}{self.viewers_fmt}'
+        id_and_date = f'{self.item_id} {self.created_date}'
+        dur_and_viewers = f'{self.duration_fmt} {self.viewers_fmt}'
         return f'{id_and_date} {self.title_fmt} {dur_and_viewers}'
 
 
@@ -142,10 +137,6 @@ class FollowedContentVideo:
     @property
     def name(self) -> str:
         return self.user_name
-
-    @property
-    def sep(self) -> str:
-        return PangoSpan(SEPARATOR, alpha='100%', markup=self.markup)
 
     @property
     def title_fmt(self) -> str:
@@ -213,5 +204,5 @@ class FollowedContentVideo:
         return format.date(self.published_at)
 
     def __str__(self) -> str:
-        id_and_date = f'{self.item_id}{self.sep}{self.created_at_fmt}'
-        return f'{id_and_date}{self.sep}{self.title_fmt} {self.duration_fmt}{self.sep}{self.viewers_fmt}'
+        id_and_date = f'{self.item_id} {self.created_at_fmt}'
+        return f'{id_and_date} {self.title_fmt} {self.duration_fmt} {self.viewers_fmt}'
