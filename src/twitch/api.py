@@ -64,7 +64,7 @@ def load_envs(filepath: str | None = None) -> None:
         load_dotenv()
         return
 
-    envfilepath = Path().absolute() / Path(filepath)
+    envfilepath = Path(filepath).expanduser()
     if not envfilepath.exists():
         err = f'{envfilepath=!s} not found'
         raise EnvValidationError(err)

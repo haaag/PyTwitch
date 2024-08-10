@@ -12,8 +12,8 @@ from twitch.__about__ import __appname__
 
 # paths
 xdg = os.getenv('XDG_DATA_HOME', '~/.local/share')
-ROOT = pathlib.Path(xdg).expanduser() / __appname__.lower()
-CONFIGFILE = ROOT / 'config.yml'
+HOME = pathlib.Path(xdg).expanduser() / __appname__.lower()
+CONFIGFILE = HOME / 'config.yml'
 
 # app
 DESC = 'Simple tool menu for watching streams, videos from twitch.'

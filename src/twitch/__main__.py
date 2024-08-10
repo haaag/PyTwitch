@@ -10,7 +10,10 @@ from twitch._exceptions import CONNECTION_EXCEPTION
 from twitch._exceptions import EXCEPTIONS
 
 # TODO)):
-# - [X] ~~Read https://dev.twitch.tv/docs/api/reference/#get-games~~
+# - [X] ~Read https://dev.twitch.tv/docs/api/reference/#get-games~
+# - [ ] Replace `argsparse` with `click`
+# Config:
+# - [ ] Move config yaml file into $XDG_CONFIG_HOME
 
 
 def main() -> int:
