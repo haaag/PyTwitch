@@ -17,6 +17,10 @@ class ItemNotPlaylableError(Exception):
     pass
 
 
+class ChannelOfflineError(Exception):
+    pass
+
+
 class InvalidConfigFileError(Exception):
     pass
 
@@ -35,4 +39,5 @@ EXCEPTIONS = (
     tenacity.RetryError,
     KeybindError,
     InvalidConfigFileError,
+    ChannelOfflineError,
 )

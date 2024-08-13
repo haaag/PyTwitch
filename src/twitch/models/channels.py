@@ -154,6 +154,10 @@ class Channel:
         return self.is_live
 
     @property
+    def live(self) -> bool:
+        return self.is_live
+
+    @property
     def offline_icon(self) -> str:
         return PangoSpan(
             LIVE_ICON,

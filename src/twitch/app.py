@@ -14,6 +14,7 @@ from twitch import clipboard
 from twitch import config
 from twitch import format
 from twitch import player
+from twitch._exceptions import ChannelOfflineError
 from twitch._exceptions import ItemNotPlaylableError
 from twitch.constants import SEPARATOR
 from twitch.constants import UserCancel
@@ -376,6 +377,10 @@ class TwitchApp:
 
     async def open_chat(self, **kwargs) -> int:
         item = kwargs.pop('item')
+        if not item.live:
+            n = item.name
+            mesg_err = f'item {n!s} must be online'
+            raise ChannelOfflineError(mesg_err)
         log.debug(f'opening chat for {item.name}')
         webbrowser.open_new_tab(item.chat)
         return 0
