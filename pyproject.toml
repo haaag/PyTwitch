@@ -12,10 +12,10 @@ authors = [{ name = "haaag", email = "git.haaag@gmail.com" }]
 requires-python = ">=3.8"
 dynamic = ["version"]
 dependencies = [
-  "pyselector==0.0.39",
+  "pyselector==0.0.41",
   "httpx==0.23.3",
   "python-dotenv",
-  "mpv==1.0.7",
+  "sh==2.0.7",
   "pydantic==2.7.4",
   "tenacity==8.4.2",
   "PyYAML==6.0.1",

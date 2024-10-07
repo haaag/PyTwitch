@@ -13,20 +13,19 @@ from twitch._exceptions import EXCEPTIONS
 # - [X] ~Read https://dev.twitch.tv/docs/api/reference/#get-games~
 # - [ ] Replace `argsparse` with `click`
 # Config:
-# - [ ] Move config yaml file into $XDG_CONFIG_HOME
+# - [X] Move config yaml file into $XDG_CONFIG_HOME
 
 
 def main() -> int:
     args = setup.args()
-    logger.verbose(args.verbose)
-    log = logging.getLogger(__name__)
-
-    if args.verbose:
-        log.debug('arguments: %s', vars(args))
-
     if args.help:
         setup.help()
         return 0
+
+    logger.verbose(args.verbose)
+    log = logging.getLogger(__name__)
+    if args.verbose:
+        log.debug('arguments: %s', vars(args))
 
     menu = setup.menu(args)
     try:

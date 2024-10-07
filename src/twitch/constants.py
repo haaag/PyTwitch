@@ -8,6 +8,7 @@ import textwrap
 from typing import NewType
 
 import httpx
+
 from twitch.__about__ import __appname__
 
 # paths
@@ -74,7 +75,8 @@ SEPARATOR = f' {MIDDLE_DOT} '
 # keybinds
 DEFAULT_KEYBINDS = """
 keybinds:
-  group_by_categories: ctrl-t
+  group_by_cat: ctrl-t
+  multiselection: ctrl-M
   open_chat: ctrl-o
   search_by_game: ctrl-s
   search_by_query: ctrl-C

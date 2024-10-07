@@ -18,6 +18,7 @@ from tenacity import retry
 from tenacity import retry_if_not_exception_type
 from tenacity import stop_after_attempt
 from tenacity import wait_fixed
+
 from twitch._exceptions import EnvValidationError
 from twitch.constants import TWITCH_API_BASE_URL
 

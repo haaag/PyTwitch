@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-added-large-files
       - id: end-of-file-fixer
@@ -25,7 +25,7 @@ repos:
 
   # Ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.7
+    rev: v0.6.9
     hooks:
       - id: ruff
 
@@ -37,19 +37,19 @@ repos:
 
   # MyPy
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.1
+    rev: v1.11.2
     hooks:
       - id: mypy
 
   # Validate pyproject
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.18
+    rev: v0.20.2
     hooks:
       - id: validate-pyproject
 
   # Spell
   - repo: https://github.com/crate-ci/typos
-    rev: v1.23.6
+    rev: v1.25.0
     hooks:
       - id: typos
   - repo: https://github.com/codespell-project/codespell
@@ -59,7 +59,7 @@ repos:
 
   # Security
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.18.4
+    rev: v8.20.0
     hooks:
       - id: gitleaks
 

@@ -9,11 +9,13 @@ from typing import Any
 from typing import Callable
 from typing import Mapping
 from typing import Protocol
+from typing import TypeVar
+
+import sh
 
 from twitch import clipboard
 from twitch import config
 from twitch import format
-from twitch import player
 from twitch._exceptions import ChannelOfflineError
 from twitch._exceptions import ItemNotPlaylableError
 from twitch.constants import SEPARATOR
@@ -26,9 +28,12 @@ from twitch.models.category import Category
 if typing.TYPE_CHECKING:
     from pyselector.interfaces import MenuInterface
     from pyselector.key_manager import Keybind
+
     from twitch.client import TwitchFetcher
 
 log = logging.getLogger(__name__)
+
+T = TypeVar('T')
 
 # TODO:
 # - [X] get player inside TwitchApp.play() method
@@ -108,7 +113,7 @@ class TwitchApp:
         clips, mesg = await self.get_channel_clips(item=item)
         return await self.show_and_play(items=clips, mesg=mesg)
 
-    async def show_group_by_categories(self, **kwargs: dict[str, TwitchChannel]) -> int:
+    async def show_group_by_cat(self, **kwargs: dict[str, TwitchChannel]) -> int:
         categories: dict[str, Category] = {}
         items: dict[str, TwitchChannel] = kwargs.get('items', {})
 
@@ -223,9 +228,9 @@ class TwitchApp:
         return await self.show_and_play({s.id: s for s in streams}, mesg=mesg)
 
     async def show_top_streams(self, **kwargs) -> int:
-        kgames = self.get_key_by_bind(self.keys.group_by_categories)
+        games_keybind = self.get_key_by_bind(self.keys.group_by_cat)
         self.toggle_content_keybinds()
-        self.menu.keybind.register(kgames)
+        self.menu.keybind.register(games_keybind)
         data = await self.fetch.top_streams(self.markup, self.ansi)
         streams = {s.name: s for s in data}
         mesg = f'> Showing ({len(streams)}) top streams'
@@ -345,8 +350,9 @@ class TwitchApp:
 
     def select(
         self,
-        items: Mapping[str, Any],
+        items: Mapping[str, T],
         mesg: str = '',
+        multi_select: bool = False,
         preprocessor: Callable[..., Any] = lambda x: str(x),
     ) -> tuple[Any, int]:
         if not items:
@@ -358,21 +364,36 @@ class TwitchApp:
             mesg=mesg,
             markup=self.markup,
             ansi=self.ansi,
+            multi_select=multi_select,
             preprocessor=preprocessor,
         )
 
         return item, keycode
 
-    async def multi_selection(self, **kwargs) -> None:
-        raise NotImplementedError
+    async def multi_selection(self, **kwargs) -> int:
+        items, mesg = await self.get_channels_and_streams()
+        mesg += "\n> Use 'Shift'+'Enter' for multi-select"
+        self.menu.keybind.get_by_bind(self.keys.show_keys).hide()
+
+        if not items:
+            self.menu.select(items=['err: no items'], mesg=mesg, markup=False)
+            return UserCancel(1)
+
+        streams, keycode = self.select(items=items, mesg=mesg, multi_select=True)
+        if not streams:
+            return UserCancel(1)
+
+        procs: list[sh.Command] = []
+        for j in streams:
+            procs.append(sh.mpv(j.url, _bg=True))
+
+        [p.wait() for p in procs]
+
+        return 0
 
     def play(self, name: str, url: str) -> int:
-        # https://github.com/jaseg/python-mpv/issues/126
         log.info(f'playing {name!r} {url!r}')
-        p = player.get(with_config=self.player_conf, name=name)
-        p.play(url)
-        p.wait_for_playback()
-        del p
+        sh.mpv(url)
         return 0
 
     async def open_chat(self, **kwargs) -> int:

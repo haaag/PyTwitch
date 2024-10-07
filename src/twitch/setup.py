@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from pyselector import Menu
+
 from twitch import config
 from twitch import constants
 from twitch.api import Credentials
@@ -54,14 +55,13 @@ def args() -> argparse.Namespace:
 def keybinds(t: TwitchApp) -> TwitchApp:
     keys = config.get_keybinds(constants.CONFIGFILE, constants.DEFAULT_KEYBINDS)
     keymap = t.menu.keybind
-    keymap.add(
-        bind=keys.group_by_categories, action=t.show_group_by_categories, hidden=True, description='show by games'
-    )
+    keymap.add(bind=keys.group_by_cat, action=t.show_group_by_cat, hidden=True, description='show by games')
     keymap.add(bind=keys.show_information, action=t.show_item_info, hidden=True, description='display item info')
     keymap.add(bind=keys.open_chat, action=t.open_chat, hidden=True, description='launch chat')
     keymap.add(bind=keys.show_keys, action=t.show_keybinds, hidden=False, description='show available keybinds')
     keymap.add(bind=keys.search_by_game, action=t.show_by_game, hidden=True, description='search game by query')
     keymap.add(bind=keys.search_by_query, action=t.show_by_query, hidden=True, description='search channel by query')
+    keymap.add(bind=keys.multiselection, action=t.multi_selection, hidden=True, description='enable multiselection')
     # Content
     keymap.add(bind=keys.top_streams, action=t.show_top_streams, hidden=True, description='show top streams')
     keymap.add(bind=keys.top_games, action=t.show_top_games, hidden=True, description='show top games')
@@ -76,7 +76,7 @@ def menu(args: argparse.Namespace) -> MenuInterface:
         menu.select,
         prompt='Twitch> ',
         lines=15,
-        width='75%',
+        width='85%',
         height='60%',
         markup=args.no_markup,
         ansi=args.no_ansi,

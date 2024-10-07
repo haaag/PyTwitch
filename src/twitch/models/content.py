@@ -7,6 +7,7 @@ from typing import Any
 from pydantic.dataclasses import dataclass
 from pyselector.colors import Color
 from pyselector.markup import PangoSpan
+
 from twitch import format
 from twitch.constants import TITLE_MAX_LENGTH
 

@@ -14,8 +14,9 @@ if TYPE_CHECKING:
 
 
 class Keys(NamedTuple):
-    group_by_categories: str
+    group_by_cat: str
     open_chat: str
+    multiselection: bool
     # Info
     show_information: str
     show_keys: str
