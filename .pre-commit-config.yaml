@@ -25,31 +25,31 @@ repos:
 
   # Ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9
+    rev: v0.8.2
     hooks:
       - id: ruff
 
   # Pyupgrade
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.17.0
+    rev: v3.19.0
     hooks:
       - id: pyupgrade
 
   # MyPy
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.2
+    rev: v1.13.0
     hooks:
       - id: mypy
 
   # Validate pyproject
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.20.2
+    rev: v0.23
     hooks:
       - id: validate-pyproject
 
   # Spell
   - repo: https://github.com/crate-ci/typos
-    rev: v1.25.0
+    rev: typos-dict-v0.11.37
     hooks:
       - id: typos
   - repo: https://github.com/codespell-project/codespell
@@ -59,7 +59,7 @@ repos:
 
   # Security
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.20.0
+    rev: v8.21.2
     hooks:
       - id: gitleaks
 
